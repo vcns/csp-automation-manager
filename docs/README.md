@@ -30,6 +30,7 @@ The following files remain authoritative alongside these docs:
 - `readme.txt` for public-facing WordPress.org plugin directory content
 - `CHANGELOG.md` for release history
 - `SECURITY.md` for vulnerability reporting policy
+- `docs/index.html`, `docs/styles.css`, and `docs/404.html` for the public GitHub Pages help site content
 - `.github/workflows/*` for the enforced CI, PR policy, packaging, and deployment automation
 
 ## Maintenance rule

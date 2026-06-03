@@ -4,6 +4,16 @@ on:
   push:
     tags:
       - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      target_environment:
+        description: 'GitHub environment providing WordPress.org deploy credentials'
+        required: true
+        default: production
+        type: choice
+        options:
+          - development
+          - production
 
 permissions:
   contents: read
@@ -12,6 +22,8 @@ jobs:
   deploy:
     name: Deploy Plugin to WordPress.org SVN
     runs-on: ubuntu-latest
+    environment:
+      name: ${{ github.event_name == 'workflow_dispatch' && inputs.target_environment || 'production' }}
 
     steps:
       - name: Checkout tagged release
@@ -24,6 +36,6 @@ jobs:
         with:
           generate-zip: true
         env:
-          SVN_USERNAME: ${{ secrets.SVN_USERNAME }}
+          SVN_USERNAME: ${{ vars.SVC_USERNAME }}
           SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
           SLUG: wp-csp-automation

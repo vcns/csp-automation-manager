@@ -129,13 +129,41 @@ Repository workflow files now provide the baseline automation:
 - `.github/workflows/pr-branch-policy.yml` for source-branch enforcement on PRs into `development` and `main`
 - `.github/workflows/codeql.yml` for GitHub-native static analysis
 - `.github/workflows/dast.yml` for disposable-environment baseline DAST
+- `.github/workflows/pages.yml` for publishing the public GitHub Pages help site from `docs/`
 - `.github/workflows/release-package.yml` for release-candidate zip validation
 - `.github/workflows/wporg-deploy.yml` for tag-driven deployment to WordPress.org SVN
 
+## Public docs site
+
+The repository now includes a public GitHub Pages site in `docs/` intended for:
+
+- install and rollout guidance
+- operational help for CSP and Stripe setup
+- release and publishing references
+- support and security policy signposting
+
+The Pages workflow publishes `docs/` when documentation-related changes reach `main`, including changes under:
+
+- `docs/**`
+- `readme.txt`
+- `CHANGELOG.md`
+- `SECURITY.md`
+
+Published URL:
+
+- `https://sjackson0109.github.io/wp-csp-automation/`
+
 Required GitHub repository secrets for WordPress.org deployment:
 
-- `SVN_USERNAME`
-- `SVN_PASSWORD`
+- environment variable `SVC_USERNAME`
+- environment secret `SVN_PASSWORD`
+
+Recommended GitHub environments:
+
+- `development` for dry-run or non-production credential separation
+- `production` for live WordPress.org deployment credentials
+
+The deploy workflow maps `vars.SVC_USERNAME` into the action's required `SVN_USERNAME` environment variable at runtime.
 
 ## WordPress.org review readiness
 
