@@ -43,17 +43,21 @@ class Scheduler {
 		$scan_id = $this->audit->start_scan( 'scheduled' );
 
 		try {
-			$plugin      = \WP_CSP\Plugin::instance();
-			$gate        = $plugin->gate;
+			$plugin    = \WP_CSP\Plugin::instance();
+			$gate      = $plugin->gate;
+			$hash_mgr  = $plugin->hash_manager;
 
-			$discovery   = new Discovery( $this->audit, $gate );
-			$hash_mgr    = new Hash_Manager( $this->audit, $gate );
+			$discovery = new Discovery( $this->audit, $gate );
 
 			$discovery_results = $discovery->run_scan();
 
-			// Audit hashes – compare current crawl against stored hashes.
-			// Simplified: retire hashes not seen in last scan run.
-			$hash_retired = $hash_mgr->retire_stale( [], 'frontend' );
+			// Retrieve hashes observed during this request (may be empty on CLI
+			// cron runs where no page was rendered and no buffer was flushed).
+			// Hash_Manager::retire_stale() is a no-op when the map is empty,
+			// which is safe: hashes are retired only when we have positive
+			// evidence that the content changed, not on absence of evidence.
+			$current_hashes = $hash_mgr->get_captured_hashes();
+			$hash_retired   = $hash_mgr->retire_stale( $current_hashes, 'frontend' );
 
 			$results = [
 				'sources_added'   => $discovery_results['sources_added'],
@@ -84,11 +88,18 @@ class Scheduler {
 		try {
 			$plugin    = \WP_CSP\Plugin::instance();
 			$gate      = $plugin->gate;
+			$hash_mgr  = $plugin->hash_manager;
+
 			$discovery = new Discovery( $this->audit, $gate );
-			$hash_mgr  = new Hash_Manager( $this->audit, $gate );
 
 			$dr = $discovery->run_scan();
-			$hr = $hash_mgr->retire_stale( [], 'frontend' );
+
+			// Same rationale as run_daily_scan(): pass the real capture map.
+			// If the admin triggered a manual scan from the dashboard, the
+			// buffer hooks will have fired during the admin page render and
+			// get_captured_hashes() will contain the admin surface's inline blocks.
+			$current_hashes = $hash_mgr->get_captured_hashes();
+			$hr = $hash_mgr->retire_stale( $current_hashes, 'frontend' );
 
 			$results = [
 				'sources_added'   => $dr['sources_added'],
