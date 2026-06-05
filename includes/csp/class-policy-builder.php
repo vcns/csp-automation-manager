@@ -11,6 +11,10 @@
  *   - Approved hosts from csp_source_inventory appended per directive.
  *   - report-to and report-uri appended automatically.
  *   - 'strict-dynamic' added to script-src when profile enables it (pro feature).
+ *
+ * FIX: source host values are sanitised with sanitize_text_field() rather than
+ * esc_attr(). esc_attr() HTML-encodes characters such as & which are invalid
+ * in HTTP header values and would produce a malformed CSP directive.
  */
 
 declare( strict_types=1 );
@@ -103,11 +107,13 @@ class Policy_Builder {
 		}
 
 		// Append approved source hosts from inventory.
+		// FIX: use sanitize_text_field() not esc_attr() -- esc_attr() encodes
+		// characters such as & that are invalid in HTTP header values.
 		$sources = $this->load_approved_sources( $surface );
 		foreach ( $sources as $src ) {
 			$dir = $src['directive'];
 			if ( isset( $directives[ $dir ] ) ) {
-				$directives[ $dir ][] = esc_attr( $src['source_host'] );
+				$directives[ $dir ][] = sanitize_text_field( $src['source_host'] );
 			}
 		}
 
