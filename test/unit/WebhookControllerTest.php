@@ -265,6 +265,8 @@ class WebhookControllerTest extends TestCase {
 	}
 
 	private function make_completed_session_payload( string $payment_status = 'paid' ): string {
+		$site_identity = substr( hash( 'sha256', get_site_url() ), 0, 48 );
+
 		return json_encode( [
 			'id'   => 'evt_test_completed',
 			'type' => 'checkout.session.completed',
@@ -275,8 +277,8 @@ class WebhookControllerTest extends TestCase {
 					'customer'       => 'cus_test',
 					'payment_intent' => 'pi_test',
 					'metadata'       => [
-						'product_key'   => 'wp-csp-pro',
-						'site_identity' => 'abc123def456',
+						'product_key'   => 'wp-csp-automation',
+						'site_identity' => $site_identity,
 					],
 				],
 			],

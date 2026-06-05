@@ -204,7 +204,7 @@ class ConfigResolverTest extends TestCase {
 
 		$resolver = $this->make_resolver( dns_url: null, fetch_body: '', fetch_code: 200 );
 
-		$price_id = $resolver->get_price_id( 'wp-csp-pro' );
+		$price_id = $resolver->get_price_id( 'wp-csp-automation' );
 
 		$this->assertSame( 'price_test_123', $price_id );
 	}
@@ -216,7 +216,7 @@ class ConfigResolverTest extends TestCase {
 
 		$resolver = $this->make_resolver( dns_url: null, fetch_body: '', fetch_code: 200 );
 
-		$price_id = $resolver->get_price_id( 'wp-csp-pro' );
+		$price_id = $resolver->get_price_id( 'wp-csp-automation' );
 
 		$this->assertSame( 'price_live_456', $price_id );
 	}
@@ -275,9 +275,9 @@ class ConfigResolverTest extends TestCase {
 			'version'   => $version,
 			'signature' => 'stub-signature',
 			'products'  => [
-				'wp-csp-pro' => [
-					'name'                => 'WP CSP Pro',
-					'amount'              => 4900,
+				'wp-csp-automation' => [
+					'name'                => 'WP CSP Automation',
+					'amount'              => 2500,
 					'currency'            => 'usd',
 					'stripe_test_price_id' => 'price_test_123',
 					'stripe_live_price_id' => 'price_live_456',

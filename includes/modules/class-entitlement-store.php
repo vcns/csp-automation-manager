@@ -178,7 +178,7 @@ class Entitlement_Store {
 	 */
 	private function resolve_tier( string $product_key ): string {
 		$map = [
-			'wp-csp-pro' => 'pro',
+			'wp-csp-automation' => 'pro',
 		];
 		return $map[ $product_key ] ?? 'pro';
 	}

@@ -31,7 +31,7 @@ class Feature_Gate {
 	];
 
 	// Product key the free tier links to in the entitlement store.
-	private const PRODUCT_KEY = 'wp-csp-pro';
+	private const PRODUCT_KEY = 'wp-csp-automation';
 
 	private Entitlement_Store $entitlements;
 	private Config_Resolver   $config;
