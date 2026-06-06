@@ -204,7 +204,7 @@ class Admin_UI {
 			wp_send_json_error( [ 'message' => __( 'Insufficient permissions.', 'wp-csp-automation' ) ], 403 );
 		}
 
-		$product_key = sanitize_text_field( wp_unslash( $_POST['product_key'] ?? 'wp-csp-automation' ) );
+		$product_key = sanitize_text_field( wp_unslash( $_POST['product_key'] ?? 'wp-csp-pro' ) );
 		$result      = $this->plugin->config ?
 			( new \WP_CSP\Modules\Checkout_Service( $this->plugin->config, $this->plugin->audit ) )->create_session( $product_key ) :
 			new \WP_Error( 'no_config', __( 'Plugin not fully initialised.', 'wp-csp-automation' ) );
@@ -334,7 +334,7 @@ class Admin_UI {
 	 * @param  string       $surface  CSP surface identifier.
 	 * @return true|string  true if all gates pass; a human-readable failure reason string otherwise.
 	 */
-	private function gate_allows_enforce( string $surface ): true|string {
+	private function gate_allows_enforce( string $surface ): bool|string {
 		global $wpdb;
 
 		// ── Gate 1: approved source or hash inventory ─────────────────────────

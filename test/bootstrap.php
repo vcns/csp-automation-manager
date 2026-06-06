@@ -186,14 +186,14 @@ if ( ! function_exists( 'admin_url' ) ) {
 }
 
 if ( ! function_exists( 'add_action' ) ) {
-	function add_action( string $hook, callable $callback, int $priority = 10, int $accepted_args = 1 ): true {
+	function add_action( string $hook, callable $callback, int $priority = 10, int $accepted_args = 1 ): bool {
 		$GLOBALS['_wp_actions'][ $hook ][] = [ $callback, $priority, $accepted_args ];
 		return true;
 	}
 }
 
 if ( ! function_exists( 'add_filter' ) ) {
-	function add_filter( string $hook, callable $callback, int $priority = 10, int $accepted_args = 1 ): true {
+	function add_filter( string $hook, callable $callback, int $priority = 10, int $accepted_args = 1 ): bool {
 		return add_action( $hook, $callback, $priority, $accepted_args );
 	}
 }
