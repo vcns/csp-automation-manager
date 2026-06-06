@@ -21,7 +21,7 @@
   },
   "scripts": {
     "lint:php": "pwsh -NoProfile -ExecutionPolicy Bypass -File tools/lint-php.ps1",
-    "lint:phpcs": "phpcs",
+    "lint:phpcs": "php vendor/squizlabs/php_codesniffer/bin/phpcs",
     "lint": [
       "@lint:php",
       "@lint:phpcs"
