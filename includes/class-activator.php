@@ -285,37 +285,37 @@ class Activator {
 		// 'report-sample' added to script/style-src so browsers include the offending
 		// inline code snippet in violation reports (R7). Harmless when no violation occurs.
 		$d = array(
-			'default-src'     => array( "'none'" ),
-			'script-src'      => array( "'report-sample'" ),
-			'script-src-elem' => array( "'report-sample'" ),
-			'script-src-attr' => array( "'none'" ),
-			'style-src'       => array( "'report-sample'" ),
-			'style-src-elem'  => array( "'report-sample'" ),
-			'style-src-attr'  => array( "'none'" ),
-			'img-src'         => array( "'self'", 'data:' ),
-			'font-src'        => array( "'self'" ),
-			'connect-src'     => array( "'self'" ),
-			'frame-src'       => array( "'none'" ),
-			'frame-ancestors' => array( "'none'" ),
-			'base-uri'        => array( "'none'" ),
-			'form-action'     => array( "'self'" ),
-			'object-src'      => array( "'none'" ),
-			'media-src'       => array( "'none'" ),
+			'default-src'               => array( "'none'" ),
+			'script-src'                => array( "'report-sample'" ),
+			'script-src-elem'           => array( "'report-sample'" ),
+			'script-src-attr'           => array( "'none'" ),
+			'style-src'                 => array( "'report-sample'" ),
+			'style-src-elem'            => array( "'report-sample'" ),
+			'style-src-attr'            => array( "'none'" ),
+			'img-src'                   => array( "'self'", 'data:' ),
+			'font-src'                  => array( "'self'" ),
+			'connect-src'               => array( "'self'" ),
+			'frame-src'                 => array( "'none'" ),
+			'frame-ancestors'           => array( "'none'" ),
+			'base-uri'                  => array( "'none'" ),
+			'form-action'               => array( "'self'" ),
+			'object-src'                => array( "'none'" ),
+			'media-src'                 => array( "'none'" ),
 			// worker-src: explicitly set on all surfaces. child-src is also set as a
 			// legacy fallback: Safari falls back worker-src → child-src → script-src,
 			// so without child-src the nonce would bleed through to workers in Safari.
-			'worker-src'      => array( "'none'" ),
-			'child-src'       => array( "'none'" ),
-			'manifest-src'    => array( "'self'" ),
+			'worker-src'                => array( "'none'" ),
+			'child-src'                 => array( "'none'" ),
+			'manifest-src'              => array( "'self'" ),
 			// upgrade-insecure-requests: auto-upgrades http→https for sub-resource requests.
 			// Boolean directive (empty array = valueless). Does NOT replace HSTS (RFC 6797).
 			// Skipped on the api surface (REST responses have no navigable resources).
 			// Not emitted on api surface — handled below.
 			// fenced-frame-src: experimental Privacy Sandbox directive; 'none' is safe.
-			'fenced-frame-src' => array( "'none'" ),
+			'fenced-frame-src'          => array( "'none'" ),
 			// sandbox: null = disabled. Set to an array of allow-* flags to enable.
 			// Ignored by browsers in CSP-Report-Only mode and in <meta http-equiv>.
-			'sandbox'                  => null,
+			'sandbox'                   => null,
 			// Trusted Types directives: empty = disabled (premium feature).
 			// When enabled, always deploy in report-only first (Chromium-strong; R5).
 			'require-trusted-types-for' => array(),

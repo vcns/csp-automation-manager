@@ -138,7 +138,7 @@ class Audit_Log {
 
 		// Guard: table may not exist yet on first activation before dbDelta runs.
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery
-		if ( ! $wpdb->get_var( "SHOW TABLES LIKE '{$table}'" ) ) {
+		if ( ! $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) ) ) {
 			return;
 		}
 

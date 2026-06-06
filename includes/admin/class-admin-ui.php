@@ -235,7 +235,11 @@ class Admin_UI {
 				),
 				array(
 					'strong' => array(),
-					'a'      => array( 'href' => array(), 'target' => array(), 'rel' => array() ),
+					'a'      => array(
+						'href'   => array(),
+						'target' => array(),
+						'rel'    => array(),
+					),
 				)
 			)
 		);
