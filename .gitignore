@@ -3,3 +3,5 @@
 .cursor
 .github/skills
 .*key
+offline/
+node_modules/
