@@ -14,15 +14,21 @@ declare( strict_types=1 );
 // ── Plugin constants ──────────────────────────────────────────────────────────
 define( 'ABSPATH',               __DIR__ . '/' );
 define( 'WP_CSP_VERSION',        '0.2.0' );
-define( 'WP_CSP_DB_VERSION',     '2' );
+define( 'WP_CSP_DB_VERSION',     '4' );
 define( 'WP_CSP_FILE',           dirname( __DIR__ ) . '/wp-csp-automation.php' );
 define( 'WP_CSP_DIR',            dirname( __DIR__ ) . '/' );
 define( 'WP_CSP_URL',            'https://example.com/wp-content/plugins/wp-csp-automation/' );
 define( 'WP_CSP_CONFIG_PUBLIC_KEY', 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=' );
 define( 'WP_CSP_CONFIG_DNS_RECORD', '_csp-config.wp-csp-automation.dev' );
+define( 'WP_CSP_WORKER_URL',        'https://wp-csp-test.example.com' );
 define( 'HOUR_IN_SECONDS',       3600 );
 define( 'DAY_IN_SECONDS',        86400 );
-define( 'DNS_TXT',               16 );
+defined( 'DNS_TXT' ) || define( 'DNS_TXT', 16 );
+
+// ── WordPress DB output-type constants ────────────────────────────────────────
+define( 'ARRAY_A',  'ARRAY_A' );
+define( 'ARRAY_N',  'ARRAY_N' );
+define( 'OBJECT_K', 'OBJECT_K' );
 
 // ── PSR-4 autoloader (mirrors wp-csp-automation.php) ─────────────────────────
 spl_autoload_register( static function ( string $class ): void {
@@ -35,6 +41,9 @@ spl_autoload_register( static function ( string $class ): void {
 	$filename = 'class-' . strtolower( str_replace( '_', '-', (string) array_pop( $parts ) ) ) . '.php';
 	$subdir   = ! empty( $parts ) ? strtolower( implode( '/', $parts ) ) . '/' : '';
 	$file     = WP_CSP_DIR . 'includes/' . $subdir . $filename;
+	if ( ! is_readable( $file ) ) {
+		$file = WP_CSP_DIR . 'offline/' . $subdir . $filename;
+	}
 	if ( is_readable( $file ) ) {
 		require $file;
 	}
@@ -228,6 +237,88 @@ if ( ! class_exists( 'WP_Error' ) ) {
 	}
 }
 
+// ── wpdb stub ─────────────────────────────────────────────────────────────────
+// Minimal implementation that returns configurable values from globals.
+// Tests set $GLOBALS['_wpdb_*'] before calling the code under test.
+if ( ! class_exists( 'wpdb_stub' ) ) {
+	class wpdb_stub {
+		public string  $prefix     = 'wp_';
+		public ?string $last_error = null;
+
+		public function prepare( string $query, mixed ...$args ): string {
+			$i = 0;
+			return (string) preg_replace_callback(
+				'/%(s|d)/',
+				static function ( array $m ) use ( &$i, $args ): string {
+					$val = $args[ $i++ ] ?? '';
+					return 's' === $m[1]
+						? "'" . addslashes( (string) $val ) . "'"
+						: (string) (int) $val;
+				},
+				$query
+			);
+		}
+
+		public function get_var( string $query ): mixed {
+			return $GLOBALS['_wpdb_get_var'] ?? null;
+		}
+
+		public function get_row( string $query, string $output = 'ARRAY_A' ): mixed {
+			return $GLOBALS['_wpdb_get_row'] ?? null;
+		}
+
+		public function get_results( string $query, string $output = 'ARRAY_A' ): array {
+			return $GLOBALS['_wpdb_get_results'] ?? [];
+		}
+
+		public function insert( string $table, array $data, array $format = [] ): int|false {
+			return $GLOBALS['_wpdb_insert_result'] ?? 1;
+		}
+
+		public function update( string $table, array $data, array $where, array $format = [], array $where_format = [] ): int|false {
+			return $GLOBALS['_wpdb_update_result'] ?? 0;
+		}
+
+		public function get_charset_collate(): string {
+			return 'DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci';
+		}
+	}
+}
+
+// ── WordPress function stubs (activation / cron) ──────────────────────────────
+
+if ( ! function_exists( 'wp_next_scheduled' ) ) {
+	function wp_next_scheduled( string $hook, array $args = [] ): int|false {
+		return $GLOBALS['_wp_cron'][ $hook ] ?? false;
+	}
+}
+
+if ( ! function_exists( 'wp_schedule_event' ) ) {
+	function wp_schedule_event( int $timestamp, string $recurrence, string $hook ): bool {
+		$GLOBALS['_wp_cron'][ $hook ] = $timestamp;
+		return true;
+	}
+}
+
+if ( ! function_exists( 'wp_unschedule_hook' ) ) {
+	function wp_unschedule_hook( string $hook ): int {
+		unset( $GLOBALS['_wp_cron'][ $hook ] );
+		return 1;
+	}
+}
+
+if ( ! function_exists( 'dbDelta' ) ) {
+	function dbDelta( string $queries = '' ): array {
+		return [];
+	}
+}
+
+if ( ! function_exists( 'current_user_can' ) ) {
+	function current_user_can( string $capability ): bool {
+		return $GLOBALS['_wp_current_user_can'][ $capability ] ?? false;
+	}
+}
+
 // ── Global state reset helper ─────────────────────────────────────────────────
 // Call this in setUp() to start each test with a clean slate.
 function wp_test_reset_globals(): void {
@@ -235,6 +326,14 @@ function wp_test_reset_globals(): void {
 	$GLOBALS['_wp_transients']           = [];
 	$GLOBALS['_wp_actions']              = [];
 	$GLOBALS['_wp_remote_get_response']  = null;
+	$GLOBALS['_wp_cron']                 = [];
+	$GLOBALS['_wp_current_user_can']     = [];
+	$GLOBALS['_wpdb_get_var']            = null;
+	$GLOBALS['_wpdb_get_row']            = null;
+	$GLOBALS['_wpdb_get_results']        = [];
+	$GLOBALS['_wpdb_insert_result']      = 1;
+	$GLOBALS['_wpdb_update_result']      = 0;
+	$GLOBALS['wpdb']                     = new wpdb_stub();
 }
 
 // Initialise globals so classes loaded at parse time do not hit undefined array errors.
@@ -243,4 +342,4 @@ wp_test_reset_globals();
 // ── Test stubs ────────────────────────────────────────────────────────────────
 // Load namespace-scoped stubs before any plugin class that might define the
 // real counterpart. Order matters: stubs must come first.
-require_once __DIR__ . '/stubs/NonceBridge.php';
+require_once __DIR__ . '/unit/NonceBridge.php';

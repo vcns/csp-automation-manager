@@ -21,7 +21,7 @@ if ( ! in_array( $tab, $allowed_tabs, true ) ) {
 $base_url = admin_url( 'admin.php?page=wp-csp-automation-dashboard' );
 
 // ── Data queries ──────────────────────────────────────────────────────────────
-// phpcs:ignore WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- No user input; only $wpdb->prefix used in query.
 $profiles_raw = $wpdb->get_results( "SELECT * FROM {$wpdb->prefix}csp_policy_profiles ORDER BY surface", ARRAY_A );
 $profiles     = ! empty( $profiles_raw ) ? $profiles_raw : array();
 $surfaces     = array( 'frontend', 'admin', 'login', 'api' );
@@ -59,13 +59,17 @@ if ( $src_surface && $src_state ) {
 }
 $sources = ! empty( $sources_raw ) ? $sources_raw : array();
 
-// Violations – last 50.
-// phpcs:ignore WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-$violations_raw = $wpdb->get_results( "SELECT * FROM {$wpdb->prefix}csp_violation_reports ORDER BY reported_at DESC LIMIT 50", ARRAY_A );
+// Violations – paginated.
+$viol_page_num  = max( 1, (int) ( isset( $_GET['v_paged'] ) ? $_GET['v_paged'] : 1 ) );
+$viol_offset    = ( $viol_page_num - 1 ) * $per_page;
+// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- No user input; only $wpdb->prefix used in query.
+$viol_total     = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}csp_violation_reports" );
+$viol_pages     = max( 1, (int) ceil( $viol_total / $per_page ) );
+$violations_raw = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}csp_violation_reports ORDER BY reported_at DESC LIMIT %d OFFSET %d", $per_page, $viol_offset ), ARRAY_A );
 $violations     = ! empty( $violations_raw ) ? $violations_raw : array();
 
 // Scan log – last 20 runs.
-// phpcs:ignore WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- No user input; only $wpdb->prefix used in query.
 $scan_logs_raw = $wpdb->get_results( "SELECT * FROM {$wpdb->prefix}csp_scan_logs ORDER BY started_at DESC LIMIT 20", ARRAY_A );
 $scan_logs     = ! empty( $scan_logs_raw ) ? $scan_logs_raw : array();
 ?>
@@ -148,7 +152,7 @@ $scan_logs     = ! empty( $scan_logs_raw ) ? $scan_logs_raw : array();
 	<?php elseif ( 'sources' === $tab ) : ?>
 	<!-- ── Sources tab ────────────────────────────────────────────────────── -->
 	<form method="get" action="">
-		<input type="hidden" name="page" value="wp-csp-dashboard" />
+		<input type="hidden" name="page" value="wp-csp-automation-dashboard" />
 		<input type="hidden" name="tab"  value="sources" />
 		<select name="src_surface">
 			<option value=""><?php esc_html_e( 'All surfaces', 'wp-csp-automation' ); ?></option>
@@ -239,6 +243,29 @@ $scan_logs     = ! empty( $scan_logs_raw ) ? $scan_logs_raw : array();
 		<?php endif; ?>
 		</tbody>
 	</table>
+
+	<?php if ( $viol_pages > 1 ) : ?>
+	<div class="tablenav bottom" style="margin-top:1em">
+		<div class="tablenav-pages">
+			<?php if ( $viol_page_num > 1 ) : ?>
+			<a class="button" href="<?php echo esc_url( add_query_arg( array( 'tab' => 'violations', 'v_paged' => $viol_page_num - 1 ), $base_url ) ); ?>">&laquo; <?php esc_html_e( 'Previous', 'wp-csp-automation' ); ?></a>
+			<?php endif; ?>
+			<span style="margin:0 8px">
+				<?php
+				printf(
+					/* translators: 1: current page number, 2: total pages */
+					esc_html__( 'Page %1$d of %2$d', 'wp-csp-automation' ),
+					$viol_page_num,
+					$viol_pages
+				);
+				?>
+			</span>
+			<?php if ( $viol_page_num < $viol_pages ) : ?>
+			<a class="button" href="<?php echo esc_url( add_query_arg( array( 'tab' => 'violations', 'v_paged' => $viol_page_num + 1 ), $base_url ) ); ?>"><?php esc_html_e( 'Next', 'wp-csp-automation' ); ?> &raquo;</a>
+			<?php endif; ?>
+		</div>
+	</div>
+	<?php endif; ?>
 
 	<?php elseif ( 'scan-log' === $tab ) : ?>
 	<!-- ── Scan log tab ───────────────────────────────────────────────────── -->
