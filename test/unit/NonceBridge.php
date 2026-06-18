@@ -14,7 +14,7 @@ declare( strict_types=1 );
 
 namespace WP_CSP\CSP;
 
-if ( ! class_exists( Plugin_Nonce_Manager::class ) ) {
+if ( ! class_exists( Plugin_Nonce_Manager::class, false ) ) {
 	final class Plugin_Nonce_Manager {
 		public static function get_instance_nonce(): string {
 			return $GLOBALS['_wp_csp_test_nonce'] ?? '';

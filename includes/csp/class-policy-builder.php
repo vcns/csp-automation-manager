@@ -231,7 +231,7 @@ class Policy_Builder {
 		return ! empty( $row ) ? $row : null;
 	}
 
-	private function load_approved_hashes( string $surface ): array {
+	protected function load_approved_hashes( string $surface ): array {
 		global $wpdb;
 		$table = $wpdb->prefix . 'csp_hash_inventory';
 		$rows  = $wpdb->get_results(
@@ -245,7 +245,7 @@ class Policy_Builder {
 		return ! empty( $rows ) ? $rows : array();
 	}
 
-	private function load_approved_sources( string $surface ): array {
+	protected function load_approved_sources( string $surface ): array {
 		global $wpdb;
 		$table = $wpdb->prefix . 'csp_source_inventory';
 		$rows  = $wpdb->get_results(
