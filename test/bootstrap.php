@@ -30,11 +30,6 @@ define( 'ARRAY_A',  'ARRAY_A' );
 define( 'ARRAY_N',  'ARRAY_N' );
 define( 'OBJECT_K', 'OBJECT_K' );
 
-// ── Namespace-scoped test stubs ───────────────────────────────────────────────
-// Must be required BEFORE spl_autoload_register so the stub class wins the race
-// against the production autoloader for any WP_CSP\* class it declares.
-require_once __DIR__ . '/unit/NonceBridge.php';
-
 // ── PSR-4 autoloader (mirrors wp-csp-automation.php) ─────────────────────────
 spl_autoload_register( static function ( string $class ): void {
 	$prefix = 'WP_CSP\\';
@@ -283,11 +278,8 @@ if ( ! class_exists( 'wpdb_stub' ) ) {
 		public function prepare( string $query, mixed ...$args ): string {
 			$i = 0;
 			return (string) preg_replace_callback(
-				'/%%|%(s|d)/',
+				'/%(s|d)/',
 				static function ( array $m ) use ( &$i, $args ): string {
-					if ( '%%' === $m[0] ) {
-						return '%';
-					}
 					$val = $args[ $i++ ] ?? '';
 					return 's' === $m[1]
 						? "'" . addslashes( (string) $val ) . "'"
@@ -372,11 +364,12 @@ function wp_test_reset_globals(): void {
 	$GLOBALS['_wpdb_insert_result']      = 1;
 	$GLOBALS['_wpdb_update_result']      = 0;
 	$GLOBALS['wpdb']                     = new wpdb_stub();
-	$GLOBALS['_wp_csp_test_nonce']       = '';
-	$GLOBALS['_wp_rest_body']            = '';
-	$GLOBALS['_wp_rest_headers']         = [];
 }
 
 // Initialise globals so classes loaded at parse time do not hit undefined array errors.
 wp_test_reset_globals();
 
+// ── Test stubs ────────────────────────────────────────────────────────────────
+// Load namespace-scoped stubs before any plugin class that might define the
+// real counterpart. Order matters: stubs must come first.
+require_once __DIR__ . '/unit/NonceBridge.php';
