@@ -30,6 +30,8 @@ It provides per-surface CSP profiles, nonce injection, source discovery, violati
 - Additional analytics and export surfaces
 - Local entitlement handling after verified Stripe webhook delivery
 
+NOTE: WP CSP Automation is open-source software released under GPLv2 or later. The names, logos, trademarks, documentation branding, hosted services, and commercial offerings are proprietary to VCNS Tech Ltd and are governed separately by the Trademark Policy and Commercial Terms.
+
 ## Requirements
 
 - WordPress 6.4+
@@ -41,7 +43,7 @@ It provides per-surface CSP profiles, nonce injection, source discovery, violati
 ### Install from GitHub Releases
 
 Every tagged release publishes a ready-to-install ZIP to the
-[Releases page](https://github.com/sjackson0109/wp-csp-automation/releases).
+[Releases page](https://github.com/vcns/wp-csp-automation/releases).
 
 **Option A — WordPress admin upload (recommended)**
 

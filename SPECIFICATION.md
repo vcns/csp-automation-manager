@@ -4,7 +4,7 @@
 
 **Version:** 0.3  
 **Date:** 7 June 2026  
-**Status:** Active — aligned to codebase DB schema v4 and architecture.md
+**Status:** Active - aligned to codebase DB schema v4 and architecture.md
 
 ---
 
@@ -20,22 +20,22 @@ CSP is governed by the W3C Web Application Security Working Group, not by IETF. 
 
 **W3C specifications:**
 
-- Content Security Policy Level 2 — W3C Recommendation (2015)
-- Content Security Policy Level 3 — W3C Working Draft, 5 May 2026 (`WD-CSP3-20260505`)
-- Trusted Types — W3C Working Draft
-- Upgrade Insecure Requests — W3C Candidate Recommendation
-- Mixed Content — W3C Recommendation
-- Reporting API — W3C Working Draft
+- Content Security Policy Level 2 - W3C Recommendation (2015)
+- Content Security Policy Level 3 - W3C Working Draft, 5 May 2026 (`WD-CSP3-20260505`)
+- Trusted Types - W3C Working Draft
+- Upgrade Insecure Requests - W3C Candidate Recommendation
+- Mixed Content - W3C Recommendation
+- Reporting API - W3C Working Draft
 
 **IETF documents:**
 
-- RFC 7762 — Initial Assignment for the Content Security Policy Directives Registry (Informational). Establishes the IANA "Content Security Policy Directives" registry (last updated 2023-02-03). The registry lags the living standard and is not authoritative for the full directive set.
-- RFC 7034 — HTTP Header Field X-Frame-Options (Informational). Documents the header superseded by CSP `frame-ancestors`.
-- RFC 6454 — The Web Origin Concept (Proposed Standard). Defines origin serialisation used throughout CSP source-expression matching.
-- RFC 9110 — HTTP Semantics, STD 97 (Internet Standard). HTTP field semantics referenced by CSP3 header ABNF.
-- RFC 9651 — Structured Field Values for HTTP (Proposed Standard). Obsoletes RFC 8941. The `Reporting-Endpoints` header is a Structured Fields Dictionary per RFC 9651 and must be constructed accordingly.
-- RFC 6797 — HTTP Strict Transport Security (Proposed Standard). Complementary to `upgrade-insecure-requests`; the upgrade directive does not replace HSTS.
-- BCP 14 (RFC 2119 / RFC 8174) — Normative language conventions.
+- RFC 7762 - Initial Assignment for the Content Security Policy Directives Registry (Informational). Establishes the IANA "Content Security Policy Directives" registry (last updated 2023-02-03). The registry lags the living standard and is not authoritative for the full directive set.
+- RFC 7034 - HTTP Header Field X-Frame-Options (Informational). Documents the header superseded by CSP `frame-ancestors`.
+- RFC 6454 - The Web Origin Concept (Proposed Standard). Defines origin serialisation used throughout CSP source-expression matching.
+- RFC 9110 - HTTP Semantics, STD 97 (Internet Standard). HTTP field semantics referenced by CSP3 header ABNF.
+- RFC 9651 - Structured Field Values for HTTP (Proposed Standard). Obsoletes RFC 8941. The `Reporting-Endpoints` header is a Structured Fields Dictionary per RFC 9651 and must be constructed accordingly.
+- RFC 6797 - HTTP Strict Transport Security (Proposed Standard). Complementary to `upgrade-insecure-requests`; the upgrade directive does not replace HSTS.
+- BCP 14 (RFC 2119 / RFC 8174) - Normative language conventions.
 
 **Key clarification:** CSP Level 3 remains a Working Draft as of the date of this document. Directive availability is browser-dependent. Directive presence in this specification does not imply universal browser support. Safari in particular lacks support for `script-src-elem`, `script-src-attr`, `style-src-elem`, and `style-src-attr`; the plugin must maintain `script-src` and `style-src` as portable fallbacks.
 
@@ -92,10 +92,10 @@ The plugin is limited to CSP hardening. It does not implement WAF rules, authent
 ### 5.3 Multi-Surface Policy Profiles
 
 - The plugin must generate and apply separate CSP profiles for at minimum the following surfaces:
-  - `frontend` — public front-end pages
-  - `admin` — `wp-admin` pages (best-effort; see §9)
-  - `login` — `wp-login.php`
-  - `api` — REST API and `admin-ajax.php` responses
+  - `frontend` - public front-end pages
+  - `admin` - `wp-admin` pages (best-effort; see §9)
+  - `login` - `wp-login.php`
+  - `api` - REST API and `admin-ajax.php` responses
 - Each surface profile must have independent directives, overrides, mode, history, and rollout state.
 - Surface detection must be performed at request time before header emission.
 
@@ -107,49 +107,49 @@ The builder produces a semicolon-delimited directive string per the CSP3 seriali
 
 Fetch directives (each falls back to `default-src` when unset):
 
-- `default-src` — fallback for all unset fetch directives
-- `script-src` — JavaScript execution; portable fallback for `script-src-elem` and `script-src-attr`
-- `script-src-elem` — `<script>` elements (CSP3; not supported in Safari — keep `script-src` as fallback)
-- `script-src-attr` — inline event-handler attributes (CSP3; not supported in Safari)
-- `style-src` — CSS sources; portable fallback for `style-src-elem` and `style-src-attr`
-- `style-src-elem` — `<style>` and `<link rel="stylesheet">` (CSP3)
-- `style-src-attr` — inline `style=` attributes (CSP3)
+- `default-src` - fallback for all unset fetch directives
+- `script-src` - JavaScript execution; portable fallback for `script-src-elem` and `script-src-attr`
+- `script-src-elem` - `<script>` elements (CSP3; not supported in Safari - keep `script-src` as fallback)
+- `script-src-attr` - inline event-handler attributes (CSP3; not supported in Safari)
+- `style-src` - CSS sources; portable fallback for `style-src-elem` and `style-src-attr`
+- `style-src-elem` - `<style>` and `<link rel="stylesheet">` (CSP3)
+- `style-src-attr` - inline `style=` attributes (CSP3)
 - `img-src`
 - `font-src`
-- `connect-src` — `fetch()`, `XMLHttpRequest`, `WebSocket`, `EventSource`, `<a ping>`
-- `frame-src` — iframes (deprecated in CSP2, un-deprecated in CSP3)
-- `child-src` — legacy fallback for `frame-src` and `worker-src`; retained for Safari worker-src compatibility
-- `worker-src` — `Worker`, `SharedWorker`, `ServiceWorker` (CSP3)
-- `manifest-src` — web app manifests (CSP3)
-- `media-src` — `<audio>`, `<video>`, `<track>`
-- `object-src` — `<object>`, `<embed>`
-- `fenced-frame-src` — `<fencedframe>` (experimental; privacy-focused)
+- `connect-src` - `fetch()`, `XMLHttpRequest`, `WebSocket`, `EventSource`, `<a ping>`
+- `frame-src` - iframes (deprecated in CSP2, un-deprecated in CSP3)
+- `child-src` - legacy fallback for `frame-src` and `worker-src`; retained for Safari worker-src compatibility
+- `worker-src` - `Worker`, `SharedWorker`, `ServiceWorker` (CSP3)
+- `manifest-src` - web app manifests (CSP3)
+- `media-src` - `<audio>`, `<video>`, `<track>`
+- `object-src` - `<object>`, `<embed>`
+- `fenced-frame-src` - `<fencedframe>` (experimental; privacy-focused)
 
 Document directives (do not fall back to `default-src`):
 
-- `base-uri` — restricts `<base>` element URLs; prevents base-tag hijacking
-- `sandbox` — applies iframe-style sandbox flags; emitted in HTTP header only; silently ignored in `Content-Security-Policy-Report-Only` and in `<meta http-equiv>`
+- `base-uri` - restricts `<base>` element URLs; prevents base-tag hijacking
+- `sandbox` - applies iframe-style sandbox flags; emitted in HTTP header only; silently ignored in `Content-Security-Policy-Report-Only` and in `<meta http-equiv>`
 
 Navigation directives (do not fall back to `default-src`):
 
-- `form-action` — restricts `<form>` submission targets
-- `frame-ancestors` — permitted parent frames; supersedes `X-Frame-Options` (RFC 7034); cannot be delivered via `<meta http-equiv>`
+- `form-action` - restricts `<form>` submission targets
+- `frame-ancestors` - permitted parent frames; supersedes `X-Frame-Options` (RFC 7034); cannot be delivered via `<meta http-equiv>`
 
 Standalone directives:
 
-- `upgrade-insecure-requests` — upgrades `http:` subresource requests to `https:` at the browser before loading; evaluated before mixed-content blocking; does not replace HSTS (RFC 6797)
+- `upgrade-insecure-requests` - upgrades `http:` subresource requests to `https:` at the browser before loading; evaluated before mixed-content blocking; does not replace HSTS (RFC 6797)
 
 Reporting directives:
 
-- `report-to` — references an endpoint name defined by the `Reporting-Endpoints` response header; uses the Reporting API (payload: `application/reports+json`)
-- `report-uri` — deprecated in CSP3 but retained as a required legacy fallback for browsers without Reporting API support; POSTs `application/csp-report`
+- `report-to` - references an endpoint name defined by the `Reporting-Endpoints` response header; uses the Reporting API (payload: `application/reports+json`)
+- `report-uri` - deprecated in CSP3 but retained as a required legacy fallback for browsers without Reporting API support; POSTs `application/csp-report`
 
 **Directives the builder must never emit:**
 
-- `plugin-types` — removed from CSP3
-- `block-all-mixed-content` — obsolete; superseded by browser-native auto-upgrade; a no-op when `upgrade-insecure-requests` is set
-- `navigate-to` — removed from CSP3
-- `prefetch-src` — deprecated and never formally shipped; Chromium intent-to-remove
+- `plugin-types` - removed from CSP3
+- `block-all-mixed-content` - obsolete; superseded by browser-native auto-upgrade; a no-op when `upgrade-insecure-requests` is set
+- `navigate-to` - removed from CSP3
+- `prefetch-src` - deprecated and never formally shipped; Chromium intent-to-remove
 
 Any `plugin-types`, `block-all-mixed-content`, `navigate-to`, or `prefetch-src` values present in admin override configurations must be stripped at emit time and the removal logged to `csp_audit_log` at `warning` severity.
 
@@ -203,12 +203,12 @@ The builder must include `'report-sample'` in fetch directives that cover inline
 
 - The plugin must emit CSP headers through the WordPress `send_headers` hook, with conditional logic per surface.
 - The plugin must support:
-  - `Content-Security-Policy` — enforcement mode
-  - `Content-Security-Policy-Report-Only` — testing and staged rollout mode
+  - `Content-Security-Policy` - enforcement mode
+  - `Content-Security-Policy-Report-Only` - testing and staged rollout mode
 - The `sandbox` directive must be omitted in report-only mode (per the CSP specification; it is ignored in `Content-Security-Policy-Report-Only`).
 - The plugin must emit `Reporting-Endpoints` and legacy `Report-To` headers alongside every CSP header that contains `report-to`:
-  - `Reporting-Endpoints: csp-endpoint="{report_uri}"` — Structured Fields Dictionary per RFC 9651; required for browsers to honour `report-to csp-endpoint`
-  - `Report-To: {"group":"csp-endpoint","max_age":86400,"endpoints":[{"url":"{report_uri}"}]}` — deprecated JSON format retained for browsers without Reporting API support
+  - `Reporting-Endpoints: csp-endpoint="{report_uri}"` - Structured Fields Dictionary per RFC 9651; required for browsers to honour `report-to csp-endpoint`
+  - `Report-To: {"group":"csp-endpoint","max_age":86400,"endpoints":[{"url":"{report_uri}"}]}` - deprecated JSON format retained for browsers without Reporting API support
 - The plugin must note that `Report-To` (the JSON header) is deprecated in favour of `Reporting-Endpoints` (RFC 9651). Both must be emitted for maximum compatibility.
 - Emitting `report-to` without a corresponding `Reporting-Endpoints` header is a silent failure in most browsers. The plugin must always emit `Reporting-Endpoints` when `report-to` is present.
 - `report-uri` must always be included alongside `report-to` as a legacy fallback, since Reporting API support remains incomplete across browsers.
@@ -261,7 +261,7 @@ The builder must include `'report-sample'` in fetch directives that cover inline
 - Repeat reports must be deduplicated by a fingerprint over `(profile_surface, blocked_uri, violated_directive)`, incrementing `occurrence_count` on duplicates.
 - Stored report fields must include:
 
-| Field | Source — legacy | Source — Reporting API |
+| Field | Source - legacy | Source - Reporting API |
 |-------|----------------|----------------------|
 | `profile_surface` | derived from `document-uri` | derived from `documentURL` |
 | `blocked_uri` | `blocked-uri` | `blockedURL` |
@@ -287,8 +287,8 @@ The `sample` field is only populated by the browser when `'report-sample'` is pr
 
 - The plugin must support the Trusted Types directives as a premium feature, always defaulting to report-only mode regardless of the surface profile's enforcement state.
 - Supported directives:
-  - `require-trusted-types-for 'script'` — enforces typed values into DOM XSS sinks (`innerHTML`, `document.write`, etc.)
-  - `trusted-types {policy-list}` — allowlists Trusted Types policy names created via `trustedTypes.createPolicy()`
+  - `require-trusted-types-for 'script'` - enforces typed values into DOM XSS sinks (`innerHTML`, `document.write`, etc.)
+  - `trusted-types {policy-list}` - allowlists Trusted Types policy names created via `trustedTypes.createPolicy()`
 - Trusted Types support is Chromium/Chrome/Edge 83+ only as of the date of this document. MDN (February 2026) states cross-browser support. W3C web-features/Baseline projects broad availability approximately August 2028. The plugin must not promote Trusted Types to enforce mode automatically; the administrator must explicitly enable enforcement when satisfied with report-only coverage.
 - When Trusted Types arrays are empty, these directives must be omitted from the header entirely.
 
@@ -397,7 +397,7 @@ The following limitations are structural and must be surfaced to administrators 
 
 ## 8. Known Platform Constraints
 
-- **wp-admin strict CSP (WordPress Trac #59446 — unresolved):** Some WordPress core admin screens and bundled admin themes emit inline scripts outside the WordPress script API. Strict nonce-based enforcement for the admin surface is best-effort. The plugin must surface a one-per-session admin notice when the admin surface is placed into enforce mode.
+- **wp-admin strict CSP (WordPress Trac #59446 - unresolved):** Some WordPress core admin screens and bundled admin themes emit inline scripts outside the WordPress script API. Strict nonce-based enforcement for the admin surface is best-effort. The plugin must surface a one-per-session admin notice when the admin surface is placed into enforce mode.
 - **Hardcoded inline scripts in themes (WordPress Trac #63806):** Some bundled core themes include `<script>` tags that bypass the WordPress script API and will not receive nonce attributes. These will be blocked under a strict enforce-mode policy.
 - **Scripts must use the WordPress script API:** Scripts emitted via `wp_enqueue_script`, `wp_add_inline_script`, `wp_print_inline_script_tag`, and `wp_enqueue_script_module` are eligible for nonce injection. Scripts added by other means are not.
 - **Safari CSP3 gap:** `script-src-elem`, `script-src-attr`, `style-src-elem`, and `style-src-attr` are not supported in Safari. The plugin must maintain `script-src` and `style-src` as the portable fallbacks alongside the granular CSP3 directives.

@@ -1,13 +1,13 @@
 <?php
 /**
  * Plugin Name:       WP CSP Automation Manager
- * Plugin URI:        https://github.com/sjackson0109/wp-csp-automation
+ * Plugin URI:        https://github.com/vcns/wp-csp-automation
  * Description:       Automates strict Content Security Policy generation, enforcement, and violation analysis for WordPress. Premium features unlocked via one-time Stripe payment.
  * Version:           0.2.0
  * Requires at least: 6.4
  * Requires PHP:      8.1
  * Author:            Simon Jackson
- * Author URI:        https://github.com/sjackson0109
+ * Author URI:        https://github.com/vcns
  * License:           GPL-2.0-or-later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain:       wp-csp-automation
