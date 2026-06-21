@@ -24,7 +24,7 @@
 
     <coverage>
         <report>
-            <html outputDirectory="test/coverage" lowUpperBound="50" highLowerBound="90"/>
+            <html outputDirectory="tests/coverage" lowUpperBound="50" highLowerBound="90"/>
             <text outputFile="php://stdout" showUncoveredFiles="false"/>
         </report>
     </coverage>

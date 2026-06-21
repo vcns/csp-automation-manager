@@ -20,15 +20,9 @@ define( 'WP_CSP_DIR',            dirname( __DIR__ ) . '/' );
 define( 'WP_CSP_URL',            'https://example.com/wp-content/plugins/wp-csp-automation/' );
 define( 'WP_CSP_CONFIG_PUBLIC_KEY', 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=' );
 define( 'WP_CSP_CONFIG_DNS_RECORD', '_csp-config.wp-csp-automation.dev' );
-define( 'WP_CSP_WORKER_URL',        'https://wp-csp-test.example.com' );
 define( 'HOUR_IN_SECONDS',       3600 );
 define( 'DAY_IN_SECONDS',        86400 );
-defined( 'DNS_TXT' ) || define( 'DNS_TXT', 16 );
-
-// ── WordPress DB output-type constants ────────────────────────────────────────
-define( 'ARRAY_A',  'ARRAY_A' );
-define( 'ARRAY_N',  'ARRAY_N' );
-define( 'OBJECT_K', 'OBJECT_K' );
+define( 'DNS_TXT',               16 );
 
 // ── PSR-4 autoloader (mirrors wp-csp-automation.php) ─────────────────────────
 spl_autoload_register( static function ( string $class ): void {

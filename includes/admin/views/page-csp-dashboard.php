@@ -20,8 +20,54 @@ if ( ! in_array( $tab, $allowed_tabs, true ) ) {
 
 $base_url = admin_url( 'admin.php?page=wp-csp-automation-dashboard' );
 
-$surfaces = array( 'frontend', 'admin', 'login', 'api' );
-$per_page = 20;
+// ── Data queries ──────────────────────────────────────────────────────────────
+// phpcs:ignore WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+$profiles_raw = $wpdb->get_results( "SELECT * FROM {$wpdb->prefix}csp_policy_profiles ORDER BY surface", ARRAY_A );
+$profiles     = ! empty( $profiles_raw ) ? $profiles_raw : array();
+$surfaces     = array( 'frontend', 'admin', 'login', 'api' );
+
+// Source inventory – paginated.
+$per_page    = 20;
+$page_num    = max( 1, (int) ( isset( $_GET['paged'] ) ? $_GET['paged'] : 1 ) );
+$offset      = ( $page_num - 1 ) * $per_page;
+$src_surface = isset( $_GET['src_surface'] ) ? sanitize_text_field( wp_unslash( $_GET['src_surface'] ) ) : '';
+$src_state   = isset( $_GET['src_state'] ) ? sanitize_text_field( wp_unslash( $_GET['src_state'] ) ) : '';
+
+$src_where = '1=1';
+$src_args  = array();
+if ( $src_surface ) {
+	$src_where .= ' AND surface = %s';
+	$src_args[] = $src_surface;
+}
+if ( $src_state ) {
+	$src_where .= ' AND approval_state = %s';
+	$src_args[] = $src_state;
+}
+
+if ( $src_surface && $src_state ) {
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	$sources_raw = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}csp_source_inventory WHERE surface = %s AND approval_state = %s ORDER BY last_seen_at DESC LIMIT %d OFFSET %d", $src_surface, $src_state, $per_page, $offset ), ARRAY_A );
+} elseif ( $src_surface ) {
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	$sources_raw = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}csp_source_inventory WHERE surface = %s ORDER BY last_seen_at DESC LIMIT %d OFFSET %d", $src_surface, $per_page, $offset ), ARRAY_A );
+} elseif ( $src_state ) {
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	$sources_raw = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}csp_source_inventory WHERE approval_state = %s ORDER BY last_seen_at DESC LIMIT %d OFFSET %d", $src_state, $per_page, $offset ), ARRAY_A );
+} else {
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+	$sources_raw = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}csp_source_inventory ORDER BY last_seen_at DESC LIMIT %d OFFSET %d", $per_page, $offset ), ARRAY_A );
+}
+$sources = ! empty( $sources_raw ) ? $sources_raw : array();
+
+// Violations – last 50.
+// phpcs:ignore WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+$violations_raw = $wpdb->get_results( "SELECT * FROM {$wpdb->prefix}csp_violation_reports ORDER BY reported_at DESC LIMIT 50", ARRAY_A );
+$violations     = ! empty( $violations_raw ) ? $violations_raw : array();
+
+// Scan log – last 20 runs.
+// phpcs:ignore WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+$scan_logs_raw = $wpdb->get_results( "SELECT * FROM {$wpdb->prefix}csp_scan_logs ORDER BY started_at DESC LIMIT 20", ARRAY_A );
+$scan_logs     = ! empty( $scan_logs_raw ) ? $scan_logs_raw : array();
 ?>
 <div class="wrap wp-csp-wrap">
 	<h1><?php esc_html_e( 'WP CSP Automation – Dashboard', 'wp-csp-automation' ); ?></h1>
