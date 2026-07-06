@@ -192,7 +192,7 @@ class Violation_Reporter {
 
 		$now = current_time( 'mysql', true );
 
-		$document_uri_sanitized       = sanitize_text_field( substr( $document_uri, 0, 2048 ) );
+		$document_uri_sanitized        = sanitize_text_field( substr( $document_uri, 0, 2048 ) );
 		$effective_directive_sanitized = sanitize_text_field( substr( isset( $r['effective_directive'] ) ? $r['effective_directive'] : '', 0, 128 ) );
 		$original_policy_sanitized     = sanitize_textarea_field( isset( $r['original_policy'] ) ? $r['original_policy'] : '' );
 		$source_file_sanitized         = sanitize_text_field( substr( isset( $r['source_file'] ) ? $r['source_file'] : '', 0, 512 ) );
