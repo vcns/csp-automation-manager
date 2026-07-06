@@ -9,6 +9,42 @@
   <link rel='preconnect' href='https://fonts.gstatic.com' crossorigin>
   <link href='https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Source+Sans+3:wght@400;600;700&display=swap' rel='stylesheet'>
   <link rel='stylesheet' href='styles.css'>
+  <style>
+    .diagram-page main {
+      max-width: none;
+      padding: 2rem max(1rem, calc((100% - 1500px) / 2)) 2.5rem;
+    }
+
+    .diagram-section {
+      overflow: visible;
+    }
+
+    .diagram-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.8rem;
+      margin: 1rem 0;
+    }
+
+    .diagram-canvas {
+      width: 100%;
+      min-height: 640px;
+      overflow: auto;
+      padding: 1.25rem;
+      background: #ffffff;
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+    }
+
+    .diagram-canvas .mermaid {
+      min-width: 1600px;
+    }
+
+    .diagram-canvas svg {
+      max-width: none !important;
+      height: auto !important;
+    }
+  </style>
 </head>
 <body>
   <div class='page-shell diagram-page'>
