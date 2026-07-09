@@ -6,8 +6,8 @@
  * Version:           0.2.0
  * Requires at least: 6.4
  * Requires PHP:      8.1
- * Author:            Simon Jackson
- * Author URI:        https://github.com/vcns
+ * Author:            VCNS Tech Ltd
+ * Author URI:        https://vcns.tech
  * License:           GPL-2.0-or-later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain:       wp-csp-automation
@@ -78,7 +78,7 @@ defined( 'WP_CSP_WORKER_URL' ) || define( 'WP_CSP_WORKER_URL', 'https://wp-csp-c
  * this plugin loads. Do not make this filterable; keeping it as an early PHP
  * constant prevents another plugin from redirecting update checks at runtime.
  */
-defined( 'WP_CSP_UPDATE_MANIFEST_URL' ) || define( 'WP_CSP_UPDATE_MANIFEST_URL', 'https://vcns.github.io/wp-csp-automation/updates/wp-csp-automation.json' );
+defined( 'WP_CSP_UPDATE_MANIFEST_URL' ) || define( 'WP_CSP_UPDATE_MANIFEST_URL', 'https://vcns.github.io/wp-updates/wp-csp-automation/wp-csp-automation.json' );
 
 // ── PSR-4 autoloader ──────────────────────────────────────────────────────────
 spl_autoload_register(
