@@ -24,10 +24,7 @@ use WP_CSP\CSP\Violation_Reporter;
 use WP_CSP\Modules\Audit_Log;
 use WP_CSP\Modules\Feature_Gate;
 use WP_CSP\Modules\Update_Checker;
-<<<<<<< HEAD
-=======
 use WP_CSP\Rest\Admin_Controller;
->>>>>>> origin/development
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;

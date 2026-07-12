@@ -126,15 +126,24 @@ final class Update_Checker {
 		$plugin_file = plugin_basename( WP_CSP_FILE );
 
 		if ( is_array( $hook_extra ) ) {
-			$type    = $this->string_value( $hook_extra['type'] ?? '' );
-			$action  = $this->string_value( $hook_extra['action'] ?? '' );
-			$plugins = $hook_extra['plugins'] ?? array();
+			$type   = $this->string_value( $hook_extra['type'] ?? '' );
+			$action = $this->string_value( $hook_extra['action'] ?? '' );
 
 			if ( 'plugin' !== $type || 'update' !== $action ) {
 				return;
 			}
 
-			if ( is_array( $plugins ) && ! in_array( $plugin_file, $plugins, true ) ) {
+			// WordPress passes `plugin` (string) for single-plugin upgrades and
+			// `plugins` (array) for bulk upgrades.  Bail early unless this plugin
+			// was among those updated.
+			$single  = $this->string_value( $hook_extra['plugin'] ?? '' );
+			$plugins = $hook_extra['plugins'] ?? array();
+
+			if ( '' !== $single ) {
+				if ( $plugin_file !== $single ) {
+					return;
+				}
+			} elseif ( is_array( $plugins ) && ! in_array( $plugin_file, $plugins, true ) ) {
 				return;
 			}
 		}
