@@ -348,7 +348,7 @@ class Activator {
 			ARRAY_A
 		);
 
-		foreach ( $duplicates as $duplicate ) {
+		foreach ( is_array( $duplicates ) ? $duplicates : array() as $duplicate ) {
 			$keep_id = (int) $duplicate['keep_id'];
 			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared
 			$wpdb->query(

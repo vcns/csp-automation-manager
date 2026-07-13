@@ -19,7 +19,12 @@
   <rule ref="WordPress-Core"/>
 
   <rule ref="WordPress.DB.DirectDatabaseQuery">
-    <severity>0</severity>
+    <exclude-pattern>includes/admin/*</exclude-pattern>
+    <exclude-pattern>includes/admin/views/*</exclude-pattern>
+    <exclude-pattern>includes/class-activator.php</exclude-pattern>
+    <exclude-pattern>includes/csp/*</exclude-pattern>
+    <exclude-pattern>includes/modules/class-audit-log.php</exclude-pattern>
+    <exclude-pattern>includes/rest/class-admin-controller.php</exclude-pattern>
   </rule>
 
   <rule ref="WordPress.DB.PreparedSQL">

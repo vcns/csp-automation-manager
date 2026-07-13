@@ -311,6 +311,10 @@ class Policy_Change_Manager {
 			$previous_version_id,
 			$policy_version_id
 		);
+		if ( $decision_id <= 0 ) {
+			return false;
+		}
+
 		$this->record_rule_evaluations( $source_id, $decision_id, $deterministic, $now );
 
 		$this->audit->log(
@@ -346,7 +350,7 @@ class Policy_Change_Manager {
 			default => 'pending',
 		};
 
-		$wpdb->insert(
+		$inserted = $wpdb->insert(
 			$wpdb->prefix . 'csp_policy_change_decisions',
 			array(
 				'change_type'                => 'source',
@@ -375,6 +379,10 @@ class Policy_Change_Manager {
 			),
 			array( '%s', '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%d', '%d', '%s', '%s', '%s', '%s', '%d', '%s' )
 		);
+
+		if ( false === $inserted ) {
+			return 0;
+		}
 
 		return (int) ( $wpdb->insert_id ?? 0 );
 	}
