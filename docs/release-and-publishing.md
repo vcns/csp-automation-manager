@@ -130,7 +130,7 @@ Repository workflow files now provide the baseline automation:
 - `.github/workflows/codeql.yml` for GitHub-native static analysis
 - `.github/workflows/dast.yml` for disposable-environment baseline DAST
 - `.github/workflows/pages.yml` for publishing the public GitHub Pages help site from `docs/`
-- `.github/workflows/release-package.yml` for release-candidate zip validation, GitHub Release ZIP publishing, and stable update manifest deployment
+- `.github/workflows/release-package.yml` for release-candidate ZIP validation and tag-driven GitHub Release ZIP/manifest publishing
 - `.github/workflows/wporg-deploy.yml` for tag-driven deployment to WordPress.org SVN
 
 ## Self-hosted update endpoint
@@ -141,15 +141,14 @@ The repository publishes a static update manifest for GitHub-distributed builds:
 
 WordPress does not automatically consume arbitrary update JSON for plugins outside the WordPress.org directory. The plugin registers an update checker that reads this manifest and maps it into the native plugin update transient.
 
-Stable tag releases generate:
+Stable tag releases generate GitHub Release assets:
 
 - `wp-csp-automation-vX.Y.Z.zip`
-- `wp-csp-automation.json`
-- a Pages deployment containing `docs/updates/wp-csp-automation.json`
+- `wp-csp-automation-vX.Y.Z.json`
 
-Pre-release tags attach ZIP and manifest assets to the GitHub Release, but they do not update the Pages "latest stable" manifest.
+Pre-release tags attach ZIP and manifest assets to the GitHub Release and mark the GitHub Release as a pre-release.
 
-The normal Pages workflow also regenerates the manifest from the latest stable GitHub Release before deploying docs. This prevents a later docs-only publish from overwriting the update endpoint with stale committed JSON.
+Stable update-feed publication is handled separately from the ZIP packaging pipeline so release asset creation can fail or pass independently from any public update endpoint deployment.
 
 ## Public docs site
 
@@ -213,6 +212,7 @@ Before publishing each version:
 - confirm version numbers are aligned
 - confirm README.md, readme.txt, SECURITY.md, and docs/architecture.md are mutually consistent and accurately reflect the behaviour of the version being released
 - confirm branch protections and CI are active
+- confirm `.github/workflows/release-package.yml` has produced a release ZIP artifact from the release branch or tag
 - confirm remote config public key is correct for that release
 - confirm no development keys or test endpoints remain in code or docs
 - confirm `readme.txt` sections reflect actual shipped behaviour
