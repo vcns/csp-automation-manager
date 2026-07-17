@@ -176,6 +176,7 @@ jobs:
 
           unzip -l "${ZIP}" | grep -q 'csp-automation-manager/csp-automation-manager.php'
           unzip -l "${ZIP}" | grep -q 'csp-automation-manager/uninstall.php'
+          unzip -l "${ZIP}" | grep -q 'csp-automation-manager/languages/index.php'
 
           if unzip -l "${ZIP}" | grep -E 'csp-automation-manager/(\.git|\.github|\.private_key|\.public_key|\.phpunit\.cache|cloudflare|docs|node_modules|offline|test|tools|vendor)/|csp-automation-manager/(\.distignore|\.git|code-review-findings\.json|COMMERCIAL_TERMS\.md|README\.md|RESEARCH\.md|SPECIFICATION\.md|TRADEMARK_POLICY\.md)$'; then
             echo "Release ZIP contains development, private, documentation, or generated-only paths. Check .distignore." >&2
