@@ -2,7 +2,7 @@
 Contributors: vcns
 Tags: security, csp, content security policy, headers, wordpress security
 Requires at least: 6.4
-Tested up to: 6.8
+Tested up to: 7.0
 Requires PHP: 8.1
 Stable tag: 1.0.5
 License: GPLv2 or later
@@ -38,6 +38,7 @@ Reports are validated and stored in this site's WordPress database. They are not
 = 1.0.5 =
 
 * Renames the package slug, text domain, main plugin file, release ZIP, and WordPress.org deployment slug to `csp-automation-manager`.
+* Updates WordPress.org scanner metadata and includes the declared `languages` directory.
 
 = 1.0.4 =
 
