@@ -53,6 +53,8 @@ class Policy_Builder {
 
 	private Feature_Gate $gate;
 
+	private bool $header_emitted = false;
+
 	/** @var callable|null */
 	private $hash_loader;
 
@@ -74,13 +76,14 @@ class Policy_Builder {
 	public function register(): void {
 		// send_headers fires before any output, ideal for emitting CSP.
 		add_action( 'send_headers', array( $this, 'emit_header' ) );
+		add_filter( 'wp_redirect', array( $this, 'emit_header_before_redirect' ), 1, 2 );
 	}
 
 	// ── Header emission ───────────────────────────────────────────────────────
 
 	public function emit_header(): void {
 		// Skip if headers already sent (e.g. a plugin flushed output early).
-		if ( headers_sent() ) {
+		if ( $this->header_emitted || headers_sent() ) {
 			return;
 		}
 
@@ -122,6 +125,13 @@ class Policy_Builder {
 		}
 
 		header( $header_name . ': ' . $policy );
+		$this->header_emitted = true;
+	}
+
+	public function emit_header_before_redirect( string $location, int $status = 302 ): string {
+		unset( $status );
+		$this->emit_header();
+		return $location;
 	}
 
 	public function get_policy_header_name( bool $is_report_only ): string {

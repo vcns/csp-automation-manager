@@ -6,6 +6,13 @@ The format is based on Keep a Changelog, and this project follows semantic versi
 
 ## [Unreleased]
 
+## [1.0.10] - 2026-08-03
+
+### Changed
+
+- Destructive CSP data reset now leaves all policy surfaces disabled so the plugin stops emitting CSP headers until rollout is deliberately restarted.
+- CSP headers are emitted before WordPress redirects so unauthenticated `wp-admin` redirects are easier to diagnose.
+
 ## [1.0.9] - 2026-08-03
 
 ### Added

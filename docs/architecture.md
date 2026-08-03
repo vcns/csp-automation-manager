@@ -188,7 +188,8 @@ Conflicts are warning-level audit events. The detector never removes or rewrites
 3. The Installed Plugins row exposes **Settings** and **Reset** action links; Reset opens the readiness page at the destructive reset panel.
 4. Reset requires `manage_options`, a valid WordPress nonce, the current logged-in administrator's password, and the typed phrase `RESET CSP DATA`.
 5. `Data_Resetter` clears rows from plugin-owned custom tables, deletes plugin-owned runtime options and transients, clears the plugin daily scan schedule, and then runs `Activator::activate()` to reseed default options, policy profiles, policy snapshots, and cron.
-6. Reset is intentionally stronger than ordinary policy rollback: it is for pre-launch clean-room restarts and removes historical CSP records from this local installation.
+6. After reseeding, reset sets every policy profile to `disabled` so the plugin does not emit CSP headers until an administrator deliberately restarts rollout in report-only or enforce mode.
+7. Reset is intentionally stronger than ordinary policy rollback: it is for pre-launch clean-room restarts and removes historical CSP records from this local installation.
 
 ### 8. Premium entitlement flow
 
