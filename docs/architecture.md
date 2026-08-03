@@ -121,10 +121,11 @@ Responsibilities:
 7. If enabled and licensed, `'strict-dynamic'` is appended to `script-src`; approved host sources are suppressed from `script-src` at this point (browsers silently ignore host allowlists when `strict-dynamic` is present — CSP3 §8.2).
 8. `sandbox` is skipped if null or if the profile is in report-only mode (CSP spec — `sandbox` is ignored in `Content-Security-Policy-Report-Only`).
 9. Trusted Types directives (`require-trusted-types-for`, `trusted-types`) are skipped when their arrays are empty; when enabled they are always emitted as report-only regardless of surface mode.
-10. Two additional headers are emitted before the CSP header:
+10. The reporting endpoint is resolved from `wp_csp_report_endpoint_url` when an administrator has configured an absolute `http` or `https` override; otherwise it falls back to `rest_url( 'csp-manager/v1/report' )`.
+11. Two additional headers are emitted before the CSP header:
     - `Reporting-Endpoints: csp-endpoint="<report_uri>"` — Structured Fields Dictionary (RFC 9651); required for browsers to honour `report-to csp-endpoint` in the CSP
     - `Report-To: {"group":"csp-endpoint","max_age":86400,"endpoints":[{"url":"<report_uri>"}]}` — deprecated JSON format retained as a legacy fallback for pre-Reporting-API browsers
-11. The CSP or CSP-Report-Only header is emitted via `send_headers`.
+12. The CSP or CSP-Report-Only header is emitted via `send_headers`.
 
 ### Conflict detection
 
@@ -150,7 +151,7 @@ Conflicts are warning-level audit events. The detector never removes or rewrites
 
 ### 4. Violation ingestion flow
 
-1. Browser submits a violation report to `/wp-json/csp-manager/v1/report`.
+1. Browser submits a violation report to the configured reporting endpoint. By default this is `/wp-json/csp-manager/v1/report`; proxy/CDN deployments can advertise an administrator-provided public URL that must route back to this plugin endpoint for local learning.
 2. `Violation_Reporter` validates the `Content-Type` header; requests with a content type other than `application/csp-report`, `application/reports+json`, or `application/json` are rejected with HTTP 400.
 3. The payload is normalised from either the legacy `application/csp-report` format (hyphenated field names: `document-uri`, `blocked-uri`, `script-sample`, etc.) or the Reporting API `application/reports+json` format (camelCase field names: `documentURL`, `blockedURL`, `sample`, etc.).
 4. The `document-uri` hostname is compared against the WordPress site origin (RFC 6454); reports from a different origin are silently discarded — CSP reports are client-generated and spoofable.

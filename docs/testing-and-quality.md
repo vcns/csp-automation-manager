@@ -81,6 +81,8 @@ Current baseline:
 - load the frontend and run `curl -I <site_url>`; response must contain a `Reporting-Endpoints:` header with value `csp-endpoint="<report_endpoint_url>"`
 - response must also contain a `Report-To:` header with the legacy JSON group structure
 - the emitted CSP string must contain `report-to csp-endpoint` referencing the endpoint name declared in both headers
+- leave the reporting server URL setting blank and confirm the emitted `report-uri` uses the current WordPress REST endpoint
+- set a public HTTPS reporting server URL override and confirm `Reporting-Endpoints`, `Report-To`, and `report-uri` all use the override
 
 **Policy correctness:**
 

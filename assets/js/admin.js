@@ -143,4 +143,10 @@
 	$( document ).on( 'click', '.wp-csp-undo-source-decision', function () {
 		postSourceDecision( $( this ), 'wp_csp_undo_source_decision', 'Why should this decision be undone?', 'pending', 'Pending', 'undone' );
 	} );
+
+	$( document ).on( 'click', '.wp-csp-use-current-report-endpoint', function () {
+		$( '#wp_csp_report_endpoint_url' )
+			.val( $( this ).data( 'report-endpoint' ) || '' )
+			.trigger( 'change' );
+	} );
 } )( jQuery );

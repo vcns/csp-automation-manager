@@ -11,6 +11,7 @@ The format is based on Keep a Changelog, and this project follows semantic versi
 - CSP conflict detection now scans `.htaccess` Header directives and treats any CSP still present during the internal probe as a likely web-server or security-header-plugin conflict.
 - Source approval, rejection, reversion, and undo decisions now require administrator reasons, and approved/rejected source decisions can be undone without rewriting history.
 - Dashboard tabs now include operator guidance through hover titles, screen-reader descriptions, and an active-tab help note.
+- Reporting server URL override for sites whose public HTTPS endpoint differs from the WordPress-detected REST URL, with a settings button to use the current site endpoint.
 
 ## [1.0.5] - 2026-07-16
 

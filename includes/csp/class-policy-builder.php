@@ -105,9 +105,20 @@ class Policy_Builder {
 		// Declare the reporting endpoint so browsers can resolve the report-to directive.
 		// Reporting-Endpoints is a Structured Fields Dictionary per RFC 9651 (obsoletes 8941).
 		// Report-To (JSON) is deprecated but kept as a legacy fallback for older browsers.
-		$report_uri = rest_url( 'csp-manager/v1/report' );
-		header( 'Reporting-Endpoints: csp-endpoint="' . esc_url_raw( $report_uri ) . '"' );
-		header( 'Report-To: {"group":"csp-endpoint","max_age":86400,"endpoints":[{"url":"' . esc_url_raw( $report_uri ) . '"}]}' );
+		$report_uri = $this->get_report_endpoint_url();
+		$report_to  = wp_json_encode(
+			array(
+				'group'     => 'csp-endpoint',
+				'max_age'   => 86400,
+				'endpoints' => array(
+					array( 'url' => $report_uri ),
+				),
+			)
+		);
+		header( 'Reporting-Endpoints: csp-endpoint="' . $report_uri . '"' );
+		if ( false !== $report_to ) {
+			header( 'Report-To: ' . $report_to );
+		}
 
 		header( $header_name . ': ' . $policy );
 	}
@@ -115,6 +126,31 @@ class Policy_Builder {
 	private function is_conflict_probe_request(): bool {
 		return isset( $_SERVER['HTTP_X_WP_CSP_PROBE'] )
 			&& '1' === (string) $_SERVER['HTTP_X_WP_CSP_PROBE'];
+	}
+
+	private function get_report_endpoint_url(): string {
+		$override = trim( (string) get_option( 'wp_csp_report_endpoint_url', '' ) );
+		if ( '' !== $override && $this->is_allowed_report_endpoint_url( $override ) ) {
+			return esc_url_raw( $override );
+		}
+
+		return esc_url_raw( rest_url( 'csp-manager/v1/report' ) );
+	}
+
+	private function is_allowed_report_endpoint_url( string $url ): bool {
+		if ( preg_match( '/[\r\n"\\\\]/', $url ) ) {
+			return false;
+		}
+
+		$parts = wp_parse_url( $url );
+		if ( ! is_array( $parts ) ) {
+			return false;
+		}
+
+		$scheme = strtolower( (string) ( $parts['scheme'] ?? '' ) );
+		$host   = (string) ( $parts['host'] ?? '' );
+
+		return '' !== $host && in_array( $scheme, array( 'http', 'https' ), true );
 	}
 
 	// ── Policy assembly ───────────────────────────────────────────────────────
@@ -209,7 +245,7 @@ class Policy_Builder {
 
 		// Append reporting directives. The endpoint name 'csp-endpoint' must match
 		// the Reporting-Endpoints header value emitted in emit_header().
-		$directives['report-uri'] = array( rest_url( 'csp-manager/v1/report' ) );
+		$directives['report-uri'] = array( $this->get_report_endpoint_url() );
 		$directives['report-to']  = array( 'csp-endpoint' );
 
 		// Serialise: each directive becomes "name src1 src2 src3".

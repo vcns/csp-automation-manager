@@ -97,6 +97,7 @@ class Admin_UI {
 			'wp_csp_notify_email'                  => 'sanitize_email',
 			'wp_csp_enforce_gate_violation_window' => 'absint',
 			'wp_csp_learning_window_hours'         => 'absint',
+			'wp_csp_report_endpoint_url'           => array( $this, 'sanitize_report_endpoint_url' ),
 			// Data retention: days to keep violation reports (0 = keep forever).
 			'wp_csp_violation_retention_days'      => 'absint',
 		);
@@ -104,6 +105,31 @@ class Admin_UI {
 		foreach ( $settings as $option => $callback ) {
 			register_setting( 'wp_csp_settings_group', $option, array( 'sanitize_callback' => $callback ) );
 		}
+	}
+
+	public function sanitize_report_endpoint_url( mixed $url ): string {
+		$url = trim( (string) $url );
+		if ( '' === $url ) {
+			return '';
+		}
+
+		if ( preg_match( '/[\r\n"\\\\]/', $url ) ) {
+			return '';
+		}
+
+		$url   = esc_url_raw( $url );
+		$parts = wp_parse_url( $url );
+		if ( ! is_array( $parts ) ) {
+			return '';
+		}
+
+		$scheme = strtolower( (string) ( $parts['scheme'] ?? '' ) );
+		$host   = (string) ( $parts['host'] ?? '' );
+		if ( '' === $host || ! in_array( $scheme, array( 'http', 'https' ), true ) ) {
+			return '';
+		}
+
+		return $url;
 	}
 
 	// ── Asset enqueue ─────────────────────────────────────────────────────────
