@@ -173,9 +173,8 @@ class Violation_Reporter {
 		// Reject spoofed cross-origin reports: document-uri must be on this site's host.
 		// CSP violation reports are client-generated and therefore spoofable (research.md).
 		if ( ! empty( $document_uri ) ) {
-			$site_host = wp_parse_url( home_url(), PHP_URL_HOST );
-			$doc_host  = wp_parse_url( $document_uri, PHP_URL_HOST );
-			if ( ! empty( $doc_host ) && $doc_host !== $site_host ) {
+			$doc_host = wp_parse_url( $document_uri, PHP_URL_HOST );
+			if ( ! empty( $doc_host ) && ! in_array( strtolower( (string) $doc_host ), $this->get_allowed_document_hosts(), true ) ) {
 				return; // silently discard; do not reveal rejection to the sender
 			}
 		}
@@ -340,6 +339,37 @@ class Violation_Reporter {
 		return str_starts_with( $value, 'data:' )
 			|| str_starts_with( $value, 'blob:' )
 			|| str_starts_with( $value, 'about:' );
+	}
+
+	private function get_allowed_document_hosts(): array {
+		$urls = array(
+			home_url(),
+			get_site_url(),
+			(string) get_option( 'wp_csp_report_endpoint_url', '' ),
+		);
+
+		$hosts = array();
+		foreach ( $urls as $url ) {
+			$host = wp_parse_url( $url, PHP_URL_HOST );
+			if ( ! empty( $host ) ) {
+				$hosts[] = strtolower( (string) $host );
+			}
+		}
+
+		foreach ( array( 'HTTP_HOST', 'HTTP_X_FORWARDED_HOST' ) as $server_key ) {
+			if ( empty( $_SERVER[ $server_key ] ) ) {
+				continue;
+			}
+
+			$host = strtok( (string) wp_unslash( $_SERVER[ $server_key ] ), ',' );
+			$host = strtolower( trim( false === $host ? '' : $host ) );
+			$host = preg_replace( '/:\d+$/', '', $host );
+			if ( is_string( $host ) && preg_match( '/^[a-z0-9.-]+$/', $host ) ) {
+				$hosts[] = $host;
+			}
+		}
+
+		return array_values( array_unique( $hosts ) );
 	}
 
 	private function surface_from_document_uri( string $uri ): string {

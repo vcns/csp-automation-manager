@@ -13,7 +13,7 @@ declare( strict_types=1 );
 
 // ── Plugin constants ──────────────────────────────────────────────────────────
 define( 'ABSPATH',               __DIR__ . '/' );
-define( 'WP_CSP_VERSION',        '1.0.11' );
+define( 'WP_CSP_VERSION',        '1.0.12' );
 define( 'WP_CSP_DB_VERSION',     '7' );
 define( 'WP_CSP_FILE',           dirname( __DIR__ ) . '/csp-automation-manager.php' );
 define( 'WP_CSP_DIR',            dirname( __DIR__ ) . '/' );
@@ -531,6 +531,8 @@ function wp_test_reset_globals(): void {
 	$GLOBALS['_wpdb_updated_rows']       = [];
 	$GLOBALS['_dbdelta_queries']         = [];
 	unset( $_SERVER['REQUEST_URI'] );
+	unset( $_SERVER['HTTP_HOST'] );
+	unset( $_SERVER['HTTP_X_FORWARDED_HOST'] );
 	unset( $_SERVER['HTTP_X_WP_CSP_PROBE'] );
 }
 

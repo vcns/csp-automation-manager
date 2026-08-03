@@ -6,6 +6,14 @@ The format is based on Keep a Changelog, and this project follows semantic versi
 
 ## [Unreleased]
 
+## [1.0.12] - 2026-08-03
+
+### Fixed
+
+- CSP directives now remove `'none'` when approved sources are merged into the same directive, avoiding browser warnings and ignored `'none'` values such as `frame-src 'none' example.com`.
+- CSP report ingestion now accepts document hosts that match the configured public reporting endpoint host or forwarded request host, so proxied deployments do not silently discard valid browser reports.
+- The Violations empty state now reflects that browser reports can be collected from either report-only or enforce CSP headers.
+
 ## [1.0.11] - 2026-08-03
 
 ### Fixed

@@ -404,7 +404,7 @@ $scan_logs     = ! empty( $scan_logs_raw ) ? $scan_logs_raw : array();
 			<td colspan="6">
 				<p><?php esc_html_e( 'No browser violation reports have been recorded yet.', 'csp-automation-manager' ); ?></p>
 				<p>
-					<?php esc_html_e( 'Manual scans discover candidate sources, but they do not create violation reports. To collect violations, browse the live site while the relevant surface is in report-only mode and confirm the response includes this plugin\'s CSP reporting directives.', 'csp-automation-manager' ); ?>
+					<?php esc_html_e( 'Manual scans discover candidate sources, but they do not create violation reports. To collect violations, browse the live site while the relevant surface emits this plugin\'s report-only or enforce CSP header with reporting directives.', 'csp-automation-manager' ); ?>
 				</p>
 				<p>
 					<?php esc_html_e( 'Expected reporting endpoint:', 'csp-automation-manager' ); ?>
