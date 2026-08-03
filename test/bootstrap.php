@@ -13,7 +13,7 @@ declare( strict_types=1 );
 
 // ── Plugin constants ──────────────────────────────────────────────────────────
 define( 'ABSPATH',               __DIR__ . '/' );
-define( 'WP_CSP_VERSION',        '1.0.7' );
+define( 'WP_CSP_VERSION',        '1.0.8' );
 define( 'WP_CSP_DB_VERSION',     '7' );
 define( 'WP_CSP_FILE',           dirname( __DIR__ ) . '/csp-automation-manager.php' );
 define( 'WP_CSP_DIR',            dirname( __DIR__ ) . '/' );
