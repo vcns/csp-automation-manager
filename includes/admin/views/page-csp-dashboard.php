@@ -226,7 +226,7 @@ $scan_logs     = ! empty( $scan_logs_raw ) ? $scan_logs_raw : array();
 			</td>
 			<td><?php echo esc_html( number_format( (int) ( $src['evidence_count'] ?? 1 ) ) ); ?></td>
 			<td><?php echo esc_html( $src['last_seen_at'] ); ?></td>
-			<td>
+			<td class="wp-csp-source-actions">
 				<?php if ( 'pending' === $src['approval_state'] || 'denied' === $src['approval_state'] ) : ?>
 				<button type="button" class="button button-small wp-csp-approve-source" data-id="<?php echo esc_attr( $src['id'] ); ?>">
 					<?php esc_html_e( 'Approve', 'csp-automation-manager' ); ?>
@@ -240,6 +240,11 @@ $scan_logs     = ! empty( $scan_logs_raw ) ? $scan_logs_raw : array();
 				<?php if ( 'approved' === $src['approval_state'] ) : ?>
 				<button type="button" class="button button-small wp-csp-revert-source" data-id="<?php echo esc_attr( $src['id'] ); ?>">
 					<?php esc_html_e( 'Revert', 'csp-automation-manager' ); ?>
+				</button>
+				<?php endif; ?>
+				<?php if ( in_array( $src['last_decision'] ?? '', array( 'approved', 'rejected' ), true ) ) : ?>
+				<button type="button" class="button button-small wp-csp-undo-source-decision" data-id="<?php echo esc_attr( $src['id'] ); ?>">
+					<?php esc_html_e( 'Undo', 'csp-automation-manager' ); ?>
 				</button>
 				<?php endif; ?>
 			</td>

@@ -113,8 +113,10 @@ Current baseline:
 - verify same-origin assets are excluded
 - verify approval and deny actions persist correctly
 - reject a pending proposal and confirm a suppressing row is appended to `csp_policy_change_decisions`
+- attempt approve, reject, revert, and undo actions without a reason; confirm each request is rejected and no source inventory or decision-ledger row is written
 - rescan the same source and confirm it is not reintroduced while the latest decision for its fingerprint is suppressing
 - approve the source again and confirm the latest decision clears suppression
+- undo a rejected source decision and confirm the source returns to pending, the prior decision is referenced where available, and suppression is cleared by a new append-only row
 - revert an approved source and confirm it moves to denied, is removed from emitted CSP, and suppresses future automatic proposals
 - approve or revert a source and confirm a `csp_policy_versions` row is appended for the affected surface
 - confirm decision rows include `decision_engine_version`, deterministic result JSON, evidence snapshot JSON, actor metadata, and policy version references where applicable

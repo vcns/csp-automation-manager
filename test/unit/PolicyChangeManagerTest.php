@@ -67,6 +67,98 @@ class PolicyChangeManagerTest extends TestCase {
 		$this->assertFalse( $this->manager->is_suppressed( 'frontend', 'script-src', 'cdn.vendor.example' ) );
 	}
 
+	public function test_decision_reason_is_required_before_source_update(): void {
+		$this->assertFalse( $this->manager->approve_source( 7, '   ' ) );
+
+		$this->assertSame( array(), $GLOBALS['_wpdb_updated_rows'] );
+		$this->assertSame( array(), $GLOBALS['_wpdb_inserted_rows'] );
+	}
+
+	public function test_undo_returns_rejected_source_to_pending_and_clears_suppression(): void {
+		$GLOBALS['_wpdb_get_row_queue'] = array(
+			array(
+				'id'                   => 7,
+				'surface'              => 'frontend',
+				'directive'            => 'script-src',
+				'source_host'          => 'cdn.vendor.example',
+				'source_uri'           => 'https://cdn.vendor.example/app.js',
+				'approval_state'       => 'denied',
+				'last_decision'        => 'rejected',
+				'decision_fingerprint' => Policy_Change_Manager::fingerprint( 'frontend', 'script-src', 'cdn.vendor.example' ),
+				'risk_level'           => 'high',
+				'risk_reason'          => 'script-src can execute remote JavaScript',
+			),
+			null,
+		);
+		$GLOBALS['_wpdb_get_var'] = 42;
+
+		$this->assertTrue( $this->manager->undo_source_decision( 7, 'Rejected in error.' ) );
+
+		$this->assertCount( 1, $GLOBALS['_wpdb_updated_rows'] );
+		$update = $GLOBALS['_wpdb_updated_rows'][0]['data'];
+		$this->assertSame( 'pending', $update['approval_state'] );
+		$this->assertSame( 'undone', $update['last_decision'] );
+		$this->assertSame( 'Rejected in error.', $update['decision_reason'] );
+		$this->assertArrayHasKey( 'approved_at', $update );
+		$this->assertNull( $update['approved_at'] );
+
+		$decision_rows = array_values(
+			array_filter(
+				$GLOBALS['_wpdb_inserted_rows'],
+				static fn( array $row ): bool => 'wp_csp_policy_change_decisions' === $row['table']
+			)
+		);
+
+		$this->assertCount( 1, $decision_rows );
+		$decision = $decision_rows[0]['data'];
+		$this->assertSame( 'undone', $decision['action'] );
+		$this->assertSame( 'pending', $decision['state'] );
+		$this->assertSame( 0, $decision['suppression_active'] );
+		$this->assertSame( 42, $decision['reverted_decision_id'] );
+		$this->assertSame( 'Rejected in error.', $decision['reason'] );
+	}
+
+	public function test_undo_returns_approved_source_to_pending(): void {
+		$GLOBALS['_wpdb_get_row_queue'] = array(
+			array(
+				'id'                   => 8,
+				'surface'              => 'frontend',
+				'directive'            => 'img-src',
+				'source_host'          => 'images.vendor.example',
+				'source_uri'           => 'https://images.vendor.example/logo.png',
+				'approval_state'       => 'approved',
+				'last_decision'        => 'approved',
+				'decision_fingerprint' => Policy_Change_Manager::fingerprint( 'frontend', 'img-src', 'images.vendor.example' ),
+				'risk_level'           => 'low',
+				'risk_reason'          => 'img-src has limited execution impact',
+			),
+			null,
+			null,
+		);
+		$GLOBALS['_wpdb_get_var'] = 43;
+
+		$this->assertTrue( $this->manager->undo_source_decision( 8, 'Approved the wrong image CDN.' ) );
+
+		$update = $GLOBALS['_wpdb_updated_rows'][0]['data'];
+		$this->assertSame( 'pending', $update['approval_state'] );
+		$this->assertSame( 'undone', $update['last_decision'] );
+		$this->assertNull( $update['approved_at'] );
+
+		$decision_rows = array_values(
+			array_filter(
+				$GLOBALS['_wpdb_inserted_rows'],
+				static fn( array $row ): bool => 'wp_csp_policy_change_decisions' === $row['table']
+			)
+		);
+
+		$this->assertCount( 1, $decision_rows );
+		$decision = $decision_rows[0]['data'];
+		$this->assertSame( 'undone', $decision['action'] );
+		$this->assertSame( 'pending', $decision['state'] );
+		$this->assertSame( 0, $decision['suppression_active'] );
+		$this->assertSame( 43, $decision['reverted_decision_id'] );
+	}
+
 	public function test_revert_marks_source_denied_and_records_suppression_decision(): void {
 		$GLOBALS['_wpdb_get_row'] = array(
 			'id'                   => 7,

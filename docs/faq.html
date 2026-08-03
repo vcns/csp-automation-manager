@@ -134,11 +134,15 @@
           </article>
           <article class='faq-item'>
             <h3>What happens when I reject a source?</h3>
-            <p>The decision is recorded and the matching surface, directive, and host fingerprint is suppressed from future automatic proposals unless a later approval becomes the newest decision.</p>
+            <p>The decision is recorded with a required administrator reason, and the matching surface, directive, and host fingerprint is suppressed from future automatic proposals unless a later approval or undo becomes the newest decision.</p>
           </article>
           <article class='faq-item'>
             <h3>What is the difference between reject and revert?</h3>
             <p>Reject is for a pending or denied source that should not be approved. Revert is for a previously approved source that should be withdrawn.</p>
+          </article>
+          <article class='faq-item'>
+            <h3>What does Undo do?</h3>
+            <p>Undo appends a new audit decision that clears the latest approval or rejection and returns the source to pending. It does not delete the original ledger row.</p>
           </article>
           <article class='faq-item'>
             <h3>Why did a rejected source appear again?</h3>

@@ -44,6 +44,7 @@ class Admin_UI {
 		add_action( 'wp_ajax_wp_csp_approve_source', array( $this, 'ajax_approve_source' ) );
 		add_action( 'wp_ajax_wp_csp_deny_source', array( $this, 'ajax_deny_source' ) );
 		add_action( 'wp_ajax_wp_csp_revert_source', array( $this, 'ajax_revert_source' ) );
+		add_action( 'wp_ajax_wp_csp_undo_source_decision', array( $this, 'ajax_undo_source_decision' ) );
 		add_action( 'wp_ajax_wp_csp_toggle_mode', array( $this, 'ajax_toggle_mode' ) );
 	}
 
@@ -141,9 +142,10 @@ class Admin_UI {
 				'nonce'     => wp_create_nonce( 'wp_csp_admin_nonce' ),
 				'restNonce' => wp_create_nonce( 'wp_rest' ),
 				'i18n'      => array(
-					'scanning'  => __( 'Scanning…', 'csp-automation-manager' ),
-					'scanDone'  => __( 'Scan complete.', 'csp-automation-manager' ),
-					'scanError' => __( 'Scan failed. Check error log.', 'csp-automation-manager' ),
+					'scanning'       => __( 'Scanning…', 'csp-automation-manager' ),
+					'scanDone'       => __( 'Scan complete.', 'csp-automation-manager' ),
+					'scanError'      => __( 'Scan failed. Check error log.', 'csp-automation-manager' ),
+					'reasonRequired' => __( 'A decision reason is required.', 'csp-automation-manager' ),
 				),
 			)
 		);
@@ -283,17 +285,31 @@ class Admin_UI {
 		$this->decide_source( (int) ( $_POST['source_id'] ?? 0 ), 'reverted' );
 	}
 
+	public function ajax_undo_source_decision(): void {
+		check_ajax_referer( 'wp_csp_admin_nonce', 'nonce' );
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( null, 403 );
+		}
+		$this->decide_source( (int) ( $_POST['source_id'] ?? 0 ), 'undone' );
+	}
+
 	private function decide_source( int $id, string $action ): void {
 		if ( $id <= 0 ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid source ID.', 'csp-automation-manager' ) ) );
 		}
 
-		$reason  = sanitize_text_field( wp_unslash( $_POST['reason'] ?? '' ) );
+		$reason = sanitize_text_field( wp_unslash( $_POST['reason'] ?? '' ) );
+		if ( '' === trim( $reason ) ) {
+			wp_send_json_error( array( 'message' => __( 'A decision reason is required.', 'csp-automation-manager' ) ) );
+		}
+
 		$manager = new Policy_Change_Manager( $this->plugin->audit, null, new Policy_Version_Manager( $this->plugin->policy_builder ) );
 		if ( 'approved' === $action ) {
 			$ok = $manager->approve_source( $id, $reason );
 		} elseif ( 'reverted' === $action ) {
 			$ok = $manager->revert_source( $id, $reason );
+		} elseif ( 'undone' === $action ) {
+			$ok = $manager->undo_source_decision( $id, $reason );
 		} else {
 			$ok = $manager->reject_source( $id, $reason );
 		}

@@ -16,7 +16,7 @@ It provides per-surface CSP profiles, nonce injection, source discovery, violati
 - Automatic purge of old violation reports
 - Append-only audit log for significant plugin events
 - Source discovery and administrator approval workflow
-- Risk-ranked CSP change proposals with approve, reject, and revert decisions
+- Risk-ranked CSP change proposals with reason-required approve, reject, revert, and undo decisions
 - Revert-and-suppress workflow so a reversed source is not proposed again automatically
 - Policy version snapshots, policy diffs, decision provenance, and deterministic rule findings
 - Policy Audit admin view and privileged admin REST endpoints for current policy, pending reviews, decisions, history, and manual automation configuration

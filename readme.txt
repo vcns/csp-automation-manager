@@ -14,7 +14,7 @@ Automates strict Content Security Policy rollout, violation reporting, source di
 
 CSP Automation Manager helps site owners roll out strict Content Security Policy headers safely and incrementally.
 
-The plugin provides per-surface CSP profiles, nonce injection, source discovery, violation reporting, policy-change review, append-only audit records, policy history, conflict detection for existing CSP emitters, and administrator-controlled rollout tools.
+The plugin provides per-surface CSP profiles, nonce injection, source discovery, violation reporting, policy-change review, reason-required append-only audit records, policy history, conflict detection for existing CSP emitters, and administrator-controlled rollout tools.
 
 == External services ==
 
