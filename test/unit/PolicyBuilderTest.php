@@ -3,8 +3,7 @@
  * Unit tests for WP_CSP\CSP\Policy_Builder.
  *
  * Focuses on build_policy_string() which assembles the CSP header value.
- * Header emission (emit_header) is not tested here as it requires headers_sent()
- * and the WordPress send_headers hook, both of which are integration concerns.
+ * Header emission itself is not tested here as it requires PHP header state.
  */
 
 declare( strict_types=1 );
@@ -22,6 +21,15 @@ class PolicyBuilderTest extends TestCase {
 		wp_test_reset_globals();
 		$this->gate    = $this->createMock( Feature_Gate::class );
 		$this->builder = new Policy_Builder( $this->gate );
+	}
+
+	public function test_register_emits_headers_on_send_headers_and_redirects(): void {
+		$this->builder->register();
+
+		$this->assertArrayHasKey( 'send_headers', $GLOBALS['_wp_actions'] );
+		$this->assertArrayHasKey( 'wp_redirect', $GLOBALS['_wp_actions'] );
+		$this->assertSame( 1, $GLOBALS['_wp_actions']['wp_redirect'][0][1] );
+		$this->assertSame( 2, $GLOBALS['_wp_actions']['wp_redirect'][0][2] );
 	}
 
 	// ── default-src ───────────────────────────────────────────────────────────

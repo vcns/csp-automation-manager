@@ -59,6 +59,7 @@ class Data_Resetter {
 		}
 
 		Activator::activate();
+		$this->disable_policy_profiles();
 
 		return $result;
 	}
@@ -68,5 +69,28 @@ class Data_Resetter {
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
 		return $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) ) === $table;
+	}
+
+	private function disable_policy_profiles(): void {
+		global $wpdb;
+
+		$table = $wpdb->prefix . 'csp_policy_profiles';
+		if ( ! $this->table_exists( $table ) ) {
+			return;
+		}
+
+		$updated_at = current_time( 'mysql', true );
+		foreach ( array( 'frontend', 'admin', 'login', 'api' ) as $surface ) {
+			$wpdb->update(
+				$table,
+				array(
+					'mode'       => 'disabled',
+					'updated_at' => $updated_at,
+				),
+				array( 'surface' => $surface ),
+				array( '%s', '%s' ),
+				array( '%s' )
+			);
+		}
 	}
 }

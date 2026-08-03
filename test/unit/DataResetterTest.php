@@ -24,8 +24,9 @@ class DataResetterTest extends TestCase {
 
 		$GLOBALS['_wpdb_get_var_queue'] = array_merge(
 			$table_names,
-			array( 'wp_csp_violation_reports' )
+			array_fill( 0, 8, '1' )
 		);
+		$GLOBALS['_wpdb_get_var']       = 'wp_csp_policy_profiles';
 		$GLOBALS['_wp_options']         = array(
 			'wp_csp_db_version'          => '7',
 			'wp_csp_report_endpoint_url' => 'https://public.example.com/wp-json/csp-manager/v1/report',
@@ -49,5 +50,13 @@ class DataResetterTest extends TestCase {
 		$this->assertArrayHasKey( 'unrelated_plugin_transient', $GLOBALS['_wp_transients'] );
 		$this->assertArrayHasKey( 'wp_csp_daily_scan', $GLOBALS['_wp_cron'] );
 		$this->assertSame( WP_CSP_DB_VERSION, $GLOBALS['_wp_options']['wp_csp_db_version'] );
+		$this->assertCount( 4, $GLOBALS['_wpdb_updated_rows'] );
+		$this->assertSame(
+			array( 'frontend', 'admin', 'login', 'api' ),
+			array_map(
+				static fn ( array $row ): string => $row['where']['surface'],
+				$GLOBALS['_wpdb_updated_rows']
+			)
+		);
 	}
 }
