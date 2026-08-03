@@ -37,6 +37,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Policy_Builder {
 
+	public const DEFAULT_ENFORCE_HEADER     = 'Content-Security-Policy';
+	public const DEFAULT_REPORT_ONLY_HEADER = 'Content-Security-Policy-Report-Only';
+
 	/**
 	 * Directives removed or deprecated by W3C that must never be emitted.
 	 * References: CSP3 WD-20260505; MDN; research.md R4.
@@ -98,9 +101,7 @@ class Policy_Builder {
 		}
 
 		$is_report_only = ( 'report-only' === $profile['mode'] );
-		$header_name    = $is_report_only
-			? 'Content-Security-Policy-Report-Only'
-			: 'Content-Security-Policy';
+		$header_name    = $this->get_policy_header_name( $is_report_only );
 
 		// Declare the reporting endpoint so browsers can resolve the report-to directive.
 		// Reporting-Endpoints is a Structured Fields Dictionary per RFC 9651 (obsoletes 8941).
@@ -121,6 +122,43 @@ class Policy_Builder {
 		}
 
 		header( $header_name . ': ' . $policy );
+	}
+
+	public function get_policy_header_name( bool $is_report_only ): string {
+		$custom = self::sanitize_custom_policy_header_name( get_option( 'wp_csp_policy_header_name', '' ) );
+		if ( '' !== $custom ) {
+			return $custom;
+		}
+
+		return $is_report_only ? self::DEFAULT_REPORT_ONLY_HEADER : self::DEFAULT_ENFORCE_HEADER;
+	}
+
+	public static function sanitize_custom_policy_header_name( mixed $header_name ): string {
+		$header_name = trim( (string) $header_name );
+		if ( '' === $header_name ) {
+			return '';
+		}
+
+		if ( ! preg_match( "/^[!#$%&'*+.^_`|~0-9A-Za-z-]+$/", $header_name ) ) {
+			return '';
+		}
+
+		$blocked = array(
+			'connection',
+			'content-length',
+			'host',
+			'keep-alive',
+			'proxy-authenticate',
+			'proxy-authorization',
+			'set-cookie',
+			'set-cookie2',
+			'te',
+			'trailer',
+			'transfer-encoding',
+			'upgrade',
+		);
+
+		return in_array( strtolower( $header_name ), $blocked, true ) ? '' : $header_name;
 	}
 
 	private function is_conflict_probe_request(): bool {

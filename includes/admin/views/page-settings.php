@@ -13,6 +13,7 @@ $learning_window            = new \WP_CSP\CSP\Learning_Window();
 $learning_status            = $learning_window->is_open() ? __( 'Open', 'csp-automation-manager' ) : __( 'Locked', 'csp-automation-manager' );
 $current_report_endpoint    = esc_url_raw( rest_url( 'csp-manager/v1/report' ) );
 $configured_report_endpoint = (string) get_option( 'wp_csp_report_endpoint_url', '' );
+$configured_policy_header   = (string) get_option( 'wp_csp_policy_header_name', '' );
 ?>
 <div class="wrap wp-csp-wrap">
 	<h1><?php esc_html_e( 'CSP Automation Manager Settings', 'csp-automation-manager' ); ?></h1>
@@ -39,6 +40,28 @@ $configured_report_endpoint = (string) get_option( 'wp_csp_report_endpoint_url',
 						min="1" max="720" class="small-text" />
 					<p class="description">
 						<?php esc_html_e( 'Number of hours without any CSP violations required before a surface can be promoted to enforce mode. Default: 24. Increase this for production sites to ensure stability.', 'csp-automation-manager' ); ?>
+					</p>
+				</td>
+			</tr>
+		</table>
+
+		<h2 class="title"><?php esc_html_e( 'Proxy Header Emission', 'csp-automation-manager' ); ?></h2>
+		<p class="description">
+			<?php esc_html_e( 'Use this when WordPress is the origin behind Cloudflare, a CDN, or another edge proxy that needs to copy an origin-only header into the browser-facing CSP header.', 'csp-automation-manager' ); ?>
+		</p>
+		<table class="form-table" role="presentation">
+			<tr>
+				<th scope="row"><label for="wp_csp_policy_header_name"><?php esc_html_e( 'Policy header name', 'csp-automation-manager' ); ?></label></th>
+				<td>
+					<input type="text" id="wp_csp_policy_header_name" name="wp_csp_policy_header_name"
+						value="<?php echo esc_attr( $configured_policy_header ); ?>"
+						placeholder="<?php echo esc_attr( 'X-Origin-CSP-Policy' ); ?>"
+						class="regular-text code" />
+					<p class="description">
+						<?php esc_html_e( 'Leave blank for the plugin to emit the normal mode-aware headers: Content-Security-Policy-Report-Only in report-only mode and Content-Security-Policy in enforce mode. Set a custom HTTP field name to emit the policy under that exact origin header instead, then configure the proxy to copy it back to the appropriate browser-facing CSP header.', 'csp-automation-manager' ); ?>
+					</p>
+					<p class="description">
+						<?php esc_html_e( 'Only valid HTTP header field names are accepted. Hop-by-hop and cookie headers are rejected.', 'csp-automation-manager' ); ?>
 					</p>
 				</td>
 			</tr>

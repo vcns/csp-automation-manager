@@ -24,6 +24,22 @@ class Activator {
 		self::seed_default_profiles();
 		self::seed_initial_policy_versions();
 		self::schedule_events();
+		self::mark_schema_verified();
+	}
+
+	public static function get_missing_table_names(): array {
+		global $wpdb;
+
+		$missing = array();
+		foreach ( self::get_table_suffixes() as $suffix ) {
+			$table = $wpdb->prefix . $suffix;
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+			if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) ) !== $table ) {
+				$missing[] = $table;
+			}
+		}
+
+		return $missing;
 	}
 
 	public static function get_table_suffixes(): array {
@@ -57,7 +73,9 @@ class Activator {
 			'wp_csp_notify_email',
 			'wp_csp_violation_retention_days',
 			'wp_csp_learning_window_hours',
+			'wp_csp_policy_header_name',
 			'wp_csp_report_endpoint_url',
+			'wp_csp_schema_verified_version',
 			'wp_csp_last_material_change_at',
 			'wp_csp_automation_config',
 			'wp_csp_admin_notices',
@@ -459,6 +477,9 @@ class Activator {
 			// Blank uses rest_url( 'csp-manager/v1/report' ); set only when a
 			// public proxy/CDN hostname must be advertised to browsers.
 			'wp_csp_report_endpoint_url'           => '',
+			// Blank emits normal CSP headers. Set only when an edge proxy copies
+			// an origin-only policy header back to a browser-facing CSP header.
+			'wp_csp_policy_header_name'            => '',
 			'wp_csp_last_material_change_at'       => current_time( 'mysql', true ),
 			'wp_csp_automation_config'             => self::default_automation_config(),
 		);
@@ -619,5 +640,9 @@ class Activator {
 		$today     = mktime( $hour, 0, 0, (int) gmdate( 'n', $now ), (int) gmdate( 'j', $now ), (int) gmdate( 'Y', $now ) );
 		$first_run = ( $today > $now ) ? $today : $today + DAY_IN_SECONDS;
 		wp_schedule_event( $first_run, 'daily', $hook );
+	}
+
+	public static function mark_schema_verified(): void {
+		update_option( 'wp_csp_schema_verified_version', WP_CSP_DB_VERSION );
 	}
 }
