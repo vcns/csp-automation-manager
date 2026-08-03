@@ -296,6 +296,8 @@ class Policy_Builder {
 		$directives['report-uri'] = array( $this->get_report_endpoint_url() );
 		$directives['report-to']  = array( 'csp-endpoint' );
 
+		$directives = $this->normalize_none_sources( $directives );
+
 		// Serialise: each directive becomes "name src1 src2 src3".
 		// An empty source list (e.g. upgrade-insecure-requests) serialises to just
 		// the directive name, which is the correct form for boolean directives.
@@ -309,6 +311,27 @@ class Policy_Builder {
 		}
 
 		return implode( '; ', $parts );
+	}
+
+	private function normalize_none_sources( array $directives ): array {
+		foreach ( $directives as $directive => $sources_list ) {
+			if ( ! is_array( $sources_list ) || count( array_filter( $sources_list ) ) < 2 ) {
+				continue;
+			}
+
+			$without_none = array_values(
+				array_filter(
+					$sources_list,
+					static fn ( mixed $source ): bool => "'none'" !== (string) $source
+				)
+			);
+
+			if ( count( $without_none ) !== count( $sources_list ) && ! empty( $without_none ) ) {
+				$directives[ $directive ] = $without_none;
+			}
+		}
+
+		return $directives;
 	}
 
 	// ── Surface detection ─────────────────────────────────────────────────────

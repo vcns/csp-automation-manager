@@ -78,6 +78,34 @@ class ViolationReporterTest extends TestCase {
 
 	// ── handle(): Rate limiting ────────────────────────────────────────────────
 
+	public function test_configured_report_endpoint_host_is_accepted_as_document_origin(): void {
+		update_option( 'wp_csp_report_endpoint_url', 'https://staging.example.net/wp-json/csp-manager/v1/report' );
+		$GLOBALS['_wp_rest_headers']['content-type'] = 'application/csp-report';
+
+		$request = $this->make_request(
+			'{"csp-report":{"violated-directive":"img-src","document-uri":"https://staging.example.net/","blocked-uri":"https://cdn.example.com/pixel.png"}}'
+		);
+
+		$this->reporter->handle( $request );
+
+		$this->assertSame( 'query', $GLOBALS['_wpdb_last_operation'] );
+		$this->assertArrayHasKey( 'wp_csp_viol_rate_frontend', $GLOBALS['_wp_transients'] );
+	}
+
+	public function test_forwarded_host_is_accepted_as_document_origin(): void {
+		$_SERVER['HTTP_X_FORWARDED_HOST']            = 'staging.example.net, internal.example.local';
+		$GLOBALS['_wp_rest_headers']['content-type'] = 'application/csp-report';
+
+		$request = $this->make_request(
+			'{"csp-report":{"violated-directive":"img-src","document-uri":"https://staging.example.net/","blocked-uri":"https://cdn.example.com/pixel.png"}}'
+		);
+
+		$this->reporter->handle( $request );
+
+		$this->assertSame( 'query', $GLOBALS['_wpdb_last_operation'] );
+		$this->assertArrayHasKey( 'wp_csp_viol_rate_frontend', $GLOBALS['_wp_transients'] );
+	}
+
 	public function test_report_is_dropped_when_rate_limit_exceeded(): void {
 		$GLOBALS['_wp_rest_headers']['content-type']            = 'application/csp-report';
 		$GLOBALS['_wp_transients']['wp_csp_viol_rate_frontend'] = 500;

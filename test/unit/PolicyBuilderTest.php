@@ -247,6 +247,22 @@ class PolicyBuilderTest extends TestCase {
 
 	// ── CSP header output format ──────────────────────────────────────────────
 
+	public function test_build_removes_none_when_approved_sources_are_added(): void {
+		$profile = $this->make_profile( [
+			'default-src' => [ "'none'" ],
+			'frame-src'   => [ "'none'" ],
+		] );
+
+		$policy = $this->build_with_approved_sources(
+			$profile,
+			'frontend',
+			[ [ 'directive' => 'frame-src', 'source_host' => 'www.google.com' ] ]
+		);
+
+		$this->assertStringContainsString( 'frame-src www.google.com', $policy );
+		$this->assertStringNotContainsString( "frame-src 'none' www.google.com", $policy );
+	}
+
 	public function test_build_output_has_semicolon_separated_directive_format(): void {
 		$profile = $this->make_profile( [
 			'default-src' => [ "'none'" ],
