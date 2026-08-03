@@ -71,7 +71,7 @@ Responsibilities:
 - capture policy version snapshots for material decisions
 - record deterministic rule findings for policy decisions
 - run scheduled and manual scans (including post-scan violation purge)
-- detect conflicting CSP headers
+- detect conflicting CSP headers from WordPress filters, `.htaccess`, server configuration, or other security-header plugins
 
 ### Entitlement and payment runtime
 
@@ -125,6 +125,16 @@ Responsibilities:
     - `Reporting-Endpoints: csp-endpoint="<report_uri>"` — Structured Fields Dictionary (RFC 9651); required for browsers to honour `report-to csp-endpoint` in the CSP
     - `Report-To: {"group":"csp-endpoint","max_age":86400,"endpoints":[{"url":"<report_uri>"}]}` — deprecated JSON format retained as a legacy fallback for pre-Reporting-API browsers
 11. The CSP or CSP-Report-Only header is emitted via `send_headers`.
+
+### Conflict detection
+
+`Conflict_Detector` checks for CSP headers before administrators promote a policy:
+
+- `wp_headers` is inspected late for CSP values added by other WordPress plugins.
+- `ABSPATH/.htaccess` is scanned for Apache or LiteSpeed `Header` directives that set, add, append, merge, or edit CSP headers.
+- A throttled internal `HEAD` probe sends `X-WP-CSP-Probe: 1`; `Policy_Builder` suppresses this plugin's own CSP output for that request so any remaining CSP header is treated as likely coming from web-server configuration or another security-header plugin.
+
+Conflicts are warning-level audit events. The detector never removes or rewrites another component's header because browser behaviour with multiple CSP policies is cumulative and site-specific.
 
 ### 3. Scan flow
 

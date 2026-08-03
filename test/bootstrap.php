@@ -161,6 +161,26 @@ if ( ! function_exists( 'wp_remote_get' ) ) {
 	}
 }
 
+if ( ! function_exists( 'wp_remote_head' ) ) {
+	function wp_remote_head( string $url, array $args = [] ): array|WP_Error {
+		$GLOBALS['_wp_remote_head_requests'][] = array(
+			'url'  => $url,
+			'args' => $args,
+		);
+		return $GLOBALS['_wp_remote_head_response'] ?? [ 'response' => [ 'code' => 200 ], 'headers' => [] ];
+	}
+}
+
+if ( ! function_exists( 'wp_remote_retrieve_headers' ) ) {
+	function wp_remote_retrieve_headers( array|WP_Error $response ): mixed {
+		if ( $response instanceof WP_Error ) {
+			return [];
+		}
+
+		return $response['headers'] ?? [];
+	}
+}
+
 if ( ! function_exists( 'wp_remote_retrieve_response_code' ) ) {
 	function wp_remote_retrieve_response_code( array|WP_Error $response ): int|string {
 		return $response['response']['code'] ?? 0;
@@ -194,6 +214,12 @@ if ( ! function_exists( 'get_site_url' ) ) {
 if ( ! function_exists( 'home_url' ) ) {
 	function home_url( string $path = '', string $scheme = '' ): string {
 		return 'https://example.com' . ( '' !== $path ? '/' . ltrim( $path, '/' ) : '' );
+	}
+}
+
+if ( ! function_exists( 'get_home_url' ) ) {
+	function get_home_url( int $blog_id = 0, string $path = '', string $scheme = '' ): string {
+		return home_url( $path, $scheme );
 	}
 }
 
@@ -450,6 +476,8 @@ function wp_test_reset_globals(): void {
 	$GLOBALS['_wp_actions']              = [];
 	$GLOBALS['_wp_remote_get_response']  = null;
 	$GLOBALS['_wp_remote_get_requests']  = [];
+	$GLOBALS['_wp_remote_head_response'] = null;
+	$GLOBALS['_wp_remote_head_requests'] = [];
 	$GLOBALS['_wp_cron']                 = [];
 	$GLOBALS['_wp_current_user_can']     = [];
 	$GLOBALS['_wpdb_get_var']            = null;
@@ -469,6 +497,7 @@ function wp_test_reset_globals(): void {
 	$GLOBALS['_wpdb_inserted_rows']      = [];
 	$GLOBALS['_wpdb_updated_rows']       = [];
 	$GLOBALS['_dbdelta_queries']         = [];
+	unset( $_SERVER['HTTP_X_WP_CSP_PROBE'] );
 }
 
 // Initialise globals so classes loaded at parse time do not hit undefined array errors.

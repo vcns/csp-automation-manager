@@ -74,6 +74,7 @@ Current baseline:
 - verify CSP header exists for frontend, admin, login, and API surfaces as configured
 - verify report-only mode does not break page rendering
 - verify enforce mode is blocked when no approvals exist
+- verify conflict detection warns when `.htaccess`, server configuration, or another security-header plugin is already emitting `Content-Security-Policy`, `Content-Security-Policy-Report-Only`, or `X-Content-Security-Policy`
 
 **Reporting-Endpoints and Report-To:**
 

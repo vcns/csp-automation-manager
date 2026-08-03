@@ -24,7 +24,7 @@ It provides per-surface CSP profiles, nonce injection, source discovery, violati
 - Multi-surface scan support
 - `strict-dynamic` with automatic host-source suppression
 - Trusted Types directives, report-only by default
-- Conflict detection for competing CSP headers
+- Conflict detection for competing CSP headers from `.htaccess`, server config, or other security-header plugins
 - Scheduled rescans with audit logging
 
 All features shipped in the WordPress.org package are available locally without payment, remote entitlement checks, trialware-style feature locking, or third-party licensing calls.

@@ -81,6 +81,10 @@ class Policy_Builder {
 			return;
 		}
 
+		if ( $this->is_conflict_probe_request() ) {
+			return;
+		}
+
 		$surface = $this->detect_surface();
 		$profile = $this->load_profile( $surface );
 
@@ -106,6 +110,11 @@ class Policy_Builder {
 		header( 'Report-To: {"group":"csp-endpoint","max_age":86400,"endpoints":[{"url":"' . esc_url_raw( $report_uri ) . '"}]}' );
 
 		header( $header_name . ': ' . $policy );
+	}
+
+	private function is_conflict_probe_request(): bool {
+		return isset( $_SERVER['HTTP_X_WP_CSP_PROBE'] )
+			&& '1' === (string) $_SERVER['HTTP_X_WP_CSP_PROBE'];
 	}
 
 	// ── Policy assembly ───────────────────────────────────────────────────────
