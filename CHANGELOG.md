@@ -6,6 +6,10 @@ The format is based on Keep a Changelog, and this project follows semantic versi
 
 ## [Unreleased]
 
+### Changed
+
+- Clarified the Violations empty state so administrators understand that manual scans do not create browser violation reports and can see the expected reporting endpoint.
+
 ## [1.0.6] - 2026-08-03
 
 ### Added
