@@ -3,7 +3,7 @@
  * Plugin Name:       CSP Automation Manager
  * Plugin URI:        https://github.com/vcns/csp-automation-manager
  * Description:       Automates strict Content Security Policy generation, enforcement, and violation analysis for WordPress.
- * Version:           1.0.6
+ * Version:           1.0.7
  * Requires at least: 6.4
  * Requires PHP:      8.1
  * Author:            VCNS Tech Ltd
@@ -21,7 +21,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // ── Core constants ────────────────────────────────────────────────────────────
-define( 'WP_CSP_VERSION', '1.0.6' );
+define( 'WP_CSP_VERSION', '1.0.7' );
 
 /**
  * Schema version. Increment whenever a database schema change is made.

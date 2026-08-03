@@ -6,6 +6,8 @@ The format is based on Keep a Changelog, and this project follows semantic versi
 
 ## [Unreleased]
 
+## [1.0.7] - 2026-08-03
+
 ### Added
 
 - Readiness admin page with plugin-version, database-schema, table-row, reporting-endpoint, scheduled-scan, and default automation posture checks.
