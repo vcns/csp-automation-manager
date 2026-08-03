@@ -91,7 +91,7 @@
           </article>
           <article class='card'>
             <h3>5. Record decisions</h3>
-            <p>Approvals, rejections, and reversions are recorded in the policy change ledger. Rejected or reverted fingerprints suppress repeated automatic proposals.</p>
+            <p>Approvals, rejections, reversions, and undo actions are recorded in the policy change ledger with required administrator reasons. Rejected or reverted fingerprints suppress repeated automatic proposals until a later approval or undo clears suppression.</p>
           </article>
           <article class='card'>
             <h3>6. Promote safely</h3>
@@ -158,7 +158,7 @@
               <tr><td>Prepare</td><td>Install on staging and confirm requirements.</td><td>Plugin activates, dashboard opens, no competing CSP header is reported.</td><td>The site still renders normally.</td></tr>
               <tr><td>Scan</td><td>Run a manual scan from the dashboard.</td><td>Source Inventory contains expected external hosts.</td><td>Obvious required sources have been reviewed.</td></tr>
               <tr><td>Exercise</td><td>Browse real user journeys in report-only mode.</td><td>Violations table shows blocked runtime activity without breaking the site.</td><td>Required runtime sources are understood.</td></tr>
-              <tr><td>Approve</td><td>Approve narrow legitimate sources; reject unknown or unwanted sources.</td><td>Policy Changes ledger contains clear decision reasons.</td><td>Inventory is stable and recent violations are resolved.</td></tr>
+              <tr><td>Approve</td><td>Approve narrow legitimate sources; reject unknown or unwanted sources.</td><td>Policy Changes ledger contains required decision reasons.</td><td>Inventory is stable and recent violations are resolved.</td></tr>
               <tr><td>Enforce</td><td>Promote one surface to enforce mode.</td><td>No user-facing breakage and no fresh unresolved violations.</td><td>The surface remains stable through normal use.</td></tr>
               <tr><td>Maintain</td><td>Repeat after theme, plugin, content, or integration changes.</td><td>New proposals and reports are reviewed before further enforcement changes.</td><td>The policy remains explainable and auditable.</td></tr>
             </tbody>
@@ -174,7 +174,7 @@
           <ul class='bullets'>
             <li><strong>Profiles:</strong> see each surface and switch between report-only, enforce, and disabled.</li>
             <li><strong>Source Inventory:</strong> review discovered hosts, risk, state, evidence count, and last-seen time.</li>
-            <li><strong>Policy Changes:</strong> review the audit trail for approvals, rejections, reversions, and suppressions.</li>
+            <li><strong>Policy Changes:</strong> review the audit trail for approvals, rejections, reversions, undo actions, and suppressions.</li>
             <li><strong>Violations:</strong> inspect browser-reported blocked resources and occurrence counts.</li>
             <li><strong>Scan Log:</strong> check manual and scheduled scan results.</li>
           </ul>
@@ -205,7 +205,7 @@
           </article>
           <article class='decision-card deny'>
             <h3>Reject or revert</h3>
-            <p>Reject unknown or unnecessary proposals. Revert a previously approved source when it is no longer required. Both actions suppress the same fingerprint from being proposed again automatically.</p>
+            <p>Reject unknown or unnecessary proposals. Revert a previously approved source when it is no longer required. Undo an approval or rejection when the administrator decision itself was mistaken. Rejections and reversions suppress the same fingerprint from being proposed again automatically.</p>
           </article>
         </div>
       </section>

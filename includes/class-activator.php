@@ -410,6 +410,9 @@ class Activator {
 			// Report-endpoint learning closes after this many hours from the latest
 			// post, page, or plugin material change.
 			'wp_csp_learning_window_hours'         => 48,
+			// Blank uses rest_url( 'csp-manager/v1/report' ); set only when a
+			// public proxy/CDN hostname must be advertised to browsers.
+			'wp_csp_report_endpoint_url'           => '',
 			'wp_csp_last_material_change_at'       => current_time( 'mysql', true ),
 			'wp_csp_automation_config'             => self::default_automation_config(),
 		);

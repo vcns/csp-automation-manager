@@ -19,6 +19,28 @@ if ( ! in_array( $tab, $allowed_tabs, true ) ) {
 }
 
 $base_url = admin_url( 'admin.php?page=csp-automation-manager-dashboard' );
+$tab_help = array(
+	'profiles'       => array(
+		'label'       => __( 'Profiles', 'csp-automation-manager' ),
+		'description' => __( 'Configure the CSP mode for each site surface. Use report-only while learning, enforce only after the surface is stable, or disabled when this plugin should not emit CSP for that surface.', 'csp-automation-manager' ),
+	),
+	'sources'        => array(
+		'label'       => __( 'Source Inventory', 'csp-automation-manager' ),
+		'description' => __( 'Review discovered hosts and decide whether each source belongs in the policy. Approvals, rejections, reversions, and undo actions require a reason and are written to the decision ledger.', 'csp-automation-manager' ),
+	),
+	'policy-changes' => array(
+		'label'       => __( 'Policy Changes', 'csp-automation-manager' ),
+		'description' => __( 'Inspect the append-only decision history for source approvals, rejections, reversions, undo actions, suppression state, risk, actor, and reason.', 'csp-automation-manager' ),
+	),
+	'violations'     => array(
+		'label'       => __( 'Violations', 'csp-automation-manager' ),
+		'description' => __( 'Review browser-submitted CSP reports. Use these reports to identify required sources before promoting a surface from report-only to enforce mode.', 'csp-automation-manager' ),
+	),
+	'scan-log'       => array(
+		'label'       => __( 'Scan Log', 'csp-automation-manager' ),
+		'description' => __( 'Check manual and scheduled scan runs, policy-change counts, warnings, and completion status after site, theme, plugin, or content changes.', 'csp-automation-manager' ),
+	),
+);
 
 // ── Data queries ──────────────────────────────────────────────────────────────
 // phpcs:ignore WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
@@ -53,28 +75,25 @@ $scan_logs     = ! empty( $scan_logs_raw ) ? $scan_logs_raw : array();
 	</p>
 
 	<!-- ── Tabs ──────────────────────────────────────────────────────────── -->
-	<nav class="nav-tab-wrapper">
-		<a class="nav-tab<?php echo 'profiles' === $tab ? ' nav-tab-active' : ''; ?>"
-			href="<?php echo esc_url( add_query_arg( 'tab', 'profiles', $base_url ) ); ?>">
-			<?php esc_html_e( 'Profiles', 'csp-automation-manager' ); ?>
+	<nav class="nav-tab-wrapper wp-csp-tab-wrapper" role="tablist" aria-label="<?php esc_attr_e( 'CSP dashboard sections', 'csp-automation-manager' ); ?>">
+		<?php foreach ( $tab_help as $tab_key => $tab_data ) : ?>
+		<a class="nav-tab<?php echo $tab_key === $tab ? ' nav-tab-active' : ''; ?>"
+			href="<?php echo esc_url( add_query_arg( 'tab', $tab_key, $base_url ) ); ?>"
+			role="tab"
+			title="<?php echo esc_attr( $tab_data['description'] ); ?>"
+			aria-describedby="wp-csp-tab-help-<?php echo esc_attr( $tab_key ); ?>"
+			<?php echo $tab_key === $tab ? 'aria-selected="true" aria-current="page"' : 'aria-selected="false"'; ?>>
+			<?php echo esc_html( $tab_data['label'] ); ?>
+			<span class="screen-reader-text" id="wp-csp-tab-help-<?php echo esc_attr( $tab_key ); ?>">
+				<?php echo esc_html( $tab_data['description'] ); ?>
+			</span>
 		</a>
-		<a class="nav-tab<?php echo 'sources' === $tab ? ' nav-tab-active' : ''; ?>"
-			href="<?php echo esc_url( add_query_arg( 'tab', 'sources', $base_url ) ); ?>">
-			<?php esc_html_e( 'Source Inventory', 'csp-automation-manager' ); ?>
-		</a>
-		<a class="nav-tab<?php echo 'policy-changes' === $tab ? ' nav-tab-active' : ''; ?>"
-			href="<?php echo esc_url( add_query_arg( 'tab', 'policy-changes', $base_url ) ); ?>">
-			<?php esc_html_e( 'Policy Changes', 'csp-automation-manager' ); ?>
-		</a>
-		<a class="nav-tab<?php echo 'violations' === $tab ? ' nav-tab-active' : ''; ?>"
-			href="<?php echo esc_url( add_query_arg( 'tab', 'violations', $base_url ) ); ?>">
-			<?php esc_html_e( 'Violations', 'csp-automation-manager' ); ?>
-		</a>
-		<a class="nav-tab<?php echo 'scan-log' === $tab ? ' nav-tab-active' : ''; ?>"
-			href="<?php echo esc_url( add_query_arg( 'tab', 'scan-log', $base_url ) ); ?>">
-			<?php esc_html_e( 'Scan Log', 'csp-automation-manager' ); ?>
-		</a>
+		<?php endforeach; ?>
 	</nav>
+	<div class="wp-csp-tab-help" role="note">
+		<strong><?php echo esc_html( $tab_help[ $tab ]['label'] ); ?>:</strong>
+		<?php echo esc_html( $tab_help[ $tab ]['description'] ); ?>
+	</div>
 
 	<div class="tab-content" style="margin-top:1em">
 
@@ -226,7 +245,7 @@ $scan_logs     = ! empty( $scan_logs_raw ) ? $scan_logs_raw : array();
 			</td>
 			<td><?php echo esc_html( number_format( (int) ( $src['evidence_count'] ?? 1 ) ) ); ?></td>
 			<td><?php echo esc_html( $src['last_seen_at'] ); ?></td>
-			<td>
+			<td class="wp-csp-source-actions">
 				<?php if ( 'pending' === $src['approval_state'] || 'denied' === $src['approval_state'] ) : ?>
 				<button type="button" class="button button-small wp-csp-approve-source" data-id="<?php echo esc_attr( $src['id'] ); ?>">
 					<?php esc_html_e( 'Approve', 'csp-automation-manager' ); ?>
@@ -240,6 +259,11 @@ $scan_logs     = ! empty( $scan_logs_raw ) ? $scan_logs_raw : array();
 				<?php if ( 'approved' === $src['approval_state'] ) : ?>
 				<button type="button" class="button button-small wp-csp-revert-source" data-id="<?php echo esc_attr( $src['id'] ); ?>">
 					<?php esc_html_e( 'Revert', 'csp-automation-manager' ); ?>
+				</button>
+				<?php endif; ?>
+				<?php if ( in_array( $src['last_decision'] ?? '', array( 'approved', 'rejected' ), true ) ) : ?>
+				<button type="button" class="button button-small wp-csp-undo-source-decision" data-id="<?php echo esc_attr( $src['id'] ); ?>">
+					<?php esc_html_e( 'Undo', 'csp-automation-manager' ); ?>
 				</button>
 				<?php endif; ?>
 			</td>

@@ -9,8 +9,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-$learning_window = new \WP_CSP\CSP\Learning_Window();
-$learning_status = $learning_window->is_open() ? __( 'Open', 'csp-automation-manager' ) : __( 'Locked', 'csp-automation-manager' );
+$learning_window            = new \WP_CSP\CSP\Learning_Window();
+$learning_status            = $learning_window->is_open() ? __( 'Open', 'csp-automation-manager' ) : __( 'Locked', 'csp-automation-manager' );
+$current_report_endpoint    = esc_url_raw( rest_url( 'csp-manager/v1/report' ) );
+$configured_report_endpoint = (string) get_option( 'wp_csp_report_endpoint_url', '' );
 ?>
 <div class="wrap wp-csp-wrap">
 	<h1><?php esc_html_e( 'CSP Automation Manager Settings', 'csp-automation-manager' ); ?></h1>
@@ -47,6 +49,25 @@ $learning_status = $learning_window->is_open() ? __( 'Open', 'csp-automation-man
 			<?php esc_html_e( 'Validated CSP reports can add pending source candidates while the site is inside the material-change learning window.', 'csp-automation-manager' ); ?>
 		</p>
 		<table class="form-table" role="presentation">
+			<tr>
+				<th scope="row"><label for="wp_csp_report_endpoint_url"><?php esc_html_e( 'Reporting server URL', 'csp-automation-manager' ); ?></label></th>
+				<td>
+					<input type="url" id="wp_csp_report_endpoint_url" name="wp_csp_report_endpoint_url"
+						value="<?php echo esc_attr( $configured_report_endpoint ); ?>"
+						placeholder="<?php echo esc_attr( $current_report_endpoint ); ?>"
+						class="regular-text code" />
+					<button type="button" class="button wp-csp-use-current-report-endpoint" data-report-endpoint="<?php echo esc_attr( $current_report_endpoint ); ?>">
+						<?php esc_html_e( 'Use current site endpoint', 'csp-automation-manager' ); ?>
+					</button>
+					<p class="description">
+						<?php esc_html_e( 'Leave blank to use the current WordPress REST endpoint shown below. Set an absolute public URL when visitors reach the site through a proxy, CDN, load balancer, or different HTTPS host. The URL should still resolve to this plugin report endpoint if you want local report learning.', 'csp-automation-manager' ); ?>
+					</p>
+					<p class="description">
+						<?php esc_html_e( 'Detected current endpoint:', 'csp-automation-manager' ); ?>
+						<code><?php echo esc_html( $current_report_endpoint ); ?></code>
+					</p>
+				</td>
+			</tr>
 			<tr>
 				<th scope="row"><label for="wp_csp_learning_window_hours"><?php esc_html_e( 'Learning window (hours)', 'csp-automation-manager' ); ?></label></th>
 				<td>

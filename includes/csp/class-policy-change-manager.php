@@ -176,16 +176,20 @@ class Policy_Change_Manager {
 		);
 	}
 
-	public function approve_source( int $source_id, string $reason = '' ): bool {
+	public function approve_source( int $source_id, string $reason ): bool {
 		return $this->decide_source( $source_id, 'approved', $reason, false );
 	}
 
-	public function reject_source( int $source_id, string $reason = '' ): bool {
+	public function reject_source( int $source_id, string $reason ): bool {
 		return $this->decide_source( $source_id, 'rejected', $reason, true );
 	}
 
-	public function revert_source( int $source_id, string $reason = '' ): bool {
+	public function revert_source( int $source_id, string $reason ): bool {
 		return $this->decide_source( $source_id, 'reverted', $reason, true );
+	}
+
+	public function undo_source_decision( int $source_id, string $reason ): bool {
+		return $this->decide_source( $source_id, 'undone', $reason, false );
 	}
 
 	public function is_suppressed( string $surface, string $directive, string $host ): bool {
@@ -239,6 +243,11 @@ class Policy_Change_Manager {
 			return false;
 		}
 
+		$reason = $this->normalise_decision_reason( $reason );
+		if ( '' === $reason ) {
+			return false;
+		}
+
 		global $wpdb;
 		$table = $wpdb->prefix . 'csp_source_inventory';
 
@@ -255,9 +264,13 @@ class Policy_Change_Manager {
 			return false;
 		}
 
-		$now         = current_time( 'mysql', true );
-		$user_id     = function_exists( 'get_current_user_id' ) ? (int) get_current_user_id() : 0;
-		$state       = 'approved' === $action ? 'approved' : 'denied';
+		$now     = current_time( 'mysql', true );
+		$user_id = function_exists( 'get_current_user_id' ) ? (int) get_current_user_id() : 0;
+		$state   = match ( $action ) {
+			'approved' => 'approved',
+			'undone'   => 'pending',
+			default    => 'denied',
+		};
 		$fingerprint = ! empty( $source['decision_fingerprint'] ) ? $source['decision_fingerprint'] : self::fingerprint( $source['surface'], $source['directive'], $source['source_host'] );
 		$risk_level  = ! empty( $source['risk_level'] ) ? $source['risk_level'] : 'low';
 		$risk_reason = ! empty( $source['risk_reason'] ) ? $source['risk_reason'] : '';
@@ -265,7 +278,7 @@ class Policy_Change_Manager {
 		$data    = array(
 			'approval_state'       => $state,
 			'last_decision'        => $action,
-			'decision_reason'      => sanitize_text_field( substr( $reason, 0, 512 ) ),
+			'decision_reason'      => $reason,
 			'decided_at'           => $now,
 			'decided_by'           => $user_id,
 			'decision_fingerprint' => $fingerprint,
@@ -274,6 +287,11 @@ class Policy_Change_Manager {
 
 		if ( 'approved' === $state ) {
 			$data['approved_at'] = $now;
+			$formats[]           = '%s';
+		}
+
+		if ( 'approved' !== $state ) {
+			$data['approved_at'] = null;
 			$formats[]           = '%s';
 		}
 
@@ -293,9 +311,10 @@ class Policy_Change_Manager {
 		$deterministic       = $this->decision_engine->evaluate_source( $source, $automation );
 		$previous_version_id = $this->latest_policy_version_id( (string) $source['surface'] );
 		$policy_version_id   = 0;
-		if ( in_array( $action, array( 'approved', 'reverted' ), true ) ) {
+		if ( in_array( $action, array( 'approved', 'reverted' ), true ) || ( 'undone' === $action && 'approved' === ( $source['approval_state'] ?? '' ) ) ) {
 			$policy_version_id = $this->policy_versions()->capture_snapshot( (string) $source['surface'], 'decision', $source_id );
 		}
+		$undone_decision_id = 'undone' === $action ? $this->latest_decision_id( $fingerprint ) : 0;
 
 		$decision_id = $this->record_decision(
 			$source,
@@ -309,7 +328,8 @@ class Policy_Change_Manager {
 			$user_id,
 			$deterministic,
 			$previous_version_id,
-			$policy_version_id
+			$policy_version_id,
+			$undone_decision_id
 		);
 		if ( $decision_id <= 0 ) {
 			return false;
@@ -321,7 +341,7 @@ class Policy_Change_Manager {
 			'policy_change',
 			"source_{$action}",
 			"Administrator {$action} {$source['surface']} {$source['directive']} {$source['source_host']}.",
-			'reverted' === $action || 'rejected' === $action ? 'warning' : 'info'
+			in_array( $action, array( 'reverted', 'rejected', 'undone' ), true ) ? 'warning' : 'info'
 		);
 
 		return true;
@@ -339,7 +359,8 @@ class Policy_Change_Manager {
 		int $user_id,
 		array $deterministic,
 		int $previous_policy_version_id,
-		int $policy_version_id
+		int $policy_version_id,
+		int $reverted_decision_id = 0
 	): int {
 		global $wpdb;
 
@@ -347,10 +368,12 @@ class Policy_Change_Manager {
 			'approved' => 'approved',
 			'rejected' => 'rejected',
 			'reverted' => 'reverted',
-			default => 'pending',
+			'undone'   => 'pending',
+			default    => 'pending',
 		};
 		$previous_policy_version_value = $previous_policy_version_id > 0 ? (string) $previous_policy_version_id : null;
 		$policy_version_value          = $policy_version_id > 0 ? (string) $policy_version_id : null;
+		$reverted_decision_value       = $reverted_decision_id > 0 ? $reverted_decision_id : null;
 
 		$inserted = $wpdb->insert(
 			$wpdb->prefix . 'csp_policy_change_decisions',
@@ -375,11 +398,12 @@ class Policy_Change_Manager {
 				'decision_engine_version'    => $deterministic['engine_version'],
 				'deterministic_result'       => wp_json_encode( $deterministic ),
 				'evidence_snapshot'          => wp_json_encode( $this->source_evidence_snapshot( $source ) ),
+				'reverted_decision_id'       => $reverted_decision_value,
 				'software_version'           => defined( 'WP_CSP_VERSION' ) ? WP_CSP_VERSION : '',
 				'suppression_active'         => $suppress ? 1 : 0,
 				'created_at'                 => $now,
 			),
-			array( '%s', '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s' )
+			array( '%s', '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s', '%d', '%s' )
 		);
 
 		if ( false === $inserted ) {
@@ -420,6 +444,19 @@ class Policy_Change_Manager {
 		return isset( $latest['id'] ) ? (int) $latest['id'] : 0;
 	}
 
+	private function latest_decision_id( string $fingerprint ): int {
+		global $wpdb;
+
+		$table = $wpdb->prefix . 'csp_policy_change_decisions';
+		return (int) $wpdb->get_var(
+			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				"SELECT id FROM {$table} WHERE decision_fingerprint = %s ORDER BY id DESC LIMIT 1",
+				$fingerprint
+			)
+		);
+	}
+
 	private function policy_versions(): Policy_Version_Manager {
 		if ( null === $this->policy_versions ) {
 			$this->policy_versions = new Policy_Version_Manager();
@@ -454,5 +491,9 @@ class Policy_Change_Manager {
 
 	private function normalise_token( string $token, int $length ): string {
 		return substr( strtolower( trim( sanitize_text_field( $token ) ) ), 0, $length );
+	}
+
+	private function normalise_decision_reason( string $reason ): string {
+		return sanitize_text_field( substr( trim( $reason ), 0, 512 ) );
 	}
 }

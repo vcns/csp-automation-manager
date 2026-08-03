@@ -250,11 +250,11 @@ Key columns:
 - `directive`
 - `source_host`, `source_uri`
 - `decision_fingerprint` — SHA-256 of `(surface, directive, source_host)`
-- `action` — `approved`, `rejected`, or `reverted`
+- `action` — `approved`, `rejected`, `reverted`, or `undone`
 - `risk_level`, `risk_reason`
-- `reason` — administrator-provided decision note
+- `reason` — required administrator-provided decision note
 - `user_id`
-- `state` — explicit lifecycle state such as `approved`, `rejected`, or `reverted`
+- `state` — explicit lifecycle state such as `approved`, `rejected`, `reverted`, or `pending` for an undone decision
 - `actor_type`, `actor_id` — final decision actor metadata; AI providers are recommendation sources, not actors
 - `previous_policy_version_id`, `policy_version_id` — policy snapshot references when the decision materially changes policy
 - `decision_engine_version`, `deterministic_result` — versioned deterministic rule output
@@ -267,7 +267,7 @@ Operational notes:
 
 - this table is append-only; do not update or delete prior decisions
 - the latest row for a `decision_fingerprint` controls suppression state
-- approving a previously rejected source appends a new non-suppressing decision, making that approval the latest decision
+- approving a previously rejected source or undoing a prior approval/rejection appends a new non-suppressing decision, making that action the latest decision
 - rejecting or reverting a source marks the source row denied and appends a suppressing decision
 
 ### `csp_policy_versions`

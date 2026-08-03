@@ -38,12 +38,15 @@ class Admin_UI {
 		add_action( 'admin_init', array( $this, 'register_settings' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_assets' ) );
 		add_action( 'admin_notices', array( $this, 'display_admin_notices' ) );
+		add_filter( 'plugin_action_links_' . plugin_basename( WP_CSP_FILE ), array( $this, 'add_plugin_action_links' ) );
+		add_filter( 'plugin_row_meta', array( $this, 'add_plugin_row_meta' ), 10, 2 );
 
 		// AJAX handlers.
 		add_action( 'wp_ajax_wp_csp_manual_scan', array( $this, 'ajax_manual_scan' ) );
 		add_action( 'wp_ajax_wp_csp_approve_source', array( $this, 'ajax_approve_source' ) );
 		add_action( 'wp_ajax_wp_csp_deny_source', array( $this, 'ajax_deny_source' ) );
 		add_action( 'wp_ajax_wp_csp_revert_source', array( $this, 'ajax_revert_source' ) );
+		add_action( 'wp_ajax_wp_csp_undo_source_decision', array( $this, 'ajax_undo_source_decision' ) );
 		add_action( 'wp_ajax_wp_csp_toggle_mode', array( $this, 'ajax_toggle_mode' ) );
 	}
 
@@ -96,6 +99,7 @@ class Admin_UI {
 			'wp_csp_notify_email'                  => 'sanitize_email',
 			'wp_csp_enforce_gate_violation_window' => 'absint',
 			'wp_csp_learning_window_hours'         => 'absint',
+			'wp_csp_report_endpoint_url'           => array( $this, 'sanitize_report_endpoint_url' ),
 			// Data retention: days to keep violation reports (0 = keep forever).
 			'wp_csp_violation_retention_days'      => 'absint',
 		);
@@ -103,6 +107,54 @@ class Admin_UI {
 		foreach ( $settings as $option => $callback ) {
 			register_setting( 'wp_csp_settings_group', $option, array( 'sanitize_callback' => $callback ) );
 		}
+	}
+
+	public function add_plugin_action_links( array $links ): array {
+		$settings_link = sprintf(
+			'<a href="%1$s">%2$s</a>',
+			esc_url( admin_url( 'admin.php?page=csp-automation-manager-settings' ) ),
+			esc_html__( 'Settings', 'csp-automation-manager' )
+		);
+
+		return array( 'settings' => $settings_link ) + $links;
+	}
+
+	public function add_plugin_row_meta( array $links, string $file ): array {
+		if ( plugin_basename( WP_CSP_FILE ) !== $file ) {
+			return $links;
+		}
+
+		$links[] = sprintf(
+			'<span class="wp-csp-update-posture">%s</span>',
+			esc_html__( 'Updates: WordPress.org only; no custom updater runs from this plugin.', 'csp-automation-manager' )
+		);
+
+		return $links;
+	}
+
+	public function sanitize_report_endpoint_url( mixed $url ): string {
+		$url = trim( (string) $url );
+		if ( '' === $url ) {
+			return '';
+		}
+
+		if ( preg_match( '/[\r\n"\\\\]/', $url ) ) {
+			return '';
+		}
+
+		$url   = esc_url_raw( $url );
+		$parts = wp_parse_url( $url );
+		if ( ! is_array( $parts ) ) {
+			return '';
+		}
+
+		$scheme = strtolower( (string) ( $parts['scheme'] ?? '' ) );
+		$host   = (string) ( $parts['host'] ?? '' );
+		if ( '' === $host || ! in_array( $scheme, array( 'http', 'https' ), true ) ) {
+			return '';
+		}
+
+		return $url;
 	}
 
 	// ── Asset enqueue ─────────────────────────────────────────────────────────
@@ -141,9 +193,10 @@ class Admin_UI {
 				'nonce'     => wp_create_nonce( 'wp_csp_admin_nonce' ),
 				'restNonce' => wp_create_nonce( 'wp_rest' ),
 				'i18n'      => array(
-					'scanning'  => __( 'Scanning…', 'csp-automation-manager' ),
-					'scanDone'  => __( 'Scan complete.', 'csp-automation-manager' ),
-					'scanError' => __( 'Scan failed. Check error log.', 'csp-automation-manager' ),
+					'scanning'       => __( 'Scanning…', 'csp-automation-manager' ),
+					'scanDone'       => __( 'Scan complete.', 'csp-automation-manager' ),
+					'scanError'      => __( 'Scan failed. Check error log.', 'csp-automation-manager' ),
+					'reasonRequired' => __( 'A decision reason is required.', 'csp-automation-manager' ),
 				),
 			)
 		);
@@ -283,17 +336,31 @@ class Admin_UI {
 		$this->decide_source( (int) ( $_POST['source_id'] ?? 0 ), 'reverted' );
 	}
 
+	public function ajax_undo_source_decision(): void {
+		check_ajax_referer( 'wp_csp_admin_nonce', 'nonce' );
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( null, 403 );
+		}
+		$this->decide_source( (int) ( $_POST['source_id'] ?? 0 ), 'undone' );
+	}
+
 	private function decide_source( int $id, string $action ): void {
 		if ( $id <= 0 ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid source ID.', 'csp-automation-manager' ) ) );
 		}
 
-		$reason  = sanitize_text_field( wp_unslash( $_POST['reason'] ?? '' ) );
+		$reason = sanitize_text_field( wp_unslash( $_POST['reason'] ?? '' ) );
+		if ( '' === trim( $reason ) ) {
+			wp_send_json_error( array( 'message' => __( 'A decision reason is required.', 'csp-automation-manager' ) ) );
+		}
+
 		$manager = new Policy_Change_Manager( $this->plugin->audit, null, new Policy_Version_Manager( $this->plugin->policy_builder ) );
 		if ( 'approved' === $action ) {
 			$ok = $manager->approve_source( $id, $reason );
 		} elseif ( 'reverted' === $action ) {
 			$ok = $manager->revert_source( $id, $reason );
+		} elseif ( 'undone' === $action ) {
+			$ok = $manager->undo_source_decision( $id, $reason );
 		} else {
 			$ok = $manager->reject_source( $id, $reason );
 		}

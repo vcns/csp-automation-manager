@@ -60,75 +60,93 @@
 		} );
 	} );
 
-	$( document ).on( 'click', '.wp-csp-approve-source', function () {
-		const $btn   = $( this );
+	function requiredReason( promptText ) {
+		const reason = window.prompt( promptText, '' );
+		if ( reason === null ) {
+			return null;
+		}
+		if ( reason.trim() === '' ) {
+			// eslint-disable-next-line no-alert
+			alert( wpCspAdmin.i18n.reasonRequired || 'A decision reason is required.' );
+			return null;
+		}
+		return reason.trim();
+	}
+
+	function sourceActionsHtml( id, state, lastDecision ) {
+		const buttons = [];
+		if ( state === 'pending' || state === 'denied' ) {
+			buttons.push( '<button type="button" class="button button-small wp-csp-approve-source" data-id="' + id + '">Approve</button>' );
+		}
+		if ( state === 'pending' || state === 'approved' ) {
+			buttons.push( '<button type="button" class="button button-small wp-csp-deny-source" data-id="' + id + '">Reject</button>' );
+		}
+		if ( state === 'approved' ) {
+			buttons.push( '<button type="button" class="button button-small wp-csp-revert-source" data-id="' + id + '">Revert</button>' );
+		}
+		if ( lastDecision === 'approved' || lastDecision === 'rejected' ) {
+			buttons.push( '<button type="button" class="button button-small wp-csp-undo-source-decision" data-id="' + id + '">Undo</button>' );
+		}
+		return buttons.join( ' ' );
+	}
+
+	function setSourceRowState( $row, id, state, label, lastDecision ) {
+		$row.find( '.wp-csp-state-badge' )
+			.removeClass( 'state-pending state-approved state-denied' )
+			.addClass( 'state-' + state )
+			.text( label );
+		$row.find( '.wp-csp-source-actions' ).html( sourceActionsHtml( id, state, lastDecision ) );
+	}
+
+	function postSourceDecision( $btn, action, promptText, nextState, nextLabel, lastDecision ) {
 		const id     = $btn.data( 'id' );
-		const reason = window.prompt( 'Optional approval reason:', '' ) || '';
+		const reason = requiredReason( promptText );
+		if ( reason === null ) {
+			return;
+		}
+
 		$btn.prop( 'disabled', true );
 
 		$.post( wpCspAdmin.ajaxUrl, {
-			action:    'wp_csp_approve_source',
+			action:    action,
 			nonce:     wpCspAdmin.nonce,
 			source_id: id,
 			reason:    reason,
 		} )
 		.done( function ( res ) {
 			if ( res.success ) {
-				$btn.closest( 'tr' ).find( '.wp-csp-state-badge' )
-					.removeClass( 'state-pending state-denied' )
-					.addClass( 'state-approved' )
-					.text( 'Approved' );
-				$btn.remove();
+				setSourceRowState( $btn.closest( 'tr' ), id, nextState, nextLabel, lastDecision );
+			} else {
+				// eslint-disable-next-line no-alert
+				alert( res.data.message || 'Could not record policy decision.' );
 			}
 		} )
+		.fail( function () {
+			// eslint-disable-next-line no-alert
+			alert( 'Could not record policy decision.' );
+		} )
 		.always( function () { $btn.prop( 'disabled', false ); } );
+	}
+
+	$( document ).on( 'click', '.wp-csp-approve-source', function () {
+		postSourceDecision( $( this ), 'wp_csp_approve_source', 'Why should this source be approved?', 'approved', 'Approved', 'approved' );
 	} );
 
 	$( document ).on( 'click', '.wp-csp-deny-source', function () {
-		const $btn   = $( this );
-		const id     = $btn.data( 'id' );
-		const reason = window.prompt( 'Why should this source be rejected and suppressed?', '' ) || '';
-		$btn.prop( 'disabled', true );
-
-		$.post( wpCspAdmin.ajaxUrl, {
-			action:    'wp_csp_deny_source',
-			nonce:     wpCspAdmin.nonce,
-			source_id: id,
-			reason:    reason,
-		} )
-		.done( function ( res ) {
-			if ( res.success ) {
-				$btn.closest( 'tr' ).find( '.wp-csp-state-badge' )
-					.removeClass( 'state-pending state-approved' )
-					.addClass( 'state-denied' )
-					.text( 'Denied' );
-				$btn.remove();
-			}
-		} )
-		.always( function () { $btn.prop( 'disabled', false ); } );
+		postSourceDecision( $( this ), 'wp_csp_deny_source', 'Why should this source be rejected and suppressed?', 'denied', 'Denied', 'rejected' );
 	} );
 
 	$( document ).on( 'click', '.wp-csp-revert-source', function () {
-		const $btn   = $( this );
-		const id     = $btn.data( 'id' );
-		const reason = window.prompt( 'Why should this approved source be reverted and suppressed?', '' ) || '';
-		$btn.prop( 'disabled', true );
+		postSourceDecision( $( this ), 'wp_csp_revert_source', 'Why should this approved source be reverted and suppressed?', 'denied', 'Denied', 'reverted' );
+	} );
 
-		$.post( wpCspAdmin.ajaxUrl, {
-			action:    'wp_csp_revert_source',
-			nonce:     wpCspAdmin.nonce,
-			source_id: id,
-			reason:    reason,
-		} )
-		.done( function ( res ) {
-			if ( res.success ) {
-				$btn.closest( 'tr' ).find( '.wp-csp-state-badge' )
-					.removeClass( 'state-pending state-approved' )
-					.addClass( 'state-denied' )
-					.text( 'Denied' );
-				$btn.remove();
-			}
-		} )
-		.always( function () { $btn.prop( 'disabled', false ); } );
+	$( document ).on( 'click', '.wp-csp-undo-source-decision', function () {
+		postSourceDecision( $( this ), 'wp_csp_undo_source_decision', 'Why should this decision be undone?', 'pending', 'Pending', 'undone' );
+	} );
+
+	$( document ).on( 'click', '.wp-csp-use-current-report-endpoint', function () {
+		$( '#wp_csp_report_endpoint_url' )
+			.val( $( this ).data( 'report-endpoint' ) || '' )
+			.trigger( 'change' );
 	} );
 } )( jQuery );

@@ -16,7 +16,7 @@ It provides per-surface CSP profiles, nonce injection, source discovery, violati
 - Automatic purge of old violation reports
 - Append-only audit log for significant plugin events
 - Source discovery and administrator approval workflow
-- Risk-ranked CSP change proposals with approve, reject, and revert decisions
+- Risk-ranked CSP change proposals with reason-required approve, reject, revert, and undo decisions
 - Revert-and-suppress workflow so a reversed source is not proposed again automatically
 - Policy version snapshots, policy diffs, decision provenance, and deterministic rule findings
 - Policy Audit admin view and privileged admin REST endpoints for current policy, pending reviews, decisions, history, and manual automation configuration
@@ -24,7 +24,7 @@ It provides per-surface CSP profiles, nonce injection, source discovery, violati
 - Multi-surface scan support
 - `strict-dynamic` with automatic host-source suppression
 - Trusted Types directives, report-only by default
-- Conflict detection for competing CSP headers
+- Conflict detection for competing CSP headers from `.htaccess`, server config, or other security-header plugins
 - Scheduled rescans with audit logging
 
 All features shipped in the WordPress.org package are available locally without payment, remote entitlement checks, trialware-style feature locking, or third-party licensing calls.
@@ -74,11 +74,13 @@ Future automation and AI-assisted recommendation work must keep deterministic pr
 
 The WordPress.org plugin package does not contact third-party services for plugin updates, licensing, checkout, telemetry, or remote product configuration.
 
-The plugin emits CSP reporting headers that point browsers back to this WordPress site's own REST endpoint:
+By default, the plugin emits CSP reporting headers that point browsers back to this WordPress site's own REST endpoint:
 
 - `/wp-json/csp-manager/v1/report`
 
-Browser-submitted CSP violation reports are validated and stored in the local WordPress database. They are not sent to any external provider by this plugin.
+Administrators may override the reporting server URL when the public HTTPS endpoint differs from the WordPress-detected site URL, such as behind a proxy, CDN, or load balancer. If the override points to another host, browsers will send CSP reports to that configured endpoint; local report learning only works when the URL routes back to this plugin's report endpoint.
+
+Browser-submitted CSP violation reports received by this plugin are validated and stored in the local WordPress database. They are not sent to any external provider by default.
 
 ## Privacy
 

@@ -14,15 +14,17 @@ Automates strict Content Security Policy rollout, violation reporting, source di
 
 CSP Automation Manager helps site owners roll out strict Content Security Policy headers safely and incrementally.
 
-The plugin provides per-surface CSP profiles, nonce injection, source discovery, violation reporting, policy-change review, append-only audit records, policy history, and administrator-controlled rollout tools.
+The plugin provides per-surface CSP profiles, nonce injection, source discovery, violation reporting, policy-change review, reason-required append-only audit records, policy history, conflict detection for existing CSP emitters, and administrator-controlled rollout tools.
 
 == External services ==
 
 This WordPress.org build does not contact third-party services for plugin updates, licensing, checkout, telemetry, or remote product configuration.
 
-The plugin emits CSP reporting headers that point browsers back to this WordPress site's own REST endpoint:
+By default, the plugin emits CSP reporting headers that point browsers back to this WordPress site's own REST endpoint:
 
 * `/wp-json/csp-manager/v1/report`
+
+Administrators may override the reporting server URL when the public HTTPS endpoint differs from the WordPress-detected site URL, such as behind a proxy, CDN, or load balancer. If the override points to another host, browsers will send CSP reports to that configured endpoint; local report learning only works when the URL routes back to this plugin's report endpoint.
 
 Purpose:
 * receive browser-generated CSP violation reports for this site;
@@ -31,7 +33,7 @@ Purpose:
 Data handled:
 * browser CSP violation report fields such as blocked URL, document URL, violated directive, referrer, user agent, line/column where provided, and an optional script sample where the active policy requests `report-sample`.
 
-Reports are validated and stored in this site's WordPress database. They are not sent to any external provider by this plugin.
+Reports received by this plugin are validated and stored in this site's WordPress database. They are not sent to any external provider by default.
 
 == Changelog ==
 

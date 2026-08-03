@@ -71,7 +71,7 @@ Responsibilities:
 - capture policy version snapshots for material decisions
 - record deterministic rule findings for policy decisions
 - run scheduled and manual scans (including post-scan violation purge)
-- detect conflicting CSP headers
+- detect conflicting CSP headers from WordPress filters, `.htaccess`, server configuration, or other security-header plugins
 
 ### Entitlement and payment runtime
 
@@ -121,10 +121,21 @@ Responsibilities:
 7. If enabled and licensed, `'strict-dynamic'` is appended to `script-src`; approved host sources are suppressed from `script-src` at this point (browsers silently ignore host allowlists when `strict-dynamic` is present — CSP3 §8.2).
 8. `sandbox` is skipped if null or if the profile is in report-only mode (CSP spec — `sandbox` is ignored in `Content-Security-Policy-Report-Only`).
 9. Trusted Types directives (`require-trusted-types-for`, `trusted-types`) are skipped when their arrays are empty; when enabled they are always emitted as report-only regardless of surface mode.
-10. Two additional headers are emitted before the CSP header:
+10. The reporting endpoint is resolved from `wp_csp_report_endpoint_url` when an administrator has configured an absolute `http` or `https` override; otherwise it falls back to `rest_url( 'csp-manager/v1/report' )`.
+11. Two additional headers are emitted before the CSP header:
     - `Reporting-Endpoints: csp-endpoint="<report_uri>"` — Structured Fields Dictionary (RFC 9651); required for browsers to honour `report-to csp-endpoint` in the CSP
     - `Report-To: {"group":"csp-endpoint","max_age":86400,"endpoints":[{"url":"<report_uri>"}]}` — deprecated JSON format retained as a legacy fallback for pre-Reporting-API browsers
-11. The CSP or CSP-Report-Only header is emitted via `send_headers`.
+12. The CSP or CSP-Report-Only header is emitted via `send_headers`.
+
+### Conflict detection
+
+`Conflict_Detector` checks for CSP headers before administrators promote a policy:
+
+- `wp_headers` is inspected late for CSP values added by other WordPress plugins.
+- `ABSPATH/.htaccess` is scanned for Apache or LiteSpeed `Header` directives that set, add, append, merge, or edit CSP headers.
+- A throttled internal `HEAD` probe sends `X-WP-CSP-Probe: 1`; `Policy_Builder` suppresses this plugin's own CSP output for that request so any remaining CSP header is treated as likely coming from web-server configuration or another security-header plugin.
+
+Conflicts are warning-level audit events. The detector never removes or rewrites another component's header because browser behaviour with multiple CSP policies is cumulative and site-specific.
 
 ### 3. Scan flow
 
@@ -140,7 +151,7 @@ Responsibilities:
 
 ### 4. Violation ingestion flow
 
-1. Browser submits a violation report to `/wp-json/csp-manager/v1/report`.
+1. Browser submits a violation report to the configured reporting endpoint. By default this is `/wp-json/csp-manager/v1/report`; proxy/CDN deployments can advertise an administrator-provided public URL that must route back to this plugin endpoint for local learning.
 2. `Violation_Reporter` validates the `Content-Type` header; requests with a content type other than `application/csp-report`, `application/reports+json`, or `application/json` are rejected with HTTP 400.
 3. The payload is normalised from either the legacy `application/csp-report` format (hyphenated field names: `document-uri`, `blocked-uri`, `script-sample`, etc.) or the Reporting API `application/reports+json` format (camelCase field names: `documentURL`, `blockedURL`, `sample`, etc.).
 4. The `document-uri` hostname is compared against the WordPress site origin (RFC 6454); reports from a different origin are silently discarded — CSP reports are client-generated and spoofable.
@@ -156,10 +167,10 @@ Responsibilities:
 2. `Policy_Change_Manager` computes a stable fingerprint from `(surface, directive, source_host)`.
 3. High-risk proposals include script/style execution, connection, form, frame, worker, wildcard, cleartext HTTP, broad browser schemes, and unsafe keyword patterns.
 4. `Decision_Engine` evaluates proposals through versioned deterministic rules and returns risk, hard exclusions, automation eligibility, and rule findings.
-5. Administrators approve, reject, or revert proposals from the Source Inventory queue.
+5. Administrators approve, reject, revert, or undo decisions from the Source Inventory queue. Every material decision requires an administrator reason.
 6. Every decision is appended to `csp_policy_change_decisions`, mirrored to `csp_audit_log`, and linked to deterministic rule findings in `csp_decision_rule_evaluations`.
 7. Approved and reverted decisions capture a `csp_policy_versions` snapshot for the affected surface.
-8. Rejected and reverted decisions set suppression on that fingerprint; future automation skips the same source until a later approval becomes the newest decision.
+8. Rejected and reverted decisions set suppression on that fingerprint; future automation skips the same source until a later approval or undo becomes the newest decision.
 
 ### 6. Policy audit flow
 
@@ -214,7 +225,7 @@ Each of these inputs is validated before use:
 - Stripe webhook bodies are HMAC-verified
 - browser reports are validated for `Content-Type`, `document-uri` origin, normalized, rate-limited, and deduplicated
 - discovered sources are not auto-approved
-- rejected and reverted source fingerprints are not reintroduced by automation unless the latest administrator decision approves them
+- rejected and reverted source fingerprints are not reintroduced by automation unless the latest administrator decision approves or undoes the suppressing decision
 
 ## Security-critical decisions
 
@@ -230,7 +241,7 @@ These design choices should not be changed casually:
 - when `strict-dynamic` is active, host-based sources are suppressed from `script-src` at emit time; emitting them is harmless but creates misleading policy noise since browsers ignore them
 - cross-origin violation reports are silently discarded; only reports whose `document-uri` matches the site's own origin are stored
 - `csp_audit_log` is append-only — no `UPDATE` or `DELETE` may ever be issued against it; it is the permanent operational audit trail
-- `csp_policy_change_decisions` is append-only; suppression is represented by the latest decision for a fingerprint, not by rewriting old decisions
+- `csp_policy_change_decisions` is append-only; suppression is represented by the latest decision for a fingerprint, not by rewriting old decisions; undo appends a new non-suppressing decision and links to the decision it reverses where available
 - the violation retention purge uses `UTC_TIMESTAMP()` not `NOW()` to avoid timezone-offset errors in environments where MySQL and PHP have different local time configurations
 
 ## Failure handling

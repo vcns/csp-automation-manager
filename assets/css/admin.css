@@ -14,6 +14,20 @@
 	padding: 16px;
 }
 
+.wp-csp-tab-wrapper .nav-tab {
+	position: relative;
+}
+
+.wp-csp-tab-help {
+	margin: 0;
+	padding: 10px 12px;
+	background: #f6f7f7;
+	border: 1px solid #ccd0d4;
+	border-top: 0;
+	color: #1d2327;
+	line-height: 1.45;
+}
+
 /* ── Mode badges ─────────────────────────────────────────────────────────── */
 .wp-csp-mode-badge {
 	display: inline-block;

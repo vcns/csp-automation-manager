@@ -24,6 +24,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Conflict_Detector {
 
+	private const CSP_HEADERS = array(
+		'content-security-policy',
+		'content-security-policy-report-only',
+		'x-content-security-policy',
+	);
+
 	private Audit_Log $audit;
 
 	public function __construct( Audit_Log $audit ) {
@@ -50,18 +56,13 @@ class Conflict_Detector {
 	 * @return array          Unchanged – we only detect, never remove.
 	 */
 	public function check_headers_filter( array $headers ): array {
-		$conflict_keys = array(
-			'Content-Security-Policy',
-			'Content-Security-Policy-Report-Only',
-			'X-Content-Security-Policy', // Legacy IE header.
-		);
-
-		foreach ( $conflict_keys as $key ) {
-			if ( isset( $headers[ $key ] ) ) {
+		foreach ( self::CSP_HEADERS as $key ) {
+			$values = $this->get_response_header_values( $headers, $key );
+			if ( ! empty( $values ) ) {
 				$this->record_conflict(
 					'header_filter',
 					$key,
-					substr( $headers[ $key ], 0, 256 )
+					substr( implode( ' | ', $values ), 0, 256 )
 				);
 			}
 		}
@@ -82,7 +83,61 @@ class Conflict_Detector {
 		}
 		set_transient( $transient_key, 1, DAY_IN_SECONDS );
 
+		$this->scan_htaccess();
 		$this->run_probe( get_home_url() );
+	}
+
+	/**
+	 * Checks the site's Apache .htaccess file for CSP Header directives.
+	 *
+	 * @param string|null $path Explicit file path for tests; defaults to ABSPATH/.htaccess.
+	 * @return array<int,array{line:int,header:string,value:string}> Detected directives.
+	 */
+	public function scan_htaccess( ?string $path = null ): array {
+		$path ??= rtrim( ABSPATH, '/\\' ) . DIRECTORY_SEPARATOR . '.htaccess';
+		if ( ! is_readable( $path ) ) {
+			return array();
+		}
+
+		$size = filesize( $path );
+		if ( false === $size || $size > 262144 ) {
+			return array();
+		}
+
+		$lines = file( $path, FILE_IGNORE_NEW_LINES );
+		if ( false === $lines ) {
+			return array();
+		}
+
+		$found = array();
+		foreach ( $lines as $index => $line ) {
+			$trimmed = trim( (string) $line );
+			if ( '' === $trimmed || str_starts_with( $trimmed, '#' ) ) {
+				continue;
+			}
+
+			if ( ! preg_match( '/^\s*Header\s+(?:always\s+)?(?:set|add|append|merge|edit)\s+["\']?(Content-Security-Policy(?:-Report-Only)?|X-Content-Security-Policy)["\']?\b(.*)$/i', $trimmed, $matches ) ) {
+				continue;
+			}
+
+			$header      = $matches[1];
+			$value       = trim( $matches[2] ?? '' );
+			$line_number = $index + 1;
+
+			$this->record_conflict(
+				'htaccess',
+				$header,
+				'line ' . $line_number . ': ' . substr( $value, 0, 220 )
+			);
+
+			$found[] = array(
+				'line'   => $line_number,
+				'header' => $header,
+				'value'  => $value,
+			);
+		}
+
+		return $found;
 	}
 
 	/**
@@ -108,15 +163,15 @@ class Conflict_Detector {
 		$headers = wp_remote_retrieve_headers( $response );
 		$found   = array();
 
-		foreach ( array( 'content-security-policy', 'content-security-policy-report-only' ) as $hdr ) {
-			$val = $headers->offsetGet( $hdr );
-			if ( $val ) {
-				// Check if we see multiple values (duplicate header).
-				if ( is_array( $val ) && count( $val ) > 1 ) {
-					$this->record_conflict( 'probe_duplicate', $hdr, implode( ' | ', array_slice( $val, 0, 2 ) ) );
-					$found[] = $hdr;
-				}
+		foreach ( self::CSP_HEADERS as $hdr ) {
+			$values = $this->get_response_header_values( $headers, $hdr );
+			if ( empty( $values ) ) {
+				continue;
 			}
+
+			$source = count( $values ) > 1 ? 'probe_duplicate' : 'probe_existing';
+			$this->record_conflict( $source, $hdr, implode( ' | ', array_slice( $values, 0, 2 ) ) );
+			$found[] = $hdr;
 		}
 
 		return $found;
@@ -125,11 +180,53 @@ class Conflict_Detector {
 	// ── Helpers ───────────────────────────────────────────────────────────────
 
 	private function record_conflict( string $source, string $header, string $value ): void {
+		$guidance = $this->get_source_guidance( $source );
 		$this->audit->log(
 			'conflict_detector',
 			'csp_conflict',
-			"Competing '{$header}' detected via {$source}. Value prefix: {$value}",
+			"Competing '{$header}' detected via {$source}. {$guidance} Value prefix: {$value}",
 			'warning'
 		);
+	}
+
+	/**
+	 * @return array<int,string>
+	 */
+	private function get_response_header_values( mixed $headers, string $header ): array {
+		$value = null;
+
+		if ( is_object( $headers ) && method_exists( $headers, 'offsetGet' ) ) {
+			$value = $headers->offsetGet( $header );
+		} elseif ( is_array( $headers ) ) {
+			foreach ( $headers as $key => $candidate ) {
+				if ( strtolower( (string) $key ) === $header ) {
+					$value = $candidate;
+					break;
+				}
+			}
+		}
+
+		if ( null === $value || '' === $value ) {
+			return array();
+		}
+
+		$values = is_array( $value ) ? $value : array( $value );
+
+		return array_values(
+			array_filter(
+				array_map( 'strval', $values ),
+				static fn( string $candidate ): bool => '' !== trim( $candidate )
+			)
+		);
+	}
+
+	private function get_source_guidance( string $source ): string {
+		return match ( $source ) {
+			'htaccess'        => 'Review Apache or LiteSpeed .htaccess Header directives before enabling enforcement here.',
+			'probe_existing'  => 'The internal probe suppresses this plugin\'s own CSP header, so this is likely from web-server configuration or another security headers plugin.',
+			'probe_duplicate' => 'Multiple live CSP headers are present; browsers apply all policies, which can make breakage difficult to predict.',
+			'header_filter'   => 'Another WordPress plugin appears to be adding this header through wp_headers.',
+			default           => 'Review other CSP emitters before enabling enforcement here.',
+		};
 	}
 }

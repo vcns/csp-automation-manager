@@ -134,11 +134,15 @@
           </article>
           <article class='faq-item'>
             <h3>What happens when I reject a source?</h3>
-            <p>The decision is recorded and the matching surface, directive, and host fingerprint is suppressed from future automatic proposals unless a later approval becomes the newest decision.</p>
+            <p>The decision is recorded with a required administrator reason, and the matching surface, directive, and host fingerprint is suppressed from future automatic proposals unless a later approval or undo becomes the newest decision.</p>
           </article>
           <article class='faq-item'>
             <h3>What is the difference between reject and revert?</h3>
             <p>Reject is for a pending or denied source that should not be approved. Revert is for a previously approved source that should be withdrawn.</p>
+          </article>
+          <article class='faq-item'>
+            <h3>What does Undo do?</h3>
+            <p>Undo appends a new audit decision that clears the latest approval or rejection and returns the source to pending. It does not delete the original ledger row.</p>
           </article>
           <article class='faq-item'>
             <h3>Why did a rejected source appear again?</h3>
@@ -157,7 +161,7 @@
           </article>
           <article class='faq-item'>
             <h3>Are reports sent to a third-party reporting service?</h3>
-            <p>No third-party reporting service is used by default. Browsers post reports to the site REST endpoint registered by the plugin.</p>
+            <p>No third-party reporting service is used by default. Browsers post reports to the site REST endpoint registered by the plugin. Administrators can override the reporting server URL for proxy, CDN, or load-balanced sites; local learning only works when that URL routes back to the plugin report endpoint.</p>
           </article>
           <article class='faq-item'>
             <h3>Why do violations appear in report-only mode?</h3>
