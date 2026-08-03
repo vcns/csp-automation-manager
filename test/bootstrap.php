@@ -414,6 +414,7 @@ if ( ! class_exists( 'wpdb_stub' ) ) {
 		public function query( string $sql ): int|false {
 			$GLOBALS['_wpdb_last_operation'] = 'query';
 			$GLOBALS['_wpdb_last_query']     = $sql;
+			$GLOBALS['_wpdb_queries'][]      = $sql;
 			$result                          = $GLOBALS['_wpdb_query_result'] ?? 1;
 			$this->rows_affected             = false === $result ? 0 : (int) $result;
 			return $result;
@@ -473,6 +474,13 @@ if ( ! function_exists( 'wp_unschedule_hook' ) ) {
 	}
 }
 
+if ( ! function_exists( 'wp_clear_scheduled_hook' ) ) {
+	function wp_clear_scheduled_hook( string $hook ): int {
+		unset( $GLOBALS['_wp_cron'][ $hook ] );
+		return 1;
+	}
+}
+
 if ( ! function_exists( 'dbDelta' ) ) {
 	function dbDelta( string $queries = '' ): array {
 		$GLOBALS['_dbdelta_queries'][] = $queries;
@@ -512,6 +520,7 @@ function wp_test_reset_globals(): void {
 	$GLOBALS['_wpdb_query_result']       = 1;
 	$GLOBALS['_wpdb_last_operation']     = null;
 	$GLOBALS['_wpdb_last_query']         = null;
+	$GLOBALS['_wpdb_queries']            = [];
 	$GLOBALS['_wpdb_inserted_rows']      = [];
 	$GLOBALS['_wpdb_updated_rows']       = [];
 	$GLOBALS['_dbdelta_queries']         = [];

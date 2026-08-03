@@ -5,6 +5,8 @@
  * Registers admin pages:
  *   1. csp-automation-manager-dashboard  – CSP surface profiles, source inventory, violations, scan history
  *   2. csp-automation-manager-settings   – promotion gates, learning window, cron schedule, notify email
+ *   3. csp-automation-manager-policy-audit – policy history, decisions, provenance
+ *   4. csp-automation-manager-readiness  – plugin-specific health checks and reset
  *
  * All form submissions are protected by check_admin_referer() and
  * current_user_can('manage_options').
@@ -42,6 +44,7 @@ class Admin_UI {
 		add_filter( 'plugin_row_meta', array( $this, 'add_plugin_row_meta' ), 10, 2 );
 
 		// AJAX handlers.
+		add_action( 'admin_post_wp_csp_reset_data', array( $this, 'handle_reset_data' ) );
 		add_action( 'wp_ajax_wp_csp_manual_scan', array( $this, 'ajax_manual_scan' ) );
 		add_action( 'wp_ajax_wp_csp_approve_source', array( $this, 'ajax_approve_source' ) );
 		add_action( 'wp_ajax_wp_csp_deny_source', array( $this, 'ajax_deny_source' ) );
@@ -89,6 +92,15 @@ class Admin_UI {
 			'csp-automation-manager-policy-audit',
 			array( $this, 'render_policy_audit' )
 		);
+
+		add_submenu_page(
+			'csp-automation-manager-dashboard',
+			__( 'Readiness', 'csp-automation-manager' ),
+			__( 'Readiness', 'csp-automation-manager' ),
+			'manage_options',
+			'csp-automation-manager-readiness',
+			array( $this, 'render_readiness' )
+		);
 	}
 
 	// ── Settings API ──────────────────────────────────────────────────────────
@@ -116,7 +128,16 @@ class Admin_UI {
 			esc_html__( 'Settings', 'csp-automation-manager' )
 		);
 
-		return array( 'settings' => $settings_link ) + $links;
+		$reset_link = sprintf(
+			'<a href="%1$s">%2$s</a>',
+			esc_url( admin_url( 'admin.php?page=csp-automation-manager-readiness#wp-csp-reset' ) ),
+			esc_html__( 'Reset', 'csp-automation-manager' )
+		);
+
+		return array(
+			'settings' => $settings_link,
+			'reset'    => $reset_link,
+		) + $links;
 	}
 
 	public function add_plugin_row_meta( array $links, string $file ): array {
@@ -164,6 +185,7 @@ class Admin_UI {
 			'toplevel_page_csp-automation-manager-dashboard',
 			'csp-manager_page_csp-automation-manager-settings',
 			'csp-manager_page_csp-automation-manager-policy-audit',
+			'csp-manager_page_csp-automation-manager-readiness',
 		);
 		if ( ! in_array( $hook_suffix, $csp_pages, true ) ) {
 			return;
@@ -223,6 +245,58 @@ class Admin_UI {
 			wp_die( esc_html__( 'You do not have permission to view this page.', 'csp-automation-manager' ) );
 		}
 		require WP_CSP_DIR . 'includes/admin/views/page-policy-audit.php';
+	}
+
+	public function render_readiness(): void {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'You do not have permission to view this page.', 'csp-automation-manager' ) );
+		}
+
+		$readiness = ( new Readiness_Checker() )->get_report();
+		require WP_CSP_DIR . 'includes/admin/views/page-readiness.php';
+	}
+
+	public function handle_reset_data(): void {
+		check_admin_referer( 'wp_csp_reset_data' );
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'You do not have permission to reset plugin data.', 'csp-automation-manager' ) );
+		}
+
+		$password     = (string) wp_unslash( $_POST['wp_csp_current_password'] ?? '' );
+		$confirmation = sanitize_text_field( wp_unslash( $_POST['wp_csp_reset_confirmation'] ?? '' ) );
+
+		if ( 'RESET CSP DATA' !== $confirmation || ! $this->current_user_password_is_valid( $password ) ) {
+			$this->redirect_to_readiness( 'failed' );
+		}
+
+		$result = ( new Data_Resetter() )->reset();
+
+		$this->redirect_to_readiness(
+			empty( $result['tables_failed'] ) ? 'success' : 'partial'
+		);
+	}
+
+	private function current_user_password_is_valid( string $password ): bool {
+		if ( '' === $password || ! function_exists( 'wp_get_current_user' ) || ! function_exists( 'wp_check_password' ) ) {
+			return false;
+		}
+
+		$user = wp_get_current_user();
+		if ( ! is_object( $user ) || empty( $user->ID ) || empty( $user->user_pass ) ) {
+			return false;
+		}
+
+		return wp_check_password( $password, (string) $user->user_pass, (int) $user->ID );
+	}
+
+	private function redirect_to_readiness( string $result ): void {
+		$url = add_query_arg(
+			array( 'wp_csp_reset' => $result ),
+			admin_url( 'admin.php?page=csp-automation-manager-readiness#wp-csp-reset' )
+		);
+
+		wp_safe_redirect( $url );
+		exit;
 	}
 
 	// ── Admin notices ─────────────────────────────────────────────────────────

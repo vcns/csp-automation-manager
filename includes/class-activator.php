@@ -26,6 +26,52 @@ class Activator {
 		self::schedule_events();
 	}
 
+	public static function get_table_suffixes(): array {
+		return array(
+			'csp_policy_profiles',
+			'csp_source_inventory',
+			'csp_hash_inventory',
+			'csp_violation_reports',
+			'csp_scan_logs',
+			'csp_entitlements',
+			'csp_processed_events',
+			'csp_audit_log',
+			'csp_policy_change_decisions',
+			'csp_policy_versions',
+			'csp_decision_rule_evaluations',
+		);
+	}
+
+	public static function get_option_names(): array {
+		return array(
+			'wp_csp_db_version',
+			'wp_csp_config_dns_domain',
+			'wp_csp_config_fallback_url',
+			'wp_csp_config_cache_ttl',
+			'wp_csp_config_grace_ttl',
+			'wp_csp_config_last_fetched',
+			'wp_csp_config_version',
+			'wp_csp_entitlement_grace_hours',
+			'wp_csp_enforce_gate_violation_window',
+			'wp_csp_cron_hour',
+			'wp_csp_notify_email',
+			'wp_csp_violation_retention_days',
+			'wp_csp_learning_window_hours',
+			'wp_csp_report_endpoint_url',
+			'wp_csp_last_material_change_at',
+			'wp_csp_automation_config',
+			'wp_csp_admin_notices',
+		);
+	}
+
+	public static function get_transient_names(): array {
+		return array(
+			'wp_csp_remote_config',
+			'wp_csp_config_stale',
+			'wp_csp_conflict_probe_ran',
+		);
+	}
+
 	// ── Database tables ───────────────────────────────────────────────────────
 
 	private static function create_tables(): void {

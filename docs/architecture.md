@@ -94,11 +94,11 @@ Responsibilities:
 
 Responsibilities:
 
-- render settings, dashboard, and entitlement pages
+- render dashboard, settings, policy audit, and readiness pages
 - support source review and mode switching
 - trigger scans and config refreshes
-- initiate checkout from the admin area
 - surface one-per-session warnings for known platform constraints (e.g. wp-admin strict CSP limitation)
+- expose a destructive reset flow that requires `manage_options`, a nonce, current administrator password re-authentication, and typed confirmation before clearing plugin-owned runtime data
 
 ## Runtime request flow
 
@@ -180,7 +180,16 @@ Conflicts are warning-level audit events. The detector never removes or rewrites
 4. Recent decisions show actor, state, surface, directive, source, risk, decision-engine version, and linked policy version.
 5. Privileged REST endpoints under `/wp-json/csp-manager/v1/admin/*` expose policy history, policy diffs, decisions, pending reviews, and automation configuration for richer future UI workflows.
 
-### 7. Premium entitlement flow
+### 7. Readiness and reset flow
+
+1. Administrators open **CSP Manager -> Readiness**.
+2. `Readiness_Checker` reports plugin version, installed schema version, expected custom tables, plugin-owned row counts, reporting endpoint validity, scheduled scan status, policy-profile presence, policy-version snapshot presence, and automation posture.
+3. The Installed Plugins row exposes **Settings** and **Reset** action links; Reset opens the readiness page at the destructive reset panel.
+4. Reset requires `manage_options`, a valid WordPress nonce, the current logged-in administrator's password, and the typed phrase `RESET CSP DATA`.
+5. `Data_Resetter` clears rows from plugin-owned custom tables, deletes plugin-owned runtime options and transients, clears the plugin daily scan schedule, and then runs `Activator::activate()` to reseed default options, policy profiles, policy snapshots, and cron.
+6. Reset is intentionally stronger than ordinary policy rollback: it is for pre-launch clean-room restarts and removes historical CSP records from this local installation.
+
+### 8. Premium entitlement flow
 
 1. Admin opens the entitlement page and starts the configured VCNS account-management flow.
 2. Legacy installations may still initiate a compatibility checkout flow from signed remote config.

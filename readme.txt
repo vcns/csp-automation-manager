@@ -14,7 +14,7 @@ Automates strict Content Security Policy rollout, violation reporting, source di
 
 CSP Automation Manager helps site owners roll out strict Content Security Policy headers safely and incrementally.
 
-The plugin provides per-surface CSP profiles, nonce injection, source discovery, violation reporting, policy-change review, reason-required append-only audit records, policy history, conflict detection for existing CSP emitters, and administrator-controlled rollout tools.
+The plugin provides per-surface CSP profiles, nonce injection, source discovery, violation reporting, policy-change review, reason-required append-only audit records, policy history, readiness checks, conflict detection for existing CSP emitters, and administrator-controlled rollout tools.
 
 == External services ==
 
@@ -36,6 +36,11 @@ Data handled:
 Reports received by this plugin are validated and stored in this site's WordPress database. They are not sent to any external provider by default.
 
 == Changelog ==
+
+= Next =
+
+* Adds a CSP Manager Readiness page for plugin-specific schema, database, reporting endpoint, scan schedule, and automation posture checks.
+* Adds a Reset action in the Installed Plugins row that links to a destructive reset panel requiring current administrator password re-authentication and typed confirmation.
 
 = 1.0.6 =
 

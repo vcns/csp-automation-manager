@@ -20,6 +20,7 @@ It provides per-surface CSP profiles, nonce injection, source discovery, violati
 - Revert-and-suppress workflow so a reversed source is not proposed again automatically
 - Policy version snapshots, policy diffs, decision provenance, and deterministic rule findings
 - Policy Audit admin view and privileged admin REST endpoints for current policy, pending reviews, decisions, history, and manual automation configuration
+- Readiness admin view for plugin-specific schema and runtime checks, with an authenticated reset flow for starting from clean CSP data
 - Automation configuration scaffold that defaults every surface to `manual`; no proposal is auto-approved on install or upgrade
 - Multi-surface scan support
 - `strict-dynamic` with automatic host-source suppression
@@ -61,8 +62,9 @@ Tagged releases publish a ready-to-install ZIP to the
 3. Review and approve only the external sources your site actually requires.
 4. Reject or revert unwanted sources so the same fingerprint is suppressed from future proposals.
 5. Use the Policy Audit page to inspect why a proposal exists and what policy version resulted from decisions.
-6. Stay in report-only mode until violations are understood.
-7. Promote one surface at a time into enforce mode.
+6. Use the Readiness page when validating schema health or deliberately resetting CSP data for a clean rollout attempt.
+7. Stay in report-only mode until violations are understood.
+8. Promote one surface at a time into enforce mode.
 
 ## Automation Posture
 
