@@ -38,6 +38,8 @@ class Admin_UI {
 		add_action( 'admin_init', array( $this, 'register_settings' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_assets' ) );
 		add_action( 'admin_notices', array( $this, 'display_admin_notices' ) );
+		add_filter( 'plugin_action_links_' . plugin_basename( WP_CSP_FILE ), array( $this, 'add_plugin_action_links' ) );
+		add_filter( 'plugin_row_meta', array( $this, 'add_plugin_row_meta' ), 10, 2 );
 
 		// AJAX handlers.
 		add_action( 'wp_ajax_wp_csp_manual_scan', array( $this, 'ajax_manual_scan' ) );
@@ -105,6 +107,29 @@ class Admin_UI {
 		foreach ( $settings as $option => $callback ) {
 			register_setting( 'wp_csp_settings_group', $option, array( 'sanitize_callback' => $callback ) );
 		}
+	}
+
+	public function add_plugin_action_links( array $links ): array {
+		$settings_link = sprintf(
+			'<a href="%1$s">%2$s</a>',
+			esc_url( admin_url( 'admin.php?page=csp-automation-manager-settings' ) ),
+			esc_html__( 'Settings', 'csp-automation-manager' )
+		);
+
+		return array( 'settings' => $settings_link ) + $links;
+	}
+
+	public function add_plugin_row_meta( array $links, string $file ): array {
+		if ( plugin_basename( WP_CSP_FILE ) !== $file ) {
+			return $links;
+		}
+
+		$links[] = sprintf(
+			'<span class="wp-csp-update-posture">%s</span>',
+			esc_html__( 'Updates: WordPress.org only; no custom updater runs from this plugin.', 'csp-automation-manager' )
+		);
+
+		return $links;
 	}
 
 	public function sanitize_report_endpoint_url( mixed $url ): string {

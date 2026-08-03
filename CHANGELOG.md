@@ -12,6 +12,7 @@ The format is based on Keep a Changelog, and this project follows semantic versi
 - Source approval, rejection, reversion, and undo decisions now require administrator reasons, and approved/rejected source decisions can be undone without rewriting history.
 - Dashboard tabs now include operator guidance through hover titles, screen-reader descriptions, and an active-tab help note.
 - Reporting server URL override for sites whose public HTTPS endpoint differs from the WordPress-detected REST URL, with a settings button to use the current site endpoint.
+- Installed Plugins now shows a Settings action and an explicit WordPress.org-only update posture note.
 
 ## [1.0.5] - 2026-07-16
 

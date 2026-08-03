@@ -127,6 +127,12 @@ if ( ! function_exists( 'esc_url_raw' ) ) {
 	}
 }
 
+if ( ! function_exists( 'esc_url' ) ) {
+	function esc_url( string $url ): string {
+		return esc_url_raw( $url );
+	}
+}
+
 if ( ! function_exists( 'esc_attr' ) ) {
 	function esc_attr( string $text ): string {
 		return htmlspecialchars( $text, ENT_QUOTES, 'UTF-8' );
@@ -136,6 +142,18 @@ if ( ! function_exists( 'esc_attr' ) ) {
 if ( ! function_exists( 'esc_html' ) ) {
 	function esc_html( string $text ): string {
 		return htmlspecialchars( $text, ENT_QUOTES, 'UTF-8' );
+	}
+}
+
+if ( ! function_exists( '__' ) ) {
+	function __( string $text, string $domain = 'default' ): string {
+		return $text;
+	}
+}
+
+if ( ! function_exists( 'esc_html__' ) ) {
+	function esc_html__( string $text, string $domain = 'default' ): string {
+		return esc_html( $text );
 	}
 }
 
