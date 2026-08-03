@@ -363,7 +363,11 @@ $scan_logs     = ! empty( $scan_logs_raw ) ? $scan_logs_raw : array();
 	<?php elseif ( 'violations' === $tab ) : ?>
 	<!-- ── Violations tab ─────────────────────────────────────────────────── -->
 		<?php
-		$viol_page_num = max( 1, (int) ( isset( $_GET['v_paged'] ) ? $_GET['v_paged'] : 1 ) );
+		$viol_page_num       = max( 1, (int) ( isset( $_GET['v_paged'] ) ? $_GET['v_paged'] : 1 ) );
+		$report_endpoint_url = (string) get_option( 'wp_csp_report_endpoint_url', '' );
+		if ( '' === trim( $report_endpoint_url ) ) {
+			$report_endpoint_url = rest_url( 'csp-manager/v1/report' );
+		}
 	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- No user input; only $wpdb->prefix used in query.
 		$viol_total    = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}csp_violation_reports" );
 		$viol_pages    = max( 1, (int) ceil( $viol_total / $per_page ) );
@@ -396,7 +400,18 @@ $scan_logs     = ! empty( $scan_logs_raw ) ? $scan_logs_raw : array();
 		</tr>
 		<?php endforeach; ?>
 		<?php if ( empty( $violations ) ) : ?>
-		<tr><td colspan="6"><?php esc_html_e( 'No violations recorded yet. Configure the report-uri on a live environment to start collecting.', 'csp-automation-manager' ); ?></td></tr>
+		<tr>
+			<td colspan="6">
+				<p><?php esc_html_e( 'No browser violation reports have been recorded yet.', 'csp-automation-manager' ); ?></p>
+				<p>
+					<?php esc_html_e( 'Manual scans discover candidate sources, but they do not create violation reports. To collect violations, browse the live site while the relevant surface is in report-only mode and confirm the response includes this plugin\'s CSP reporting directives.', 'csp-automation-manager' ); ?>
+				</p>
+				<p>
+					<?php esc_html_e( 'Expected reporting endpoint:', 'csp-automation-manager' ); ?>
+					<code><?php echo esc_html( esc_url_raw( $report_endpoint_url ) ); ?></code>
+				</p>
+			</td>
+		</tr>
 		<?php endif; ?>
 		</tbody>
 	</table>
