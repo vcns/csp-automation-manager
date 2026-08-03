@@ -147,3 +147,42 @@
 .wp-csp-audit-table td {
 	vertical-align: top;
 }
+
+.wp-csp-readiness-table {
+	margin: 12px 0 24px;
+}
+
+.wp-csp-readiness-table th,
+.wp-csp-readiness-table td {
+	vertical-align: top;
+}
+
+.wp-csp-readiness-badge {
+	display: inline-block;
+	padding: 2px 8px;
+	border-radius: 3px;
+	font-size: 0.85em;
+	font-weight: 600;
+}
+
+.wp-csp-readiness-badge.status-pass {
+	background: #dafbe1;
+	border: 1px solid #a8d9b4;
+	color: #1a7f37;
+}
+
+.wp-csp-readiness-badge.status-warning {
+	background: #fff8c5;
+	border: 1px solid #e0c04c;
+	color: #735c0f;
+}
+
+.wp-csp-readiness-badge.status-fail {
+	background: #ffeef0;
+	border: 1px solid #f1aeb5;
+	color: #86181d;
+}
+
+.wp-csp-reset-form {
+	max-width: 760px;
+}

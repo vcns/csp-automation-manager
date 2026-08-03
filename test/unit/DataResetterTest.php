@@ -1,0 +1,53 @@
+<?php
+/**
+ * Unit tests for the administrative CSP data reset service.
+ */
+
+declare( strict_types=1 );
+
+use PHPUnit\Framework\TestCase;
+use WP_CSP\Activator;
+use WP_CSP\Admin\Data_Resetter;
+
+class DataResetterTest extends TestCase {
+
+	protected function setUp(): void {
+		wp_test_reset_globals();
+	}
+
+	public function test_reset_clears_plugin_tables_and_reseeds_defaults(): void {
+		$table_suffixes = Activator::get_table_suffixes();
+		$table_names    = array_map(
+			static fn ( string $suffix ): string => 'wp_' . $suffix,
+			$table_suffixes
+		);
+
+		$GLOBALS['_wpdb_get_var_queue'] = array_merge(
+			$table_names,
+			array( 'wp_csp_violation_reports' )
+		);
+		$GLOBALS['_wp_options']         = array(
+			'wp_csp_db_version'          => '7',
+			'wp_csp_report_endpoint_url' => 'https://public.example.com/wp-json/csp-manager/v1/report',
+		);
+		$GLOBALS['_wp_transients']      = array(
+			'wp_csp_remote_config'       => array( 'cached' => true ),
+			'wp_csp_conflict_probe_ran'  => 1,
+			'unrelated_plugin_transient' => 1,
+		);
+		$GLOBALS['_wp_cron']            = array( 'wp_csp_daily_scan' => time() + 3600 );
+
+		$result = ( new Data_Resetter() )->reset();
+
+		foreach ( $table_names as $table_name ) {
+			$this->assertContains( "DELETE FROM {$table_name}", $GLOBALS['_wpdb_queries'] );
+		}
+
+		$this->assertSame( $table_names, array_keys( $result['tables_cleared'] ) );
+		$this->assertSame( '', $GLOBALS['_wp_options']['wp_csp_report_endpoint_url'] );
+		$this->assertArrayNotHasKey( 'wp_csp_remote_config', $GLOBALS['_wp_transients'] );
+		$this->assertArrayHasKey( 'unrelated_plugin_transient', $GLOBALS['_wp_transients'] );
+		$this->assertArrayHasKey( 'wp_csp_daily_scan', $GLOBALS['_wp_cron'] );
+		$this->assertSame( WP_CSP_DB_VERSION, $GLOBALS['_wp_options']['wp_csp_db_version'] );
+	}
+}

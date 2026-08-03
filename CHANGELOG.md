@@ -6,6 +6,13 @@ The format is based on Keep a Changelog, and this project follows semantic versi
 
 ## [Unreleased]
 
+## [1.0.7] - 2026-08-03
+
+### Added
+
+- Readiness admin page with plugin-version, database-schema, table-row, reporting-endpoint, scheduled-scan, and default automation posture checks.
+- Installed Plugins Reset action linking to a destructive reset panel that requires current administrator password re-authentication and a typed confirmation before clearing CSP Automation Manager data.
+
 ## [1.0.6] - 2026-08-03
 
 ### Added
