@@ -4,7 +4,7 @@ Tags: security, csp, content security policy, headers, wordpress security
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.0.8
+Stable tag: 1.0.9
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -35,7 +35,14 @@ Data handled:
 
 Reports received by this plugin are validated and stored in this site's WordPress database. They are not sent to any external provider by default.
 
+For Cloudflare, CDN, and reverse-proxy deployments, administrators can configure an origin-only policy header name such as X-Origin-CSP-Policy. The proxy can then copy that origin header into the browser-facing Content-Security-Policy-Report-Only or Content-Security-Policy header.
+
 == Changelog ==
+
+= 1.0.9 =
+
+* Adds a configurable origin policy header name for Cloudflare, CDN, and reverse-proxy deployments that copy an origin header back to the browser-facing CSP header.
+* Adds schema self-healing so missing CSP tables are recreated even when the stored database version already matches the current schema version.
 
 = 1.0.8 =
 

@@ -24,6 +24,7 @@ class SchemaMigrationTest extends TestCase {
 		}
 
 		$this->assertSame( WP_CSP_DB_VERSION, get_option( 'wp_csp_db_version' ) );
+		$this->assertSame( WP_CSP_DB_VERSION, get_option( 'wp_csp_schema_verified_version' ) );
 	}
 
 	public function test_schema_v6_violation_rollup_columns_are_declared(): void {
@@ -62,6 +63,27 @@ class SchemaMigrationTest extends TestCase {
 		Activator::activate();
 
 		$this->assertSame( WP_CSP_DB_VERSION, get_option( 'wp_csp_db_version' ) );
+	}
+
+	public function test_missing_table_names_reports_absent_plugin_tables(): void {
+		$GLOBALS['_wpdb_get_var_queue'] = array(
+			'wp_csp_policy_profiles',
+			null,
+			'wp_csp_hash_inventory',
+			'wp_csp_violation_reports',
+			'wp_csp_scan_logs',
+			'wp_csp_entitlements',
+			'wp_csp_processed_events',
+			'wp_csp_audit_log',
+			'wp_csp_policy_change_decisions',
+			null,
+			'wp_csp_decision_rule_evaluations',
+		);
+
+		$this->assertSame(
+			array( 'wp_csp_source_inventory', 'wp_csp_policy_versions' ),
+			Activator::get_missing_table_names()
+		);
 	}
 
 	public static function legacy_schema_version_provider(): array {

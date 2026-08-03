@@ -50,7 +50,7 @@ Responsibilities:
 - construct shared services
 - register REST routes
 - register admin UI and CSP runtime hooks
-- run DB schema migrations via `maybe_upgrade_db()` on each boot when `WP_CSP_DB_VERSION` exceeds the stored option value
+- run DB schema migrations via `maybe_upgrade_db()` on each boot when `WP_CSP_DB_VERSION` exceeds the stored option value, when the current schema has not yet been verified, or when an admin request detects missing plugin tables
 - expose the central singleton used by cross-cutting helpers
 
 ### CSP runtime
@@ -61,7 +61,7 @@ Responsibilities:
 
 - create a per-request nonce (≥128-bit entropy from CSPRNG)
 - inject nonce attributes into script and style tags
-- build per-surface CSP headers (including `Reporting-Endpoints` and legacy `Report-To`)
+- build per-surface CSP headers (including `Reporting-Endpoints`, legacy `Report-To`, and optional origin-only policy header names for proxy deployments)
 - strip deprecated and forbidden directives from policy overrides at emit time
 - discover remote sources from crawled pages
 - record inline hashes
@@ -106,7 +106,7 @@ Responsibilities:
 
 1. WordPress loads the plugin file.
 2. The plugin singleton is initialized on `plugins_loaded`.
-3. `maybe_upgrade_db()` compares `WP_CSP_DB_VERSION` against the stored option; if the constant is higher, `Activator::activate()` is called and `dbDelta()` migrates the schema.
+3. `maybe_upgrade_db()` compares `WP_CSP_DB_VERSION` against the stored option and the schema verification marker; if either is stale, `Activator::activate()` is called and `dbDelta()` migrates or repairs the schema. Admin requests also check for missing plugin tables so a partially upgraded installation can self-heal.
 4. Shared services are instantiated.
 5. Hooks for admin UI, REST endpoints, nonce generation, CSP emission, cron, and conflict detection are registered.
 
@@ -125,7 +125,8 @@ Responsibilities:
 11. Two additional headers are emitted before the CSP header:
     - `Reporting-Endpoints: csp-endpoint="<report_uri>"` — Structured Fields Dictionary (RFC 9651); required for browsers to honour `report-to csp-endpoint` in the CSP
     - `Report-To: {"group":"csp-endpoint","max_age":86400,"endpoints":[{"url":"<report_uri>"}]}` — deprecated JSON format retained as a legacy fallback for pre-Reporting-API browsers
-12. The CSP or CSP-Report-Only header is emitted via `send_headers`.
+12. The policy header name is resolved from `wp_csp_policy_header_name`. Blank emits the normal mode-aware `Content-Security-Policy-Report-Only` or `Content-Security-Policy` header. A validated custom value emits the exact origin header name for a proxy to copy back into the browser-facing CSP header.
+13. The CSP or CSP-Report-Only policy value is emitted via `send_headers`.
 
 ### Conflict detection
 
@@ -183,7 +184,7 @@ Conflicts are warning-level audit events. The detector never removes or rewrites
 ### 7. Readiness and reset flow
 
 1. Administrators open **CSP Manager -> Readiness**.
-2. `Readiness_Checker` reports plugin version, installed schema version, expected custom tables, plugin-owned row counts, reporting endpoint validity, scheduled scan status, policy-profile presence, policy-version snapshot presence, and automation posture.
+2. `Readiness_Checker` reports plugin version, installed schema version, expected custom tables, plugin-owned row counts, reporting endpoint validity, policy header emission mode, scheduled scan status, policy-profile presence, policy-version snapshot presence, and automation posture.
 3. The Installed Plugins row exposes **Settings** and **Reset** action links; Reset opens the readiness page at the destructive reset panel.
 4. Reset requires `manage_options`, a valid WordPress nonce, the current logged-in administrator's password, and the typed phrase `RESET CSP DATA`.
 5. `Data_Resetter` clears rows from plugin-owned custom tables, deletes plugin-owned runtime options and transients, clears the plugin daily scan schedule, and then runs `Activator::activate()` to reseed default options, policy profiles, policy snapshots, and cron.

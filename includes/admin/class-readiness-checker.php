@@ -8,6 +8,7 @@ declare( strict_types=1 );
 namespace WP_CSP\Admin;
 
 use WP_CSP\Activator;
+use WP_CSP\CSP\Policy_Builder;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -116,6 +117,11 @@ class Readiness_Checker {
 				'status' => $this->is_valid_http_url( $report_endpoint ) ? 'pass' : 'fail',
 			),
 			array(
+				'label'  => __( 'Policy header emission', 'csp-automation-manager' ),
+				'value'  => $this->policy_header_summary(),
+				'status' => 'pass',
+			),
+			array(
 				'label'  => __( 'Daily scan schedule', 'csp-automation-manager' ),
 				'value'  => wp_next_scheduled( 'wp_csp_daily_scan' )
 					? __( 'Scheduled', 'csp-automation-manager' )
@@ -177,5 +183,23 @@ class Readiness_Checker {
 		}
 
 		return implode( ', ', $modes );
+	}
+
+	private function policy_header_summary(): string {
+		$custom = Policy_Builder::sanitize_custom_policy_header_name( get_option( 'wp_csp_policy_header_name', '' ) );
+		if ( '' !== $custom ) {
+			return sprintf(
+				/* translators: %s: custom policy header name */
+				__( 'Custom origin header: %s', 'csp-automation-manager' ),
+				$custom
+			);
+		}
+
+		return sprintf(
+			/* translators: 1: report-only header name, 2: enforce header name */
+			__( 'Mode based: %1$s or %2$s', 'csp-automation-manager' ),
+			Policy_Builder::DEFAULT_REPORT_ONLY_HEADER,
+			Policy_Builder::DEFAULT_ENFORCE_HEADER
+		);
 	}
 }

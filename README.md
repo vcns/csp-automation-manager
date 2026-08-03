@@ -10,6 +10,7 @@ It provides per-surface CSP profiles, nonce injection, source discovery, violati
 - Strict defaults across CSP directives, including `upgrade-insecure-requests`, `child-src`, `fenced-frame-src`, and the `sandbox` document directive
 - `report-sample` support in fetch directives so inline snippets can appear in violation reports
 - `Reporting-Endpoints` and legacy `Report-To` headers emitted alongside CSP
+- Configurable origin policy header name for Cloudflare, CDN, and reverse-proxy deployments
 - Per-request nonce injection for compatible WordPress script output
 - Report-only rollout mode
 - CSP violation reporting endpoint with content-type and origin checks
@@ -81,6 +82,8 @@ By default, the plugin emits CSP reporting headers that point browsers back to t
 - `/wp-json/csp-manager/v1/report`
 
 Administrators may override the reporting server URL when the public HTTPS endpoint differs from the WordPress-detected site URL, such as behind a proxy, CDN, or load balancer. If the override points to another host, browsers will send CSP reports to that configured endpoint; local report learning only works when the URL routes back to this plugin's report endpoint.
+
+Administrators may also configure an origin-only policy header name, such as `X-Origin-CSP-Policy`, when a proxy needs to copy the WordPress-generated policy into the browser-facing `Content-Security-Policy-Report-Only` or `Content-Security-Policy` header. Leaving the setting blank preserves the normal mode-aware CSP header names. Custom names are validated as HTTP header field names and unsafe hop-by-hop or cookie headers are rejected.
 
 Browser-submitted CSP violation reports received by this plugin are validated and stored in the local WordPress database. They are not sent to any external provider by default.
 

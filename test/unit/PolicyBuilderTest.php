@@ -183,6 +183,42 @@ class PolicyBuilderTest extends TestCase {
 		$this->assertStringContainsString( 'report-to csp-endpoint', $policy );
 	}
 
+	public function test_policy_header_name_defaults_to_report_only_header(): void {
+		$this->assertSame(
+			'Content-Security-Policy-Report-Only',
+			$this->builder->get_policy_header_name( true )
+		);
+	}
+
+	public function test_policy_header_name_defaults_to_enforce_header(): void {
+		$this->assertSame(
+			'Content-Security-Policy',
+			$this->builder->get_policy_header_name( false )
+		);
+	}
+
+	public function test_policy_header_name_uses_custom_origin_header(): void {
+		update_option( 'wp_csp_policy_header_name', 'X-Origin-CSP-Policy' );
+
+		$this->assertSame( 'X-Origin-CSP-Policy', $this->builder->get_policy_header_name( true ) );
+		$this->assertSame( 'X-Origin-CSP-Policy', $this->builder->get_policy_header_name( false ) );
+	}
+
+	public function test_policy_header_name_ignores_invalid_custom_header(): void {
+		update_option( 'wp_csp_policy_header_name', "X-Bad:\r\nInjected" );
+
+		$this->assertSame(
+			'Content-Security-Policy-Report-Only',
+			$this->builder->get_policy_header_name( true )
+		);
+	}
+
+	public function test_policy_header_name_rejects_blocked_headers(): void {
+		update_option( 'wp_csp_policy_header_name', 'Set-Cookie' );
+
+		$this->assertSame( 'Content-Security-Policy', $this->builder->get_policy_header_name( false ) );
+	}
+
 	// ── CSP header output format ──────────────────────────────────────────────
 
 	public function test_build_output_has_semicolon_separated_directive_format(): void {

@@ -76,8 +76,14 @@ final class Plugin {
 
 	private function maybe_upgrade_db(): void {
 		$installed = (int) get_option( 'wp_csp_db_version', 0 );
-		if ( $installed < (int) WP_CSP_DB_VERSION ) {
+		$verified  = (string) get_option( 'wp_csp_schema_verified_version', '' );
+		if (
+			$installed < (int) WP_CSP_DB_VERSION
+			|| (string) WP_CSP_DB_VERSION !== $verified
+			|| ( is_admin() && ! empty( Activator::get_missing_table_names() ) )
+		) {
 			Activator::activate();
+			Activator::mark_schema_verified();
 		}
 	}
 

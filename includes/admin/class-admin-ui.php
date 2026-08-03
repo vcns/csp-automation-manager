@@ -17,6 +17,7 @@ declare( strict_types=1 );
 namespace WP_CSP\Admin;
 
 use WP_CSP\Plugin;
+use WP_CSP\CSP\Policy_Builder;
 use WP_CSP\CSP\Policy_Change_Manager;
 use WP_CSP\CSP\Policy_Version_Manager;
 use WP_CSP\CSP\Scheduler;
@@ -112,6 +113,7 @@ class Admin_UI {
 			'wp_csp_enforce_gate_violation_window' => 'absint',
 			'wp_csp_learning_window_hours'         => 'absint',
 			'wp_csp_report_endpoint_url'           => array( $this, 'sanitize_report_endpoint_url' ),
+			'wp_csp_policy_header_name'            => array( $this, 'sanitize_policy_header_name' ),
 			// Data retention: days to keep violation reports (0 = keep forever).
 			'wp_csp_violation_retention_days'      => 'absint',
 		);
@@ -176,6 +178,10 @@ class Admin_UI {
 		}
 
 		return $url;
+	}
+
+	public function sanitize_policy_header_name( mixed $header_name ): string {
+		return Policy_Builder::sanitize_custom_policy_header_name( $header_name );
 	}
 
 	// ── Asset enqueue ─────────────────────────────────────────────────────────

@@ -54,6 +54,18 @@ class AdminUITest extends TestCase {
 		$this->assertSame( $original, $links );
 	}
 
+	public function test_sanitize_policy_header_name_accepts_origin_header(): void {
+		$ui = $this->make_admin_ui();
+
+		$this->assertSame( 'X-Origin-CSP-Policy', $ui->sanitize_policy_header_name( 'X-Origin-CSP-Policy' ) );
+	}
+
+	public function test_sanitize_policy_header_name_rejects_header_injection(): void {
+		$ui = $this->make_admin_ui();
+
+		$this->assertSame( '', $ui->sanitize_policy_header_name( "X-Origin-CSP\r\nContent-Length" ) );
+	}
+
 	private function make_admin_ui(): Admin_UI {
 		$reflection = new ReflectionClass( Plugin::class );
 

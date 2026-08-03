@@ -6,6 +6,16 @@ The format is based on Keep a Changelog, and this project follows semantic versi
 
 ## [Unreleased]
 
+## [1.0.9] - 2026-08-03
+
+### Added
+
+- Configurable origin policy header name for Cloudflare, CDN, and reverse-proxy deployments that copy an origin header back to the browser-facing CSP header.
+
+### Fixed
+
+- Schema self-healing now recreates missing plugin tables even when the stored database schema version already matches the current code schema.
+
 ## [1.0.8] - 2026-08-03
 
 ### Changed

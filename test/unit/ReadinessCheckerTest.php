@@ -28,13 +28,14 @@ class ReadinessCheckerTest extends TestCase {
 
 		$GLOBALS['_wpdb_get_var_queue'] = $get_var_queue;
 		$GLOBALS['_wp_options']         = array(
-			'wp_csp_db_version'        => WP_CSP_DB_VERSION,
-			'wp_csp_automation_config' => array(
+			'wp_csp_db_version'         => WP_CSP_DB_VERSION,
+			'wp_csp_automation_config'  => array(
 				'frontend' => array( 'mode' => 'manual' ),
 				'admin'    => array( 'mode' => 'manual' ),
 				'login'    => array( 'mode' => 'manual' ),
 				'api'      => array( 'mode' => 'manual' ),
 			),
+			'wp_csp_policy_header_name' => 'X-Origin-CSP-Policy',
 		);
 		$GLOBALS['_wp_cron']            = array( 'wp_csp_daily_scan' => time() + 3600 );
 
@@ -47,5 +48,6 @@ class ReadinessCheckerTest extends TestCase {
 		$this->assertSame( 'pass', $report['plugin'][1]['status'] );
 		$this->assertSame( 'pass', $report['schema'][0]['status'] );
 		$this->assertSame( 'pass', $report['health'][0]['status'] );
+		$this->assertStringContainsString( 'X-Origin-CSP-Policy', $report['health'][3]['value'] );
 	}
 }

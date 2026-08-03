@@ -45,6 +45,8 @@ $options = array(
 	'wp_csp_notify_email',
 	'wp_csp_violation_retention_days',
 	'wp_csp_learning_window_hours',
+	'wp_csp_policy_header_name',
+	'wp_csp_schema_verified_version',
 	'wp_csp_last_material_change_at',
 	'wp_csp_automation_config',
 	'wp_csp_admin_notices',
