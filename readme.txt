@@ -4,7 +4,7 @@ Tags: security, csp, content security policy, headers, wordpress security
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.0.5
+Stable tag: 1.0.6
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -36,6 +36,13 @@ Data handled:
 Reports received by this plugin are validated and stored in this site's WordPress database. They are not sent to any external provider by default.
 
 == Changelog ==
+
+= 1.0.6 =
+
+* Adds CSP conflict detection for existing `.htaccess`, server, and security-header-plugin CSP emitters.
+* Requires administrator reasons for source approval, rejection, reversion, and undo decisions.
+* Adds undo support for approved and rejected source decisions without rewriting history.
+* Adds dashboard tab guidance, configurable reporting server URL support, and an Installed Plugins Settings link.
 
 = 1.0.5 =
 

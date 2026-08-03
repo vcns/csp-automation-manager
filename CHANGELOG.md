@@ -6,6 +6,8 @@ The format is based on Keep a Changelog, and this project follows semantic versi
 
 ## [Unreleased]
 
+## [1.0.6] - 2026-08-03
+
 ### Added
 
 - CSP conflict detection now scans `.htaccess` Header directives and treats any CSP still present during the internal probe as a likely web-server or security-header-plugin conflict.
