@@ -6,6 +6,12 @@ The format is based on Keep a Changelog, and this project follows semantic versi
 
 ## [Unreleased]
 
+## [1.0.11] - 2026-08-03
+
+### Fixed
+
+- CSP surface detection is now path-aware so `wp-admin` URLs that produce redirects or 404 responses still use the admin surface configuration.
+
 ## [1.0.10] - 2026-08-03
 
 ### Changed
