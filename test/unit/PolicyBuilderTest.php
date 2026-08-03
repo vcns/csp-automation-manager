@@ -32,6 +32,24 @@ class PolicyBuilderTest extends TestCase {
 		$this->assertSame( 2, $GLOBALS['_wp_actions']['wp_redirect'][0][2] );
 	}
 
+	public function test_detect_surface_uses_admin_path_for_admin_404s(): void {
+		$_SERVER['REQUEST_URI'] = '/wp-admin/wp-login.php';
+
+		$this->assertSame( 'admin', $this->detect_surface() );
+	}
+
+	public function test_detect_surface_uses_login_path_for_login_page(): void {
+		$_SERVER['REQUEST_URI'] = '/wp-login.php?redirect_to=https%3A%2F%2Fexample.com%2Fwp-admin%2F';
+
+		$this->assertSame( 'login', $this->detect_surface() );
+	}
+
+	public function test_detect_surface_supports_subdirectory_admin_paths(): void {
+		$_SERVER['REQUEST_URI'] = '/wordpress/wp-admin/edit.php';
+
+		$this->assertSame( 'admin', $this->detect_surface() );
+	}
+
 	// ── default-src ───────────────────────────────────────────────────────────
 
 	public function test_build_includes_default_src_none(): void {
@@ -299,6 +317,12 @@ class PolicyBuilderTest extends TestCase {
 			'overrides'      => wp_json_encode( [] ),
 			'strict_dynamic' => $strict_dynamic ? 1 : 0,
 		];
+	}
+
+	private function detect_surface(): string {
+		$method = new ReflectionMethod( Policy_Builder::class, 'detect_surface' );
+		$method->setAccessible( true );
+		return (string) $method->invoke( $this->builder );
 	}
 
 	private function make_profile_raw( string $directives_json, string $overrides_json ): array {

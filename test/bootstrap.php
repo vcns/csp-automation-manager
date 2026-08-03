@@ -13,7 +13,7 @@ declare( strict_types=1 );
 
 // ── Plugin constants ──────────────────────────────────────────────────────────
 define( 'ABSPATH',               __DIR__ . '/' );
-define( 'WP_CSP_VERSION',        '1.0.10' );
+define( 'WP_CSP_VERSION',        '1.0.11' );
 define( 'WP_CSP_DB_VERSION',     '7' );
 define( 'WP_CSP_FILE',           dirname( __DIR__ ) . '/csp-automation-manager.php' );
 define( 'WP_CSP_DIR',            dirname( __DIR__ ) . '/' );
@@ -166,6 +166,12 @@ if ( ! function_exists( 'wp_json_encode' ) ) {
 if ( ! function_exists( 'wp_parse_url' ) ) {
 	function wp_parse_url( string $url, int $component = -1 ): mixed {
 		return parse_url( $url, $component );
+	}
+}
+
+if ( ! function_exists( 'wp_unslash' ) ) {
+	function wp_unslash( mixed $value ): mixed {
+		return is_string( $value ) ? stripslashes( $value ) : $value;
 	}
 }
 
@@ -524,6 +530,7 @@ function wp_test_reset_globals(): void {
 	$GLOBALS['_wpdb_inserted_rows']      = [];
 	$GLOBALS['_wpdb_updated_rows']       = [];
 	$GLOBALS['_dbdelta_queries']         = [];
+	unset( $_SERVER['REQUEST_URI'] );
 	unset( $_SERVER['HTTP_X_WP_CSP_PROBE'] );
 }
 

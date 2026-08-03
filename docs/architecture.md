@@ -114,7 +114,7 @@ Responsibilities:
 
 1. `Nonce_Manager` generates a random nonce early in the request lifecycle.
 2. Script and inline-script attributes receive the nonce through WordPress 6.4+ hooks, with legacy fallback filters for broader compatibility.
-3. `Policy_Builder` identifies the current surface: `frontend`, `admin`, `login`, or `api`.
+3. `Policy_Builder` identifies the current surface: `frontend`, `admin`, `login`, or `api`. REST requests use the API surface, `wp-admin` request paths use the admin surface even on redirects or 404 responses, and `wp-login.php` paths use the login surface.
 4. The relevant profile is loaded from the database.
 5. Approved sources and active hashes are merged into the directive set.
 6. Forbidden or deprecated directives (`plugin-types`, `block-all-mixed-content`, `navigate-to`, `prefetch-src`) are stripped from overrides; any stripped directive is logged to `csp_audit_log` at `warning` severity.
