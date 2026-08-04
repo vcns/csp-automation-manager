@@ -47,6 +47,15 @@ class SchemaMigrationTest extends TestCase {
 		$this->assertStringContainsString( 'KEY suppression_active (suppression_active)', $schema );
 	}
 
+	public function test_policy_versions_schema_uses_safe_trigger_lookup_index_name(): void {
+		Activator::activate();
+
+		$schema = implode( "\n\n", $GLOBALS['_dbdelta_queries'] );
+
+		$this->assertStringContainsString( 'KEY trigger_lookup (trigger_type, trigger_id)', $schema );
+		$this->assertStringNotContainsString( 'KEY trigger (trigger_type, trigger_id)', $schema );
+	}
+
 	/**
 	 * @dataProvider legacy_schema_version_provider
 	 */
@@ -84,6 +93,17 @@ class SchemaMigrationTest extends TestCase {
 			array( 'wp_csp_source_inventory', 'wp_csp_policy_versions' ),
 			Activator::get_missing_table_names()
 		);
+	}
+
+	public function test_initial_policy_version_seed_stops_when_table_is_missing(): void {
+		$GLOBALS['_wpdb_get_var_queue'] = array( null );
+
+		$method = new ReflectionMethod( Activator::class, 'seed_initial_policy_versions' );
+		$method->setAccessible( true );
+		$method->invoke( null );
+
+		$this->assertSame( array(), $GLOBALS['_wpdb_inserted_rows'] );
+		$this->assertSame( array(), $GLOBALS['_wpdb_queries'] );
 	}
 
 	public static function legacy_schema_version_provider(): array {

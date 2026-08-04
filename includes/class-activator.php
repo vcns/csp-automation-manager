@@ -33,8 +33,7 @@ class Activator {
 		$missing = array();
 		foreach ( self::get_table_suffixes() as $suffix ) {
 			$table = $wpdb->prefix . $suffix;
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
-			if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) ) !== $table ) {
+			if ( ! self::table_exists( $table ) ) {
 				$missing[] = $table;
 			}
 		}
@@ -354,7 +353,7 @@ class Activator {
   UNIQUE KEY surface_version (surface, version_number),
   KEY surface (surface),
   KEY previous_version_id (previous_version_id),
-  KEY trigger (trigger_type, trigger_id),
+  KEY trigger_lookup (trigger_type, trigger_id),
   KEY created_at (created_at)
 ) {$cc};"
 		);
@@ -559,6 +558,10 @@ class Activator {
 		$table   = $wpdb->prefix . 'csp_policy_versions';
 		$manager = new \WP_CSP\CSP\Policy_Version_Manager();
 
+		if ( ! self::table_exists( $table ) ) {
+			return;
+		}
+
 		foreach ( array( 'frontend', 'admin', 'login', 'api' ) as $surface ) {
 			$exists = $wpdb->get_var(
 				$wpdb->prepare(
@@ -572,6 +575,13 @@ class Activator {
 				$manager->capture_snapshot( $surface, 'system_migration', 0 );
 			}
 		}
+	}
+
+	private static function table_exists( string $table ): bool {
+		global $wpdb;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
+		return $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $table ) ) === $table;
 	}
 
 	private static function default_directives( string $surface ): array {

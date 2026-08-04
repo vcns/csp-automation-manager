@@ -201,6 +201,24 @@ class PolicyBuilderTest extends TestCase {
 		$this->assertStringNotContainsString( 'javascript:', $policy );
 	}
 
+	public function test_build_uses_home_url_report_endpoint_before_init(): void {
+		$GLOBALS['_wp_rest_url_should_throw'] = true;
+		$profile = $this->make_profile( [ 'default-src' => [ "'none'" ] ] );
+
+		$policy = $this->builder->build_policy_string( $profile, 'frontend' );
+
+		$this->assertStringContainsString( 'report-uri https://example.com/wp-json/csp-manager/v1/report', $policy );
+	}
+
+	public function test_build_uses_rest_url_report_endpoint_after_init(): void {
+		$GLOBALS['_wp_did_actions']['init'] = 1;
+		$profile = $this->make_profile( [ 'default-src' => [ "'none'" ] ] );
+
+		$policy = $this->builder->build_policy_string( $profile, 'frontend' );
+
+		$this->assertStringContainsString( 'report-uri https://example.com/wp-json/csp-manager/v1/report', $policy );
+	}
+
 	public function test_build_appends_report_to(): void {
 		$profile = $this->make_profile( [ 'default-src' => [ "'none'" ] ] );
 

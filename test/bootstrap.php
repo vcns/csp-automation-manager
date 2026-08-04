@@ -13,7 +13,7 @@ declare( strict_types=1 );
 
 // ── Plugin constants ──────────────────────────────────────────────────────────
 define( 'ABSPATH',               __DIR__ . '/' );
-define( 'WP_CSP_VERSION',        '1.0.12' );
+define( 'WP_CSP_VERSION',        '1.0.13' );
 define( 'WP_CSP_DB_VERSION',     '7' );
 define( 'WP_CSP_FILE',           dirname( __DIR__ ) . '/csp-automation-manager.php' );
 define( 'WP_CSP_DIR',            dirname( __DIR__ ) . '/' );
@@ -225,6 +225,10 @@ if ( ! function_exists( 'is_wp_error' ) ) {
 
 if ( ! function_exists( 'rest_url' ) ) {
 	function rest_url( string $path = '' ): string {
+		if ( ! empty( $GLOBALS['_wp_rest_url_should_throw'] ) ) {
+			throw new RuntimeException( 'rest_url called before REST routing is available.' );
+		}
+
 		return 'https://example.com/wp-json/' . ltrim( $path, '/' );
 	}
 }
@@ -269,6 +273,12 @@ if ( ! function_exists( 'add_action' ) ) {
 if ( ! function_exists( 'add_filter' ) ) {
 	function add_filter( string $hook, callable $callback, int $priority = 10, int $accepted_args = 1 ): bool {
 		return add_action( $hook, $callback, $priority, $accepted_args );
+	}
+}
+
+if ( ! function_exists( 'did_action' ) ) {
+	function did_action( string $hook ): int {
+		return (int) ( $GLOBALS['_wp_did_actions'][ $hook ] ?? 0 );
 	}
 }
 
@@ -506,6 +516,9 @@ function wp_test_reset_globals(): void {
 	$GLOBALS['_wp_options']              = [];
 	$GLOBALS['_wp_transients']           = [];
 	$GLOBALS['_wp_actions']              = [];
+	$GLOBALS['_wp_did_actions']          = [];
+	$GLOBALS['_wp_rest_url_should_throw'] = false;
+
 	$GLOBALS['_wp_remote_get_response']  = null;
 	$GLOBALS['_wp_remote_get_requests']  = [];
 	$GLOBALS['_wp_remote_head_response'] = null;

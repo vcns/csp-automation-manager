@@ -24,7 +24,11 @@ class DataResetterTest extends TestCase {
 
 		$GLOBALS['_wpdb_get_var_queue'] = array_merge(
 			$table_names,
-			array_fill( 0, 8, '1' )
+			array( 'wp_csp_violation_reports' ),
+			array_fill( 0, 4, '1' ),
+			array( 'wp_csp_policy_versions' ),
+			array_fill( 0, 4, '1' ),
+			array( 'wp_csp_policy_profiles' )
 		);
 		$GLOBALS['_wpdb_get_var']       = 'wp_csp_policy_profiles';
 		$GLOBALS['_wp_options']         = array(
