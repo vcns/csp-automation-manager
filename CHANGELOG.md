@@ -6,6 +6,14 @@ The format is based on Keep a Changelog, and this project follows semantic versi
 
 ## [Unreleased]
 
+## [1.0.24] - 2026-08-04
+
+### Changed
+
+- Learned same-origin browser file violations as reviewable `'self'` proposals instead of discarding them before review.
+- Applied the existing same-origin-as-low automation setting to deterministic risk scoring.
+- Clarified that browser violations are evidence and only appear as recent audit decisions after approval, rejection, reversal, undo, or automation.
+
 ## [1.0.23] - 2026-08-04
 
 ### Changed

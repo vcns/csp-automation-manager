@@ -169,6 +169,28 @@ class ViolationReporterTest extends TestCase {
 		$this->assertSame( 'report-endpoint', $source_insert['owner_component'] );
 	}
 
+	public function test_report_endpoint_learning_creates_self_candidate_for_same_origin_file(): void {
+		update_option( Learning_Window::OPTION_LAST_CHANGE, gmdate( 'Y-m-d H:i:s' ) );
+		update_option( Learning_Window::OPTION_WINDOW_HOURS, 48 );
+		$GLOBALS['_wp_rest_headers']['content-type'] = 'application/csp-report';
+
+		$reporter = new Violation_Reporter( $this->audit, new Learning_Window() );
+		$request  = $this->make_request(
+			'{"csp-report":{"effective-directive":"media-src","violated-directive":"media-src","document-uri":"https://example.com/","blocked-uri":"https://example.com/wp-content/uploads/video.mp4"}}'
+		);
+
+		$reporter->handle( $request );
+
+		$this->assertCount( 1, $GLOBALS['_wpdb_inserted_rows'] );
+		$source_insert = $GLOBALS['_wpdb_inserted_rows'][0]['data'];
+		$this->assertSame( 'frontend', $source_insert['surface'] );
+		$this->assertSame( 'media-src', $source_insert['directive'] );
+		$this->assertSame( "'self'", $source_insert['source_host'] );
+		$this->assertSame( 'https', $source_insert['source_scheme'] );
+		$this->assertSame( 'low', $source_insert['risk_level'] );
+		$this->assertSame( 'pending', $source_insert['approval_state'] );
+	}
+
 	public function test_report_endpoint_learning_is_locked_after_window_expires(): void {
 		update_option( Learning_Window::OPTION_LAST_CHANGE, gmdate( 'Y-m-d H:i:s', time() - ( 49 * HOUR_IN_SECONDS ) ) );
 		update_option( Learning_Window::OPTION_WINDOW_HOURS, 48 );

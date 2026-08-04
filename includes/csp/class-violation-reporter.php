@@ -310,7 +310,12 @@ class Violation_Reporter {
 		$host      = strtolower( $parsed['host'] );
 		$site_host = wp_parse_url( home_url(), PHP_URL_HOST );
 		if ( ! empty( $site_host ) && strtolower( (string) $site_host ) === $host ) {
-			return null;
+			return array(
+				'directive' => $directive,
+				'uri'       => esc_url_raw( $blocked_uri ),
+				'scheme'    => $scheme,
+				'host'      => "'self'",
+			);
 		}
 
 		return array(

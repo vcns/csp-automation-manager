@@ -27,7 +27,7 @@ $is_embedded       = ! empty( $wp_csp_settings_embedded );
 	<?php else : ?>
 	<h1><?php esc_html_e( 'CSP Policy Audit', 'csp-automation-manager' ); ?></h1>
 	<?php endif; ?>
-	<p><?php esc_html_e( 'Inspect effective policies, decision provenance, pending review items, and policy version history.', 'csp-automation-manager' ); ?></p>
+	<p><?php esc_html_e( 'Inspect effective policies, decision provenance, pending review items, and policy version history. Browser violation reports are evidence; they appear here as pending review items when they create a policy source proposal, and as recent decisions only after an administrator or the automation engine approves, rejects, reverts, or undoes that proposal.', 'csp-automation-manager' ); ?></p>
 
 	<h2><?php esc_html_e( 'Current Policy', 'csp-automation-manager' ); ?></h2>
 	<table class="widefat striped wp-csp-audit-table">

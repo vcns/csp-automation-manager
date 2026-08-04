@@ -249,7 +249,10 @@ class Policy_Change_Manager {
 				'source_uri'     => $uri,
 				'evidence_count' => 1,
 			),
-			array( 'mode' => 'manual' )
+			array(
+				'mode'                     => 'manual',
+				'treat_same_origin_as_low' => true,
+			)
 		);
 
 		return array(
