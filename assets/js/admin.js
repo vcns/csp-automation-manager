@@ -60,6 +60,46 @@
 		} );
 	} );
 
+	$( '.wp-csp-automation-mode' ).on( 'change', function () {
+		const $select = $( this );
+		const surface = $select.data( 'surface' );
+		const mode    = $select.val();
+		const previous = $select.data( 'previous' ) || '';
+
+		$select.prop( 'disabled', true );
+
+		$.post( wpCspAdmin.ajaxUrl, {
+			action:  'wp_csp_set_automation_mode',
+			nonce:   wpCspAdmin.nonce,
+			surface: surface,
+			mode:    mode,
+		} )
+		.done( function ( res ) {
+			if ( res.success ) {
+				$select.data( 'previous', mode );
+				return;
+			}
+
+			if ( previous !== '' ) {
+				$select.val( previous );
+			}
+			// eslint-disable-next-line no-alert
+			alert( res.data.message || 'Failed to switch automation mode.' );
+		} )
+		.fail( function () {
+			if ( previous !== '' ) {
+				$select.val( previous );
+			}
+			// eslint-disable-next-line no-alert
+			alert( 'Failed to switch automation mode.' );
+		} )
+		.always( function () {
+			$select.prop( 'disabled', false );
+		} );
+	} ).each( function () {
+		$( this ).data( 'previous', $( this ).val() );
+	} );
+
 	function requiredReason( promptText ) {
 		const reason = window.prompt( promptText, '' );
 		if ( reason === null ) {

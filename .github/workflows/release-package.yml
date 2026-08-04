@@ -35,6 +35,7 @@ jobs:
       is_prerelease: ${{ steps.release_meta.outputs.is_prerelease }}
       version: ${{ steps.release_meta.outputs.version }}
       zip_filename: ${{ steps.build.outputs.zip_filename }}
+      github_zip_filename: ${{ steps.build.outputs.github_zip_filename }}
 
     steps:
       - name: Checkout repository
@@ -152,42 +153,91 @@ jobs:
           VERSION="${{ steps.release_meta.outputs.version }}"
           TAG="${{ steps.release_meta.outputs.tag }}"
           ZIP_FILENAME="csp-automation-manager-${TAG}.zip"
+          GITHUB_ZIP_FILENAME="csp-automation-manager-github-${TAG}.zip"
 
           rm -rf dist
-          mkdir -p dist/csp-automation-manager
+          mkdir -p dist/wporg/csp-automation-manager dist/github/csp-automation-manager
 
-          rsync -a --delete --exclude-from='.distignore' ./ dist/csp-automation-manager/
+          rsync -a --delete --exclude-from='.distignore' ./ dist/wporg/csp-automation-manager/
+          rsync -a --delete --exclude-from='.distignore' ./ dist/github/csp-automation-manager/
+
+          rm -f dist/wporg/csp-automation-manager/includes/modules/class-github-update-checker.php
+
+          cat > dist/github/csp-automation-manager/includes/build-channel.php <<'PHP'
+          <?php
+          /**
+           * Generated build-channel marker for the GitHub release ZIP.
+           */
+
+          declare( strict_types=1 );
+
+          if ( ! defined( 'ABSPATH' ) ) {
+            exit;
+          }
+
+          if ( ! defined( 'WP_CSP_DISTRIBUTION_CHANNEL' ) ) {
+            define( 'WP_CSP_DISTRIBUTION_CHANNEL', 'github' );
+          }
+          PHP
+
+          python3 - <<'PY'
+          from pathlib import Path
+          plugin = Path("dist/github/csp-automation-manager/csp-automation-manager.php")
+          contents = plugin.read_text()
+          marker = " * Plugin URI:        https://github.com/vcns/csp-automation-manager\n"
+          update = " * Update URI:        https://github.com/vcns/csp-automation-manager\n"
+          if update not in contents:
+              contents = contents.replace(marker, marker + update, 1)
+          plugin.write_text(contents)
+          PY
 
           COMMIT_TIMESTAMP="$(git log -1 --format=%ct)"
-          find dist/csp-automation-manager -exec touch -h -d "@${COMMIT_TIMESTAMP}" {} +
+          find dist/wporg/csp-automation-manager dist/github/csp-automation-manager -exec touch -h -d "@${COMMIT_TIMESTAMP}" {} +
 
-          cd dist
-          find csp-automation-manager -type f -print | LC_ALL=C sort | zip -q -X "${ZIP_FILENAME}" -@
-          cd ..
+          ( cd dist/wporg && find csp-automation-manager -type f -print | LC_ALL=C sort | zip -q -X "../${ZIP_FILENAME}" -@ )
+          ( cd dist/github && find csp-automation-manager -type f -print | LC_ALL=C sort | zip -q -X "../${GITHUB_ZIP_FILENAME}" -@ )
 
           echo "zip_filename=${ZIP_FILENAME}" >> "${GITHUB_OUTPUT}"
+          echo "github_zip_filename=${GITHUB_ZIP_FILENAME}" >> "${GITHUB_OUTPUT}"
 
       - name: Verify ZIP structure
         shell: bash
         run: |
           set -euo pipefail
 
-          ZIP="dist/${{ steps.build.outputs.zip_filename }}"
+          WPORG_ZIP="dist/${{ steps.build.outputs.zip_filename }}"
+          GITHUB_ZIP="dist/${{ steps.build.outputs.github_zip_filename }}"
 
-          unzip -l "${ZIP}" | grep -q 'csp-automation-manager/csp-automation-manager.php'
-          unzip -l "${ZIP}" | grep -q 'csp-automation-manager/uninstall.php'
-          unzip -l "${ZIP}" | grep -q 'csp-automation-manager/languages/index.php'
+          for ZIP in "${WPORG_ZIP}" "${GITHUB_ZIP}"; do
+            unzip -l "${ZIP}" | grep -q 'csp-automation-manager/csp-automation-manager.php'
+            unzip -l "${ZIP}" | grep -q 'csp-automation-manager/uninstall.php'
+            unzip -l "${ZIP}" | grep -q 'csp-automation-manager/languages/index.php'
+          done
 
-          if unzip -l "${ZIP}" | grep -E 'csp-automation-manager/(\.git|\.github|\.private_key|\.public_key|\.phpunit\.cache|cloudflare|docs|node_modules|offline|test|tools|vendor)/|csp-automation-manager/(\.distignore|\.git|code-review-findings\.json|COMMERCIAL_TERMS\.md|README\.md|RESEARCH\.md|SPECIFICATION\.md|TRADEMARK_POLICY\.md)$'; then
-            echo "Release ZIP contains development, private, documentation, or generated-only paths. Check .distignore." >&2
+          if unzip -l "${WPORG_ZIP}" | grep -E 'class-github-update-checker\.php|includes/build-channel\.php'; then
+            echo "WordPress.org ZIP contains GitHub-channel updater files." >&2
             exit 1
           fi
+          if unzip -p "${WPORG_ZIP}" csp-automation-manager/csp-automation-manager.php | grep -q 'Update URI:'; then
+            echo "WordPress.org ZIP must not include the GitHub Update URI header." >&2
+            exit 1
+          fi
+          unzip -l "${GITHUB_ZIP}" | grep -q 'csp-automation-manager/includes/modules/class-github-update-checker.php'
+          unzip -l "${GITHUB_ZIP}" | grep -q 'csp-automation-manager/includes/build-channel.php'
+          unzip -p "${GITHUB_ZIP}" csp-automation-manager/csp-automation-manager.php | grep -q 'Update URI:'
+
+          for ZIP in "${WPORG_ZIP}" "${GITHUB_ZIP}"; do
+            if unzip -l "${ZIP}" | grep -E 'csp-automation-manager/(\.git|\.github|\.private_key|\.public_key|\.phpunit\.cache|cloudflare|docs|node_modules|offline|test|tools|vendor)/|csp-automation-manager/(\.distignore|\.git|code-review-findings\.json|COMMERCIAL_TERMS\.md|README\.md|RESEARCH\.md|SPECIFICATION\.md|TRADEMARK_POLICY\.md)$'; then
+              echo "Release ZIP contains development, private, documentation, or generated-only paths. Check .distignore." >&2
+              exit 1
+            fi
+          done
 
       - name: Upload ZIP artifact
         uses: actions/upload-artifact@v7
         with:
           name: csp-automation-manager-release-zip
-          path: dist/${{ steps.build.outputs.zip_filename }}
+          path: dist/*.zip
           retention-days: 30
 
   release:
@@ -214,6 +264,7 @@ jobs:
 
           TAG="${GITHUB_REF_NAME}"
           ZIP_FILENAME="${{ needs.build.outputs.zip_filename }}"
+          GITHUB_ZIP_FILENAME="${{ needs.build.outputs.github_zip_filename }}"
 
           PRERELEASE_FLAG=""
           if [[ "${{ needs.build.outputs.is_prerelease }}" == "true" ]]; then
@@ -221,12 +272,132 @@ jobs:
           fi
 
           if gh release view "${TAG}" --repo "${GITHUB_REPOSITORY}" >/dev/null 2>&1; then
-            gh release upload "${TAG}" "dist/${ZIP_FILENAME}" --repo "${GITHUB_REPOSITORY}" --clobber
+            gh release upload "${TAG}" "dist/${ZIP_FILENAME}" "dist/${GITHUB_ZIP_FILENAME}" --repo "${GITHUB_REPOSITORY}" --clobber
           else
             gh release create "${TAG}" \
               --repo "${GITHUB_REPOSITORY}" \
               --title "CSP Automation Manager ${TAG}" \
               --generate-notes \
               ${PRERELEASE_FLAG} \
-              "dist/${ZIP_FILENAME}"
+              "dist/${ZIP_FILENAME}" \
+              "dist/${GITHUB_ZIP_FILENAME}"
           fi
+
+  update-feed:
+    name: Publish GitHub-channel update feed
+    needs:
+      - build
+      - release
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v') && needs.build.outputs.is_prerelease == 'false'
+
+    steps:
+      - name: Download release artifacts
+        uses: actions/download-artifact@v8
+        with:
+          name: csp-automation-manager-release-zip
+          path: dist/
+
+      - name: Prepare update feed
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          TAG="${GITHUB_REF_NAME}"
+          VERSION="${TAG#v}"
+          GITHUB_ZIP_FILENAME="${{ needs.build.outputs.github_zip_filename }}"
+          FEED_DIR="/tmp/pages"
+          LAST_UPDATED="$(date -u +%Y-%m-%d)"
+
+          mkdir -p "${FEED_DIR}"
+          cp "dist/${GITHUB_ZIP_FILENAME}" "${FEED_DIR}/${GITHUB_ZIP_FILENAME}"
+          cp "dist/${GITHUB_ZIP_FILENAME}" "${FEED_DIR}/csp-automation-manager-github-latest.zip"
+          SHA256="$(sha256sum "${FEED_DIR}/${GITHUB_ZIP_FILENAME}" | awk '{print $1}')"
+
+          python3 - <<PY
+          import json
+          version = "${VERSION}"
+          last_updated = "${LAST_UPDATED}"
+          zip_name = "${GITHUB_ZIP_FILENAME}"
+          sha256 = "${SHA256}"
+          update_url = "https://vcns.github.io/wp-updates/csp-automation-manager/" + zip_name
+          data = {
+              "name": "CSP Automation Manager",
+              "slug": "csp-automation-manager",
+              "version": version,
+              "author": "VCNS Tech Ltd",
+              "author_homepage": "https://vcns.tech",
+              "requires": "6.4",
+              "tested": "7.0",
+              "requires_php": "8.1",
+              "download_url": update_url,
+              "sha256": sha256,
+              "last_updated": last_updated,
+              "homepage": "https://github.com/vcns/csp-automation-manager",
+              "sections": {
+                  "description": "Strict Content Security Policy rollout, reporting, and decision review for WordPress.",
+                  "changelog": "See https://github.com/vcns/csp-automation-manager/releases/tag/${TAG}"
+              }
+          }
+          with open("${FEED_DIR}/update.json", "w", encoding="utf-8") as handle:
+              json.dump(data, handle, indent=2)
+          html = f"""<!doctype html>
+          <html lang="en">
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <title>CSP Automation Manager Updates</title>
+          </head>
+          <body>
+            <h1>CSP Automation Manager</h1>
+            <p>Latest GitHub-channel release: <strong>{version}</strong> ({last_updated})</p>
+            <ul>
+              <li><a href="{zip_name}">Download GitHub-channel ZIP</a></li>
+              <li><a href="csp-automation-manager-github-latest.zip">Latest ZIP alias</a></li>
+              <li><a href="update.json">Update manifest</a></li>
+            </ul>
+          </body>
+          </html>
+          """
+          with open("${FEED_DIR}/index.html", "w", encoding="utf-8") as handle:
+              handle.write(html)
+          PY
+
+      - name: Deploy to vcns/wp-updates
+        env:
+          WP_UPDATES_TOKEN: ${{ secrets.WP_UPDATES_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ -z "${WP_UPDATES_TOKEN:-}" ]]; then
+            echo "::warning::Missing WP_UPDATES_TOKEN secret. Release ZIPs were published, but the GitHub-channel update feed was not updated."
+            exit 0
+          fi
+
+          UPDATE_REPO="vcns/wp-updates"
+          WORKTREE="/tmp/wp-updates"
+          REMOTE_URL="https://x-access-token:${WP_UPDATES_TOKEN}@github.com/${UPDATE_REPO}.git"
+
+          if git ls-remote --exit-code --heads "${REMOTE_URL}" gh-pages >/dev/null 2>&1; then
+            git clone --depth 1 --branch gh-pages "${REMOTE_URL}" "${WORKTREE}"
+          else
+            mkdir -p "${WORKTREE}"
+            git -C "${WORKTREE}" init --initial-branch=gh-pages
+            git -C "${WORKTREE}" remote add origin "${REMOTE_URL}"
+          fi
+
+          mkdir -p "${WORKTREE}/csp-automation-manager"
+          cp -R /tmp/pages/. "${WORKTREE}/csp-automation-manager/"
+
+          git -C "${WORKTREE}" config user.name "github-actions[bot]"
+          git -C "${WORKTREE}" config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git -C "${WORKTREE}" add csp-automation-manager
+
+          if git -C "${WORKTREE}" diff --cached --quiet; then
+            echo "No update feed changes to publish."
+            exit 0
+          fi
+
+          git -C "${WORKTREE}" commit -m "csp-automation-manager ${GITHUB_REF_NAME}"
+          git -C "${WORKTREE}" push origin gh-pages

@@ -41,11 +41,11 @@ class AutomationConfigTest extends TestCase {
 		$this->assertSame( array( 'https', 'javascript:' ), $config['allowed_source_schemes'] );
 	}
 
-	public function test_admin_input_can_enable_conservative_surface_automation(): void {
+	public function test_admin_input_can_enable_automatic_surface_automation(): void {
 		$config = ( new Automation_Config() )->normalise_admin_input(
 			array(
 				'frontend' => array(
-					'mode'                           => 'conservative',
+					'mode'                           => Automation_Config::MODE_AUTOMATIC_MEDIUM_HIGH_APPROVAL,
 					'emergency_disabled'             => '0',
 					'max_automatic_changes_per_scan' => '5',
 					'enabled_directives'             => array( 'DEFAULT-SRC', 'img-src' ),
@@ -54,12 +54,44 @@ class AutomationConfigTest extends TestCase {
 			)
 		);
 
-		$this->assertSame( 'conservative', $config['frontend']['mode'] );
+		$this->assertSame( Automation_Config::MODE_AUTOMATIC_MEDIUM_HIGH_APPROVAL, $config['frontend']['mode'] );
 		$this->assertFalse( $config['frontend']['emergency_disabled'] );
 		$this->assertSame( 5, $config['frontend']['max_automatic_changes_per_scan'] );
 		$this->assertSame( array( 'default-src', 'img-src' ), $config['frontend']['enabled_directives'] );
 		$this->assertSame( array( 'https', 'wss' ), $config['frontend']['allowed_source_schemes'] );
 		$this->assertSame( 'manual', $config['admin']['mode'] );
 		$this->assertTrue( $config['admin']['emergency_disabled'] );
+	}
+
+	public function test_legacy_modes_normalise_to_new_approval_postures(): void {
+		update_option(
+			'wp_csp_automation_config',
+			array(
+				'frontend' => array( 'mode' => 'conservative' ),
+				'admin'    => array( 'mode' => 'balanced' ),
+				'login'    => array( 'mode' => 'expert' ),
+			)
+		);
+
+		$config = ( new Automation_Config() )->all();
+
+		$this->assertSame( Automation_Config::MODE_AUTOMATIC_MEDIUM_HIGH_APPROVAL, $config['frontend']['mode'] );
+		$this->assertSame( Automation_Config::MODE_AUTOMATIC_HIGH_APPROVAL, $config['admin']['mode'] );
+		$this->assertSame( Automation_Config::MODE_FULLY_AUTOMATIC, $config['login']['mode'] );
+	}
+
+	public function test_dashboard_mode_update_toggles_emergency_guardrail(): void {
+		$automation = new Automation_Config();
+		$config     = $automation->update_surface_mode( 'frontend', Automation_Config::MODE_AUTOMATIC_HIGH_APPROVAL );
+
+		$this->assertSame( Automation_Config::MODE_AUTOMATIC_HIGH_APPROVAL, $config['frontend']['mode'] );
+		$this->assertFalse( $config['frontend']['emergency_disabled'] );
+		$this->assertSame( 50, $config['frontend']['max_automatic_changes_per_scan'] );
+
+		$config = $automation->update_surface_mode( 'frontend', Automation_Config::MODE_MANUAL );
+
+		$this->assertSame( Automation_Config::MODE_MANUAL, $config['frontend']['mode'] );
+		$this->assertTrue( $config['frontend']['emergency_disabled'] );
+		$this->assertSame( 0, $config['frontend']['max_automatic_changes_per_scan'] );
 	}
 }

@@ -41,7 +41,7 @@ class AdminUITest extends TestCase {
 			plugin_basename( WP_CSP_FILE )
 		);
 
-		$this->assertStringContainsString( 'WordPress.org only', implode( ' ', $links ) );
+		$this->assertStringContainsString( 'WordPress.org package', implode( ' ', $links ) );
 		$this->assertStringContainsString( 'no custom updater', implode( ' ', $links ) );
 	}
 
@@ -62,6 +62,9 @@ class AdminUITest extends TestCase {
 		$this->assertStringContainsString( 'This timeline shows proposal activity', $view );
 		$this->assertStringContainsString( 'Proposed source', $view );
 		$this->assertStringContainsString( 'Policy version', $view );
+		$this->assertStringContainsString( "'Automation'", $view );
+		$this->assertStringContainsString( 'wp-csp-automation-mode', $view );
+		$this->assertStringNotContainsString( "'Strict-Dynamic'", $view );
 	}
 
 	public function test_sanitize_policy_header_name_accepts_origin_header(): void {

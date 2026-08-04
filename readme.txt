@@ -4,7 +4,7 @@ Tags: security, csp, content security policy, headers, wordpress security
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.0.15
+Stable tag: 1.0.16
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -19,6 +19,8 @@ The plugin provides per-surface CSP profiles, nonce injection, source discovery,
 == External services ==
 
 This WordPress.org build does not contact third-party services for plugin updates, licensing, checkout, telemetry, or remote product configuration.
+
+GitHub release builds are published separately for administrators who install from GitHub rather than WordPress.org. The GitHub-channel ZIP checks https://vcns.github.io/wp-updates/csp-automation-manager/update.json from administrator update contexts only, validates the advertised package host and SHA-256 checksum, and then lets WordPress perform the update. Define WP_CSP_DISABLE_AUTO_UPDATE as true in wp-config.php to prevent background auto-updates for the GitHub-channel package.
 
 By default, the plugin emits CSP reporting headers that point browsers back to this WordPress site's own REST endpoint:
 
@@ -38,6 +40,14 @@ Reports received by this plugin are validated and stored in this site's WordPres
 For Cloudflare, CDN, and reverse-proxy deployments, administrators can configure an origin-only policy header name such as X-Origin-CSP-Policy. The proxy can then copy that origin header into the browser-facing Content-Security-Policy-Report-Only or Content-Security-Policy header.
 
 == Changelog ==
+
+= 1.0.16 =
+
+* Adds a separate GitHub-channel release ZIP with checksum-verified native WordPress update integration.
+* Keeps the plain release ZIP WordPress.org-safe by excluding the GitHub updater and Update URI header.
+* Publishes GitHub-channel update metadata for vcns/wp-updates when the release pipeline has a WP_UPDATES_TOKEN.
+* Adds selectable automation postures on Profiles and Settings: Manual, Automatic with medium+high approvals, Automatic with high approvals only, and Fully Automatic within deterministic hard safety exclusions.
+* Replaces the dashboard Strict-Dynamic display column with a per-surface Automation dropdown.
 
 = 1.0.15 =
 

@@ -23,6 +23,19 @@ class VersionConsistencyTest extends TestCase {
 		$this->assertSame( $plugin_version, $changelog );
 	}
 
+	public function test_release_workflow_builds_separate_update_channels(): void {
+		$workflow = $this->read_file( dirname( __DIR__, 2 ) . '/.github/workflows/release-package.yml' );
+
+		$this->assertStringContainsString( 'csp-automation-manager-${TAG}.zip', $workflow );
+		$this->assertStringContainsString( 'csp-automation-manager-github-${TAG}.zip', $workflow );
+		$this->assertStringContainsString( 'rm -f dist/wporg/csp-automation-manager/includes/modules/class-github-update-checker.php', $workflow );
+		$this->assertStringContainsString( 'WP_CSP_DISTRIBUTION_CHANNEL\', \'github', $workflow );
+		$this->assertStringContainsString( 'Update URI:        https://github.com/vcns/csp-automation-manager', $workflow );
+		$this->assertStringContainsString( 'https://vcns.github.io/wp-updates/csp-automation-manager/', $workflow );
+		$this->assertStringContainsString( 'WP_UPDATES_TOKEN', $workflow );
+		$this->assertStringContainsString( 'sha256sum', $workflow );
+	}
+
 	private function extract_plugin_header_version( string $file ): string {
 		$contents = $this->read_file( $file );
 

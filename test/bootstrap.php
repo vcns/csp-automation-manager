@@ -13,11 +13,14 @@ declare( strict_types=1 );
 
 // ── Plugin constants ──────────────────────────────────────────────────────────
 define( 'ABSPATH',               __DIR__ . '/' );
-define( 'WP_CSP_VERSION',        '1.0.15' );
+define( 'WP_CSP_VERSION',        '1.0.16' );
 define( 'WP_CSP_DB_VERSION',     '7' );
 define( 'WP_CSP_FILE',           dirname( __DIR__ ) . '/csp-automation-manager.php' );
 define( 'WP_CSP_DIR',            dirname( __DIR__ ) . '/' );
 define( 'WP_CSP_URL',            'https://example.com/wp-content/plugins/csp-automation-manager/' );
+define( 'WP_CSP_PLUGIN_BASENAME', 'csp-automation-manager/csp-automation-manager.php' );
+define( 'WP_CSP_DISTRIBUTION_CHANNEL', 'wordpress-org' );
+define( 'WP_CSP_UPDATE_MANIFEST_URL', 'https://vcns.github.io/wp-updates/csp-automation-manager/update.json' );
 define( 'HOUR_IN_SECONDS',       3600 );
 define( 'DAY_IN_SECONDS',        86400 );
 if ( ! defined( 'DNS_TXT' ) ) {
@@ -109,6 +112,13 @@ if ( ! function_exists( 'delete_transient' ) ) {
 	}
 }
 
+if ( ! function_exists( 'delete_site_transient' ) ) {
+	function delete_site_transient( string $transient ): bool {
+		unset( $GLOBALS['_wp_transients'][ $transient ] );
+		return true;
+	}
+}
+
 if ( ! function_exists( 'sanitize_text_field' ) ) {
 	function sanitize_text_field( string $str ): string {
 		return trim( strip_tags( $str ) );
@@ -182,6 +192,25 @@ if ( ! function_exists( 'wp_remote_get' ) ) {
 			'args' => $args,
 		);
 		return $GLOBALS['_wp_remote_get_response'] ?? [ 'response' => [ 'code' => 200 ], 'body' => '' ];
+	}
+}
+
+if ( ! function_exists( 'download_url' ) ) {
+	function download_url( string $url, int $timeout = 300 ): string|WP_Error {
+		$GLOBALS['_wp_download_url_requests'][] = array(
+			'url'     => $url,
+			'timeout' => $timeout,
+		);
+		return $GLOBALS['_wp_download_url_response'] ?? '';
+	}
+}
+
+if ( ! function_exists( 'wp_delete_file' ) ) {
+	function wp_delete_file( string $file ): void {
+		$GLOBALS['_wp_deleted_files'][] = $file;
+		if ( is_file( $file ) ) {
+			unlink( $file );
+		}
 	}
 }
 
@@ -260,6 +289,32 @@ if ( ! function_exists( 'admin_url' ) ) {
 if ( ! function_exists( 'plugin_basename' ) ) {
 	function plugin_basename( string $file ): string {
 		return 'csp-automation-manager/csp-automation-manager.php';
+	}
+}
+
+if ( ! function_exists( 'get_bloginfo' ) ) {
+	function get_bloginfo( string $show = '' ): string {
+		if ( 'version' === $show ) {
+			return '7.0';
+		}
+
+		if ( 'url' === $show ) {
+			return 'https://example.com';
+		}
+
+		return '';
+	}
+}
+
+if ( ! function_exists( 'is_admin' ) ) {
+	function is_admin(): bool {
+		return $GLOBALS['_wp_is_admin'] ?? false;
+	}
+}
+
+if ( ! function_exists( 'wp_doing_cron' ) ) {
+	function wp_doing_cron(): bool {
+		return $GLOBALS['_wp_doing_cron'] ?? false;
 	}
 }
 
@@ -521,8 +576,13 @@ function wp_test_reset_globals(): void {
 
 	$GLOBALS['_wp_remote_get_response']  = null;
 	$GLOBALS['_wp_remote_get_requests']  = [];
+	$GLOBALS['_wp_download_url_response'] = '';
+	$GLOBALS['_wp_download_url_requests'] = [];
+	$GLOBALS['_wp_deleted_files']        = [];
 	$GLOBALS['_wp_remote_head_response'] = null;
 	$GLOBALS['_wp_remote_head_requests'] = [];
+	$GLOBALS['_wp_is_admin']             = false;
+	$GLOBALS['_wp_doing_cron']           = false;
 	$GLOBALS['_wp_cron']                 = [];
 	$GLOBALS['_wp_current_user_can']     = [];
 	$GLOBALS['_wpdb_get_var']            = null;

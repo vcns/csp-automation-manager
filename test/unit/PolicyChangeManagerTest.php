@@ -6,6 +6,7 @@
 declare( strict_types=1 );
 
 use PHPUnit\Framework\TestCase;
+use WP_CSP\CSP\Automation_Config;
 use WP_CSP\CSP\Policy_Change_Manager;
 use WP_CSP\Modules\Audit_Log;
 
@@ -79,7 +80,7 @@ class PolicyChangeManagerTest extends TestCase {
 			'wp_csp_automation_config',
 			array(
 				'frontend' => array(
-					'mode'                           => 'conservative',
+					'mode'                           => Automation_Config::MODE_AUTOMATIC_MEDIUM_HIGH_APPROVAL,
 					'emergency_disabled'             => false,
 					'max_automatic_changes_per_scan' => 2,
 					'allowed_source_schemes'         => array( 'https' ),

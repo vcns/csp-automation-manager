@@ -3,7 +3,7 @@
  * Plugin Name:       CSP Automation Manager
  * Plugin URI:        https://github.com/vcns/csp-automation-manager
  * Description:       Automates strict Content Security Policy generation, enforcement, and violation analysis for WordPress.
- * Version:           1.0.15
+ * Version:           1.0.16
  * Requires at least: 6.4
  * Requires PHP:      8.1
  * Author:            VCNS Tech Ltd
@@ -21,7 +21,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // ── Core constants ────────────────────────────────────────────────────────────
-define( 'WP_CSP_VERSION', '1.0.15' );
+define( 'WP_CSP_VERSION', '1.0.16' );
 
 /**
  * Schema version. Increment whenever a database schema change is made.
@@ -41,6 +41,21 @@ define( 'WP_CSP_DB_VERSION', '7' );
 define( 'WP_CSP_FILE', __FILE__ );
 define( 'WP_CSP_DIR', plugin_dir_path( __FILE__ ) );
 define( 'WP_CSP_URL', plugin_dir_url( __FILE__ ) );
+define( 'WP_CSP_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
+
+$wp_csp_build_channel = WP_CSP_DIR . 'includes/build-channel.php';
+if ( is_readable( $wp_csp_build_channel ) ) {
+	require $wp_csp_build_channel;
+}
+unset( $wp_csp_build_channel );
+
+if ( ! defined( 'WP_CSP_DISTRIBUTION_CHANNEL' ) ) {
+	define( 'WP_CSP_DISTRIBUTION_CHANNEL', 'wordpress-org' );
+}
+
+if ( ! defined( 'WP_CSP_UPDATE_MANIFEST_URL' ) ) {
+	define( 'WP_CSP_UPDATE_MANIFEST_URL', 'https://vcns.github.io/wp-updates/csp-automation-manager/update.json' );
+}
 
 
 // ── PSR-4 autoloader ──────────────────────────────────────────────────────────
@@ -79,5 +94,13 @@ add_action(
 	'plugins_loaded',
 	static function (): void {
 		WP_CSP\Plugin::instance()->init();
+
+		if (
+			'github' === WP_CSP_DISTRIBUTION_CHANNEL
+			&& ( is_admin() || wp_doing_cron() )
+			&& is_readable( WP_CSP_DIR . 'includes/modules/class-github-update-checker.php' )
+		) {
+			( new WP_CSP\Modules\Github_Update_Checker() )->register();
+		}
 	}
 );

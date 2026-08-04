@@ -13,11 +13,15 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Automation_Config {
 
-	public const MODES    = array( 'manual', 'conservative', 'balanced', 'expert' );
-	public const SURFACES = array( 'frontend', 'admin', 'login', 'api' );
+	public const MODE_MANUAL                         = 'manual';
+	public const MODE_AUTOMATIC_MEDIUM_HIGH_APPROVAL = 'automatic_medium_high_approval';
+	public const MODE_AUTOMATIC_HIGH_APPROVAL        = 'automatic_high_approval';
+	public const MODE_FULLY_AUTOMATIC                = 'fully_automatic';
+	public const MODES                               = array( self::MODE_MANUAL, self::MODE_AUTOMATIC_MEDIUM_HIGH_APPROVAL, self::MODE_AUTOMATIC_HIGH_APPROVAL, self::MODE_FULLY_AUTOMATIC );
+	public const SURFACES                            = array( 'frontend', 'admin', 'login', 'api' );
 
 	public const DEFAULT_SURFACE_CONFIG = array(
-		'mode'                           => 'manual',
+		'mode'                           => self::MODE_MANUAL,
 		'enabled_directives'             => array(),
 		'excluded_directives'            => array(),
 		'allowed_source_schemes'         => array( 'https' ),
@@ -35,6 +39,50 @@ class Automation_Config {
 		'change_rate_guardrail'          => 0,
 		'emergency_disabled'             => true,
 	);
+
+	private const LEGACY_MODE_MAP = array(
+		'conservative' => self::MODE_AUTOMATIC_MEDIUM_HIGH_APPROVAL,
+		'balanced'     => self::MODE_AUTOMATIC_HIGH_APPROVAL,
+		'expert'       => self::MODE_FULLY_AUTOMATIC,
+	);
+
+	public static function mode_labels(): array {
+		return array(
+			self::MODE_MANUAL                         => __( 'Manual', 'csp-automation-manager' ),
+			self::MODE_AUTOMATIC_MEDIUM_HIGH_APPROVAL => __( 'Automatic (with medium+high approvals)', 'csp-automation-manager' ),
+			self::MODE_AUTOMATIC_HIGH_APPROVAL        => __( 'Automatic (with high approvals only)', 'csp-automation-manager' ),
+			self::MODE_FULLY_AUTOMATIC                => __( 'Fully Automatic', 'csp-automation-manager' ),
+		);
+	}
+
+	public static function mode_label( string $mode ): string {
+		$labels = self::mode_labels();
+		return $labels[ $mode ] ?? $labels[ self::MODE_MANUAL ];
+	}
+
+	public function update_surface_mode( string $surface, string $mode ): array {
+		$config = $this->all();
+		if ( ! in_array( $surface, self::SURFACES, true ) ) {
+			return $config;
+		}
+
+		$normalised_mode = $this->normalise_mode( $mode );
+		$surface_config  = $config[ $surface ] ?? self::DEFAULT_SURFACE_CONFIG;
+
+		$surface_config['mode']               = $normalised_mode;
+		$surface_config['emergency_disabled'] = self::MODE_MANUAL === $normalised_mode;
+
+		if ( self::MODE_MANUAL === $normalised_mode ) {
+			$surface_config['max_automatic_changes_per_scan'] = 0;
+		} elseif ( (int) ( $surface_config['max_automatic_changes_per_scan'] ?? 0 ) <= 0 ) {
+			$surface_config['max_automatic_changes_per_scan'] = 50;
+		}
+
+		$config[ $surface ] = $this->normalise_surface( $surface_config );
+		update_option( 'wp_csp_automation_config', $config );
+
+		return $config;
+	}
 
 	public function all(): array {
 		$config = get_option( 'wp_csp_automation_config', array() );
@@ -65,10 +113,8 @@ class Automation_Config {
 	}
 
 	private function normalise_surface( array $config ): array {
-		$merged = array_merge( self::DEFAULT_SURFACE_CONFIG, $config );
-		if ( ! in_array( $merged['mode'], self::MODES, true ) ) {
-			$merged['mode'] = 'manual';
-		}
+		$merged         = array_merge( self::DEFAULT_SURFACE_CONFIG, $config );
+		$merged['mode'] = $this->normalise_mode( (string) $merged['mode'] );
 
 		foreach ( array( 'enabled_directives', 'excluded_directives', 'allowed_source_schemes' ) as $key ) {
 			$values         = is_array( $merged[ $key ] ) ? $merged[ $key ] : array();
@@ -93,5 +139,12 @@ class Automation_Config {
 		$merged['change_rate_guardrail']          = max( 0, (int) $merged['change_rate_guardrail'] );
 
 		return $merged;
+	}
+
+	private function normalise_mode( string $mode ): string {
+		$mode = strtolower( trim( sanitize_text_field( $mode ) ) );
+		$mode = self::LEGACY_MODE_MAP[ $mode ] ?? $mode;
+
+		return in_array( $mode, self::MODES, true ) ? $mode : self::MODE_MANUAL;
 	}
 }

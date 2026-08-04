@@ -53,6 +53,7 @@ class Admin_UI {
 		add_action( 'wp_ajax_wp_csp_revert_source', array( $this, 'ajax_revert_source' ) );
 		add_action( 'wp_ajax_wp_csp_undo_source_decision', array( $this, 'ajax_undo_source_decision' ) );
 		add_action( 'wp_ajax_wp_csp_toggle_mode', array( $this, 'ajax_toggle_mode' ) );
+		add_action( 'wp_ajax_wp_csp_set_automation_mode', array( $this, 'ajax_set_automation_mode' ) );
 	}
 
 	// ── Menu registration ─────────────────────────────────────────────────────
@@ -150,9 +151,13 @@ class Admin_UI {
 			return $links;
 		}
 
+		$update_posture = 'github' === WP_CSP_DISTRIBUTION_CHANNEL
+			? __( 'Updates: GitHub Releases channel with checksum verification.', 'csp-automation-manager' )
+			: __( 'Updates: WordPress.org package; no custom updater runs in this build.', 'csp-automation-manager' );
+
 		$links[] = sprintf(
 			'<span class="wp-csp-update-posture">%s</span>',
-			esc_html__( 'Updates: WordPress.org only; no custom updater runs from this plugin.', 'csp-automation-manager' )
+			esc_html( $update_posture )
 		);
 
 		return $links;
@@ -500,6 +505,33 @@ class Admin_UI {
 			array( '%s' )
 		);
 		wp_send_json_success();
+	}
+
+	public function ajax_set_automation_mode(): void {
+		check_ajax_referer( 'wp_csp_admin_nonce', 'nonce' );
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( null, 403 );
+		}
+
+		$surface = sanitize_text_field( wp_unslash( $_POST['surface'] ?? '' ) );
+		$mode    = sanitize_text_field( wp_unslash( $_POST['mode'] ?? '' ) );
+
+		if ( ! in_array( $surface, Automation_Config::SURFACES, true ) ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid surface.', 'csp-automation-manager' ) ) );
+		}
+
+		if ( ! in_array( $mode, Automation_Config::MODES, true ) ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid automation mode.', 'csp-automation-manager' ) ) );
+		}
+
+		( new Automation_Config() )->update_surface_mode( $surface, $mode );
+
+		wp_send_json_success(
+			array(
+				'mode'  => $mode,
+				'label' => Automation_Config::mode_label( $mode ),
+			)
+		);
 	}
 
 	// ── Promotion gate ────────────────────────────────────────────────────────

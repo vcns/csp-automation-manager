@@ -88,11 +88,18 @@ Typical mapping:
 
 ## GitHub Release Artifacts
 
-Tagged releases generate a ready-to-install ZIP asset:
+Tagged releases generate two ready-to-install ZIP assets:
 
-- `csp-automation-manager-vX.Y.Z.zip`
+- `csp-automation-manager-vX.Y.Z.zip` - WordPress.org-safe package; no GitHub updater files and no `Update URI` header
+- `csp-automation-manager-github-vX.Y.Z.zip` - GitHub-channel package; includes the GitHub release updater, a generated `includes/build-channel.php`, and an `Update URI` header
 
-The repository does not publish a custom WordPress update manifest or shared update-feed ZIP. WordPress.org-distributed installs receive update metadata from WordPress.org after SVN deployment.
+The GitHub-channel package publishes update metadata to:
+
+- `https://vcns.github.io/wp-updates/csp-automation-manager/update.json`
+
+The manifest points to the versioned GitHub-channel ZIP and includes a SHA-256 checksum. The runtime updater validates the manifest slug, package host/path, HTTPS URL, version string, and checksum before allowing WordPress to install the package.
+
+WordPress.org-distributed installs receive update metadata from WordPress.org after SVN deployment. Do not submit the GitHub-channel ZIP to WordPress.org.
 
 Pull request and manual workflow runs produce ZIP artifacts for validation only.
 
@@ -117,7 +124,7 @@ Before submission, verify:
 - `readme.txt` is valid and accurate
 - the plugin display name complies with trademark restrictions
 - no remote code execution or code download features exist
-- no custom update process exists in the submitted package
+- no custom update process exists in the submitted WordPress.org package
 - external service usage is disclosed clearly in `readme.txt`
 - shipped functionality is not trialware and does not depend on remote licensing
 - no obfuscated code is present
@@ -131,6 +138,8 @@ Before publishing each version:
 - confirm README.md, readme.txt, SECURITY.md, and docs/architecture.md are mutually consistent
 - confirm branch protections and CI are active
 - confirm `.github/workflows/release-package.yml` produced a release ZIP artifact from the release branch or tag
+- confirm the plain ZIP excludes the GitHub updater and the GitHub ZIP includes it
+- confirm `WP_UPDATES_TOKEN` exists when publishing the GitHub-channel update feed
 - confirm no development keys or test endpoints remain in code or docs
 - confirm `readme.txt` sections reflect actual shipped behaviour
 - confirm `.wordpress-org/assets/` artwork is current and matches the listing
