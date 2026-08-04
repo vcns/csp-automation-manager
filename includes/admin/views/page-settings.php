@@ -9,6 +9,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+global $wpdb;
+
 $learning_window            = new \WP_CSP\CSP\Learning_Window();
 $learning_status            = $learning_window->is_open() ? __( 'Open', 'csp-automation-manager' ) : __( 'Locked', 'csp-automation-manager' );
 $current_report_endpoint    = esc_url_raw( rest_url( 'csp-manager/v1/report' ) );
@@ -20,6 +22,10 @@ $automation_surfaces        = \WP_CSP\CSP\Automation_Config::SURFACES;
 $automation_mode_labels     = \WP_CSP\CSP\Automation_Config::mode_labels();
 $automation_directives      = array( 'default-src', 'img-src', 'font-src', 'media-src', 'manifest-src' );
 $automation_schemes         = array( 'https', 'wss' );
+
+// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- No user input; only $wpdb->prefix used in query.
+$scan_logs_raw = $wpdb->get_results( "SELECT * FROM {$wpdb->prefix}csp_scan_logs ORDER BY started_at DESC LIMIT 20", ARRAY_A );
+$scan_logs     = ! empty( $scan_logs_raw ) ? $scan_logs_raw : array();
 ?>
 <div class="wrap wp-csp-wrap">
 	<h1><?php esc_html_e( 'CSP Automation Manager Settings', 'csp-automation-manager' ); ?></h1>
@@ -229,6 +235,47 @@ $automation_schemes         = array( 'https', 'wss' );
 					<p class="description"><?php esc_html_e( 'Receive an email when the policy changes after a scheduled scan.', 'csp-automation-manager' ); ?></p>
 				</td>
 			</tr>
+		</table>
+
+		<h2 class="title"><?php esc_html_e( 'Scan Log', 'csp-automation-manager' ); ?></h2>
+		<p class="description">
+			<?php esc_html_e( 'Review recent manual and scheduled scan runs, policy-change counts, warnings, and completion status after site, theme, plugin, or content changes.', 'csp-automation-manager' ); ?>
+		</p>
+		<table class="widefat fixed striped">
+			<thead>
+				<tr>
+					<th><?php esc_html_e( 'Trigger', 'csp-automation-manager' ); ?></th>
+					<th><?php esc_html_e( 'Status', 'csp-automation-manager' ); ?></th>
+					<th><?php esc_html_e( 'Sources +/-', 'csp-automation-manager' ); ?></th>
+					<th><?php esc_html_e( 'Hashes +/-', 'csp-automation-manager' ); ?></th>
+					<th><?php esc_html_e( 'Policy Changed', 'csp-automation-manager' ); ?></th>
+					<th><?php esc_html_e( 'Started', 'csp-automation-manager' ); ?></th>
+					<th><?php esc_html_e( 'Duration', 'csp-automation-manager' ); ?></th>
+				</tr>
+			</thead>
+			<tbody>
+			<?php foreach ( $scan_logs as $log ) : ?>
+				<?php
+				$duration = '';
+				if ( ! empty( $log['completed_at'] ) && ! empty( $log['started_at'] ) ) {
+					$diff     = strtotime( $log['completed_at'] ) - strtotime( $log['started_at'] );
+					$duration = $diff . 's';
+				}
+				?>
+				<tr>
+					<td><?php echo esc_html( ucfirst( (string) $log['trigger_type'] ) ); ?></td>
+					<td><?php echo esc_html( ucfirst( (string) $log['status'] ) ); ?></td>
+					<td>+<?php echo esc_html( (string) $log['sources_added'] ); ?> / -<?php echo esc_html( (string) $log['sources_removed'] ); ?></td>
+					<td>+<?php echo esc_html( (string) $log['hashes_added'] ); ?> / -<?php echo esc_html( (string) $log['hashes_removed'] ); ?></td>
+					<td><?php echo ! empty( $log['policy_changed'] ) ? esc_html__( 'Yes', 'csp-automation-manager' ) : '&mdash;'; ?></td>
+					<td><?php echo esc_html( (string) $log['started_at'] ); ?></td>
+					<td><?php echo esc_html( $duration ); ?></td>
+				</tr>
+			<?php endforeach; ?>
+			<?php if ( empty( $scan_logs ) ) : ?>
+				<tr><td colspan="7"><?php esc_html_e( 'No scans run yet.', 'csp-automation-manager' ); ?></td></tr>
+			<?php endif; ?>
+			</tbody>
 		</table>
 
 

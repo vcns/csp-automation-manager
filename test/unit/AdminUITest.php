@@ -67,6 +67,17 @@ class AdminUITest extends TestCase {
 		$this->assertStringNotContainsString( "'Strict-Dynamic'", $view );
 	}
 
+	public function test_dashboard_tab_order_prioritises_violations_after_profiles(): void {
+		$view = file_get_contents( dirname( __DIR__, 2 ) . '/includes/admin/views/page-csp-dashboard.php' );
+
+		$this->assertIsString( $view );
+
+		$allowed_tabs = "array( 'profiles', 'violations', 'sources', 'policy-changes' )";
+
+		$this->assertStringContainsString( $allowed_tabs, $view );
+		$this->assertStringNotContainsString( "'scan-log'", $view );
+	}
+
 	public function test_sanitize_policy_header_name_accepts_origin_header(): void {
 		$ui = $this->make_admin_ui();
 

@@ -15,7 +15,7 @@ class GithubUpdateCheckerTest extends TestCase {
 	}
 
 	public function test_new_manifest_version_populates_native_update_response(): void {
-		$GLOBALS['_wp_remote_get_response'] = $this->response( $this->manifest( '1.0.17' ) );
+		$GLOBALS['_wp_remote_get_response'] = $this->response( $this->manifest( '1.0.18' ) );
 
 		$checker   = new Github_Update_Checker();
 		$transient = (object) array(
@@ -28,8 +28,8 @@ class GithubUpdateCheckerTest extends TestCase {
 
 		$item = $result->response[ WP_CSP_PLUGIN_BASENAME ] ?? null;
 		$this->assertIsObject( $item );
-		$this->assertSame( '1.0.17', $item->new_version );
-		$this->assertSame( 'https://vcns.github.io/wp-updates/csp-automation-manager/csp-automation-manager-github-v1.0.17.zip', $item->package );
+		$this->assertSame( '1.0.18', $item->new_version );
+		$this->assertSame( 'https://vcns.github.io/wp-updates/csp-automation-manager/csp-automation-manager-github-v1.0.18.zip', $item->package );
 		$this->assertArrayNotHasKey( WP_CSP_PLUGIN_BASENAME, $result->no_update );
 	}
 
@@ -53,7 +53,7 @@ class GithubUpdateCheckerTest extends TestCase {
 	}
 
 	public function test_invalid_manifest_does_not_offer_update(): void {
-		$manifest                 = $this->manifest( '1.0.17' );
+		$manifest                 = $this->manifest( '1.0.18' );
 		$manifest['download_url'] = 'https://example.com/csp-automation-manager.zip';
 
 		$GLOBALS['_wp_remote_get_response'] = $this->response( $manifest );

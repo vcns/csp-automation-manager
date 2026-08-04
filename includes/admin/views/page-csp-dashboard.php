@@ -1,7 +1,7 @@
 <?php
 /**
  * Admin view: CSP Automation Manager dashboard.
- * Shows per-surface policy profiles, source inventory, violations, scan log.
+ * Shows per-surface policy profiles, violations, source review, and policy changes.
  * Rendered by Admin_UI::render_dashboard().
  */
 
@@ -13,7 +13,7 @@ global $wpdb;
 
 // Current tab.
 $tab          = isset( $_GET['tab'] ) ? sanitize_text_field( wp_unslash( $_GET['tab'] ) ) : 'profiles';
-$allowed_tabs = array( 'profiles', 'sources', 'policy-changes', 'violations', 'scan-log' );
+$allowed_tabs = array( 'profiles', 'violations', 'sources', 'policy-changes' );
 if ( ! in_array( $tab, $allowed_tabs, true ) ) {
 	$tab = 'profiles';
 }
@@ -24,6 +24,10 @@ $tab_help = array(
 		'label'       => __( 'Profiles', 'csp-automation-manager' ),
 		'description' => __( 'Configure the CSP mode for each site surface. Use report-only while learning, enforce only after the surface is stable, or disabled when this plugin should not emit CSP for that surface.', 'csp-automation-manager' ),
 	),
+	'violations'     => array(
+		'label'       => __( 'Violations', 'csp-automation-manager' ),
+		'description' => __( 'Review browser-submitted CSP reports. Use these reports to identify required sources before promoting a surface from report-only to enforce mode.', 'csp-automation-manager' ),
+	),
 	'sources'        => array(
 		'label'       => __( 'For Review', 'csp-automation-manager' ),
 		'description' => __( 'Review discovered source candidates and decide whether each source belongs in the policy. Discovery adds review items; approvals, rejections, reversions, and undo actions require a reason and are written to the decision ledger.', 'csp-automation-manager' ),
@@ -31,14 +35,6 @@ $tab_help = array(
 	'policy-changes' => array(
 		'label'       => __( 'Policy Changes', 'csp-automation-manager' ),
 		'description' => __( 'Inspect policy activity across discovered proposals, administrator or automation decisions, and immutable policy snapshots.', 'csp-automation-manager' ),
-	),
-	'violations'     => array(
-		'label'       => __( 'Violations', 'csp-automation-manager' ),
-		'description' => __( 'Review browser-submitted CSP reports. Use these reports to identify required sources before promoting a surface from report-only to enforce mode.', 'csp-automation-manager' ),
-	),
-	'scan-log'       => array(
-		'label'       => __( 'Scan Log', 'csp-automation-manager' ),
-		'description' => __( 'Check manual and scheduled scan runs, policy-change counts, warnings, and completion status after site, theme, plugin, or content changes.', 'csp-automation-manager' ),
 	),
 );
 
@@ -60,10 +56,6 @@ $offset   = ( $page_num - 1 ) * $per_page;
 $violations_raw = $wpdb->get_results( "SELECT * FROM {$wpdb->prefix}csp_violation_reports ORDER BY reported_at DESC LIMIT 50", ARRAY_A );
 $violations     = ! empty( $violations_raw ) ? $violations_raw : array();
 
-// Scan log – last 20 runs.
-// phpcs:ignore WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-$scan_logs_raw = $wpdb->get_results( "SELECT * FROM {$wpdb->prefix}csp_scan_logs ORDER BY started_at DESC LIMIT 20", ARRAY_A );
-$scan_logs     = ! empty( $scan_logs_raw ) ? $scan_logs_raw : array();
 ?>
 <div class="wrap wp-csp-wrap">
 	<h1><?php esc_html_e( 'CSP Automation Manager Dashboard', 'csp-automation-manager' ); ?></h1>
@@ -582,50 +574,6 @@ $scan_logs     = ! empty( $scan_logs_raw ) ? $scan_logs_raw : array();
 		</div>
 	</div>
 	<?php endif; ?>
-
-	<?php elseif ( 'scan-log' === $tab ) : ?>
-	<!-- ── Scan log tab ───────────────────────────────────────────────────── -->
-		<?php
-	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- No user input; only $wpdb->prefix used in query.
-		$scan_logs_raw = $wpdb->get_results( "SELECT * FROM {$wpdb->prefix}csp_scan_logs ORDER BY started_at DESC LIMIT 20", ARRAY_A );
-		$scan_logs     = ! empty( $scan_logs_raw ) ? $scan_logs_raw : array();
-		?>
-	<table class="widefat fixed striped">
-		<thead>
-			<tr>
-				<th><?php esc_html_e( 'Trigger', 'csp-automation-manager' ); ?></th>
-				<th><?php esc_html_e( 'Status', 'csp-automation-manager' ); ?></th>
-				<th><?php esc_html_e( 'Sources +/-', 'csp-automation-manager' ); ?></th>
-				<th><?php esc_html_e( 'Hashes +/-', 'csp-automation-manager' ); ?></th>
-				<th><?php esc_html_e( 'Policy Changed', 'csp-automation-manager' ); ?></th>
-				<th><?php esc_html_e( 'Started', 'csp-automation-manager' ); ?></th>
-				<th><?php esc_html_e( 'Duration', 'csp-automation-manager' ); ?></th>
-			</tr>
-		</thead>
-		<tbody>
-		<?php foreach ( $scan_logs as $log ) : ?>
-			<?php
-			$duration = '';
-			if ( $log['completed_at'] && $log['started_at'] ) {
-				$diff     = strtotime( $log['completed_at'] ) - strtotime( $log['started_at'] );
-				$duration = $diff . 's';
-			}
-			?>
-		<tr>
-			<td><?php echo esc_html( ucfirst( $log['trigger_type'] ) ); ?></td>
-			<td><?php echo esc_html( ucfirst( $log['status'] ) ); ?></td>
-			<td>+<?php echo esc_html( $log['sources_added'] ); ?> / -<?php echo esc_html( $log['sources_removed'] ); ?></td>
-			<td>+<?php echo esc_html( $log['hashes_added'] ); ?> / -<?php echo esc_html( $log['hashes_removed'] ); ?></td>
-			<td><?php echo $log['policy_changed'] ? esc_html__( 'Yes', 'csp-automation-manager' ) : '&mdash;'; ?></td>
-			<td><?php echo esc_html( $log['started_at'] ); ?></td>
-			<td><?php echo esc_html( $duration ); ?></td>
-		</tr>
-		<?php endforeach; ?>
-		<?php if ( empty( $scan_logs ) ) : ?>
-		<tr><td colspan="7"><?php esc_html_e( 'No scans run yet.', 'csp-automation-manager' ); ?></td></tr>
-		<?php endif; ?>
-		</tbody>
-	</table>
 	<?php endif; ?>
 
 	</div><!-- .tab-content -->

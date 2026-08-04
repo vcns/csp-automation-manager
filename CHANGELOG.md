@@ -6,6 +6,13 @@ The format is based on Keep a Changelog, and this project follows semantic versi
 
 ## [Unreleased]
 
+## [1.0.17] - 2026-08-04
+
+### Changed
+
+- Reordered the Dashboard tabs to Profiles, Violations, For Review, and Policy Changes.
+- Moved the recent Scan Log table into Settings alongside the scan schedule controls.
+
 ## [1.0.16] - 2026-08-04
 
 ### Added
