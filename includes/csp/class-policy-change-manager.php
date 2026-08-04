@@ -212,6 +212,39 @@ class Policy_Change_Manager {
 		return $this->decide_source( $source_id, 'undone', $reason, false );
 	}
 
+	public function process_pending_auto_approvals( string $surface = '', int $limit = 50 ): int {
+		global $wpdb;
+
+		$table = $wpdb->prefix . 'csp_source_inventory';
+		$limit = max( 1, min( 100, $limit ) );
+		$where = "approval_state = 'pending'";
+		$args  = array();
+
+		$surface = $this->normalise_token( $surface, 32 );
+		if ( '' !== $surface ) {
+			$where .= ' AND surface = %s';
+			$args[] = $surface;
+		}
+
+		$args[] = $limit;
+		$sql    = "SELECT id FROM {$table} WHERE {$where} ORDER BY FIELD(risk_level, 'low', 'medium', 'high', 'critical', 'unknown'), last_seen_at ASC LIMIT %d";
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		$sql = $wpdb->prepare( $sql, ...$args );
+
+		$rows = $wpdb->get_results( $sql, ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.PreparedSQL.NotPrepared
+		$rows = ! empty( $rows ) ? $rows : array();
+
+		$approved = 0;
+		foreach ( $rows as $row ) {
+			$source_id = (int) ( $row['id'] ?? 0 );
+			if ( $source_id > 0 && $this->maybe_auto_approve_source( $source_id ) ) {
+				++$approved;
+			}
+		}
+
+		return $approved;
+	}
+
 	public function is_suppressed( string $surface, string $directive, string $host ): bool {
 		global $wpdb;
 

@@ -79,13 +79,16 @@ class AdminUITest extends TestCase {
 
 	public function test_settings_automation_table_owns_surface_mode_and_automation_controls(): void {
 		$view = file_get_contents( dirname( __DIR__, 2 ) . '/includes/admin/views/page-settings.php' );
+		$ui_source = file_get_contents( dirname( __DIR__, 2 ) . '/includes/admin/class-admin-ui.php' );
 
 		$this->assertIsString( $view );
+		$this->assertIsString( $ui_source );
 		$this->assertStringContainsString( "'Mode'", $view );
 		$this->assertStringContainsString( "'Automation'", $view );
 		$this->assertStringContainsString( "'Auto Approval'", $view );
 		$this->assertStringContainsString( "'Actions'", $view );
 		$this->assertStringContainsString( 'wp-csp-toggle-mode', $view );
+		$this->assertStringContainsString( 'process_automation_config_update', $ui_source );
 		$this->assertStringNotContainsString( "'Automation enabled'", $view );
 	}
 

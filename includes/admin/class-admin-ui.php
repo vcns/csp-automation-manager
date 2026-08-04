@@ -40,6 +40,7 @@ class Admin_UI {
 		add_action( 'admin_init', array( $this, 'register_settings' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_assets' ) );
 		add_action( 'admin_notices', array( $this, 'display_admin_notices' ) );
+		add_action( 'updated_option', array( $this, 'process_automation_config_update' ), 10, 3 );
 		add_filter( 'plugin_action_links_' . plugin_basename( WP_CSP_FILE ), array( $this, 'add_plugin_action_links' ) );
 		add_filter( 'plugin_row_meta', array( $this, 'add_plugin_row_meta' ), 10, 2 );
 
@@ -180,6 +181,27 @@ class Admin_UI {
 
 	public function sanitize_automation_config( mixed $config ): array {
 		return ( new Automation_Config() )->normalise_admin_input( is_array( $config ) ? $config : array() );
+	}
+
+	public function process_automation_config_update( string $option, mixed $old_value, mixed $value ): void {
+		if ( 'wp_csp_automation_config' !== $option || $old_value === $value || ! isset( $this->plugin->audit ) ) {
+			return;
+		}
+
+		$manager  = new Policy_Change_Manager( $this->plugin->audit );
+		$approved = $manager->process_pending_auto_approvals();
+		if ( $approved > 0 ) {
+			$this->plugin->audit->log(
+				'policy_change',
+				'pending_auto_approval_sweep',
+				sprintf(
+					/* translators: %d: number of proposals auto-approved after settings save */
+					__( 'Automation settings update auto-approved %d pending source proposal(s).', 'csp-automation-manager' ),
+					$approved
+				),
+				'info'
+			);
+		}
 	}
 
 	public function enqueue_assets( string $hook_suffix ): void {

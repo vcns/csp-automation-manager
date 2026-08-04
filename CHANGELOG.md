@@ -6,6 +6,13 @@ The format is based on Keep a Changelog, and this project follows semantic versi
 
 ## [Unreleased]
 
+## [1.0.27] - 2026-08-04
+
+### Changed
+
+- Reprocessed pending source proposals immediately after automation settings change, so newly eligible items can be auto-approved without waiting for another discovery pass.
+- Recorded an audit event when a settings update auto-approves pending proposals.
+
 ## [1.0.26] - 2026-08-04
 
 ### Changed
