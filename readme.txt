@@ -46,6 +46,8 @@ For Cloudflare, CDN, and reverse-proxy deployments, administrators can configure
 * Adds a separate GitHub-channel release ZIP with checksum-verified native WordPress update integration.
 * Keeps the plain release ZIP WordPress.org-safe by excluding the GitHub updater and Update URI header.
 * Publishes GitHub-channel update metadata for vcns/wp-updates when the release pipeline has a WP_UPDATES_TOKEN.
+* Adds selectable automation postures on Profiles and Settings: Manual, Automatic with medium+high approvals, Automatic with high approvals only, and Fully Automatic within deterministic hard safety exclusions.
+* Replaces the dashboard Strict-Dynamic display column with a per-surface Automation dropdown.
 
 = 1.0.15 =
 

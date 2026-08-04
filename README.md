@@ -72,7 +72,14 @@ The GitHub-channel ZIP includes a checksum-verified updater that uses WordPress'
 
 ## Automation Posture
 
-Automation defaults to `manual` for every surface. Administrators may explicitly enable conservative deterministic automation per surface from the Settings page. Automatic approvals are limited to eligible low-risk proposals, record `automation_engine` decision provenance, and can be undone without rewriting history.
+Automation defaults to `Manual` for every surface. Administrators may explicitly select each surface posture from the Profiles tab or Settings page:
+
+- `Manual`
+- `Automatic (with medium+high approvals)`
+- `Automatic (with high approvals only)`
+- `Fully Automatic`
+
+Automatic approvals are bounded by deterministic risk rules, hard exclusions, configured directive/scheme limits, evidence requirements, and per-run caps. Automatic decisions record `automation_engine` provenance and can be undone without rewriting history.
 
 Future AI-assisted recommendation work must keep deterministic product rules as the authority. AI output must not directly modify an enforced CSP policy.
 

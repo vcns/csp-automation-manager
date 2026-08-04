@@ -99,13 +99,13 @@ class Decision_Engine {
 			$this->add_finding( $findings, 'CSP-EVID-001', 'fail', 'unknown', 'blocked', 'At least one validated observation is required.' );
 		}
 
-		$mode                = (string) ( $automation_config['mode'] ?? 'manual' );
-		$automation_eligible = 'manual' !== $mode && 'low' === $risk && empty( $exclusions );
+		$mode                = (string) ( $automation_config['mode'] ?? Automation_Config::MODE_MANUAL );
+		$automation_eligible = $this->mode_allows_risk( $mode, $risk ) && empty( $exclusions );
 
-		if ( 'manual' === $mode ) {
+		if ( Automation_Config::MODE_MANUAL === $mode ) {
 			$this->add_finding( $findings, 'CSP-AUTO-001', 'review', 'none', 'blocked', 'Automation mode is manual; administrator review is required.' );
 		} elseif ( $automation_eligible ) {
-			$this->add_finding( $findings, 'CSP-AUTO-002', 'pass', 'none', 'eligible', 'Proposal passes the low-risk deterministic automation boundary.' );
+			$this->add_finding( $findings, 'CSP-AUTO-002', 'pass', 'none', 'eligible', 'Proposal is inside the configured deterministic automation approval boundary.' );
 		} else {
 			$this->add_finding( $findings, 'CSP-AUTO-003', 'review', $risk, 'blocked', 'Proposal does not meet the deterministic automation boundary.' );
 		}
@@ -141,6 +141,15 @@ class Decision_Engine {
 			'unknown'  => 5,
 		);
 		return ( $order[ $b ] ?? 0 ) > ( $order[ $a ] ?? 0 ) ? $b : $a;
+	}
+
+	private function mode_allows_risk( string $mode, string $risk ): bool {
+		return match ( $mode ) {
+			Automation_Config::MODE_AUTOMATIC_MEDIUM_HIGH_APPROVAL => 'low' === $risk,
+			Automation_Config::MODE_AUTOMATIC_HIGH_APPROVAL        => in_array( $risk, array( 'low', 'medium' ), true ),
+			Automation_Config::MODE_FULLY_AUTOMATIC                => in_array( $risk, array( 'low', 'medium', 'high' ), true ),
+			default                                                => false,
+		};
 	}
 
 	private function summarise( string $risk, array $exclusions ): string {

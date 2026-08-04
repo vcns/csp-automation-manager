@@ -17,6 +17,7 @@ $configured_policy_header   = (string) get_option( 'wp_csp_policy_header_name', 
 $reporting_transport        = \WP_CSP\CSP\Policy_Builder::sanitize_reporting_transport( get_option( 'wp_csp_reporting_transport', 'report-uri' ) );
 $automation_config          = ( new \WP_CSP\CSP\Automation_Config() )->all();
 $automation_surfaces        = \WP_CSP\CSP\Automation_Config::SURFACES;
+$automation_mode_labels     = \WP_CSP\CSP\Automation_Config::mode_labels();
 $automation_directives      = array( 'default-src', 'img-src', 'font-src', 'media-src', 'manifest-src' );
 $automation_schemes         = array( 'https', 'wss' );
 ?>
@@ -52,7 +53,7 @@ $automation_schemes         = array( 'https', 'wss' );
 
 		<h2 class="title"><?php esc_html_e( 'Deterministic Automation', 'csp-automation-manager' ); ?></h2>
 		<p class="description">
-			<?php esc_html_e( 'Enable automatic approval only for proposals that pass the deterministic low-risk rule boundary. Manual mode remains the default. Medium, high, unknown, and hard-excluded proposals still require administrator review.', 'csp-automation-manager' ); ?>
+			<?php esc_html_e( 'Configure how far the deterministic engine may go without administrator approval. Manual mode remains the default; hard-excluded, critical, unknown, and insufficient-evidence proposals always require review.', 'csp-automation-manager' ); ?>
 		</p>
 		<table class="widefat striped" role="presentation">
 			<thead>
@@ -72,9 +73,9 @@ $automation_schemes         = array( 'https', 'wss' );
 					<td><strong><?php echo esc_html( ucfirst( $surface ) ); ?></strong></td>
 					<td>
 						<select name="wp_csp_automation_config[<?php echo esc_attr( $surface ); ?>][mode]">
-							<?php foreach ( \WP_CSP\CSP\Automation_Config::MODES as $mode ) : ?>
+							<?php foreach ( $automation_mode_labels as $mode => $label ) : ?>
 							<option value="<?php echo esc_attr( $mode ); ?>" <?php selected( $surface_config['mode'], $mode ); ?>>
-								<?php echo esc_html( ucwords( str_replace( '_', ' ', $mode ) ) ); ?>
+								<?php echo esc_html( $label ); ?>
 							</option>
 							<?php endforeach; ?>
 						</select>
@@ -96,7 +97,7 @@ $automation_schemes         = array( 'https', 'wss' );
 								<code><?php echo esc_html( $directive ); ?></code>
 							</label>
 						<?php endforeach; ?>
-						<p class="description"><?php esc_html_e( 'Leave all unchecked to permit any deterministic low-risk directive. High and medium risk directives are still blocked by the engine.', 'csp-automation-manager' ); ?></p>
+						<p class="description"><?php esc_html_e( 'Leave all unchecked to permit any directive that is inside the selected automation posture and not hard-excluded by the deterministic engine.', 'csp-automation-manager' ); ?></p>
 					</td>
 					<td>
 						<?php foreach ( $automation_schemes as $scheme ) : ?>

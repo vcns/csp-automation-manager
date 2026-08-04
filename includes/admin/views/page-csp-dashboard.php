@@ -44,9 +44,11 @@ $tab_help = array(
 
 // ── Data queries ──────────────────────────────────────────────────────────────
 // phpcs:ignore WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-$profiles_raw = $wpdb->get_results( "SELECT * FROM {$wpdb->prefix}csp_policy_profiles ORDER BY surface", ARRAY_A );
-$profiles     = ! empty( $profiles_raw ) ? $profiles_raw : array();
-$surfaces     = array( 'frontend', 'admin', 'login', 'api' );
+$profiles_raw      = $wpdb->get_results( "SELECT * FROM {$wpdb->prefix}csp_policy_profiles ORDER BY surface", ARRAY_A );
+$profiles          = ! empty( $profiles_raw ) ? $profiles_raw : array();
+$surfaces          = array( 'frontend', 'admin', 'login', 'api' );
+$automation_config = ( new \WP_CSP\CSP\Automation_Config() )->all();
+$automation_labels = \WP_CSP\CSP\Automation_Config::mode_labels();
 
 // Shared pagination defaults.
 $per_page = 20;
@@ -109,7 +111,7 @@ $scan_logs     = ! empty( $scan_logs_raw ) ? $scan_logs_raw : array();
 			<tr>
 				<th><?php esc_html_e( 'Surface', 'csp-automation-manager' ); ?></th>
 				<th><?php esc_html_e( 'Mode', 'csp-automation-manager' ); ?></th>
-				<th><?php esc_html_e( 'Strict-Dynamic', 'csp-automation-manager' ); ?></th>
+				<th><?php esc_html_e( 'Automation', 'csp-automation-manager' ); ?></th>
 				<th><?php esc_html_e( 'Last Updated', 'csp-automation-manager' ); ?></th>
 				<th><?php esc_html_e( 'Actions', 'csp-automation-manager' ); ?></th>
 			</tr>
@@ -123,7 +125,31 @@ $scan_logs     = ! empty( $scan_logs_raw ) ? $scan_logs_raw : array();
 					<?php echo esc_html( $profile['mode'] ); ?>
 				</span>
 			</td>
-			<td><?php echo $profile['strict_dynamic'] ? esc_html__( 'Yes', 'csp-automation-manager' ) : '&mdash;'; ?></td>
+			<td>
+				<?php
+				$surface          = (string) $profile['surface'];
+				$surface_config   = $automation_config[ $surface ] ?? \WP_CSP\CSP\Automation_Config::DEFAULT_SURFACE_CONFIG;
+				$automation_mode  = (string) ( $surface_config['mode'] ?? \WP_CSP\CSP\Automation_Config::MODE_MANUAL );
+				$automation_title = sprintf(
+					/* translators: %s: current automation mode label */
+					__( 'Automation posture: %s', 'csp-automation-manager' ),
+					\WP_CSP\CSP\Automation_Config::mode_label( $automation_mode )
+				);
+				?>
+				<label class="screen-reader-text" for="wp-csp-automation-mode-<?php echo esc_attr( $surface ); ?>">
+					<?php echo esc_html( $automation_title ); ?>
+				</label>
+				<select id="wp-csp-automation-mode-<?php echo esc_attr( $surface ); ?>"
+					class="wp-csp-automation-mode"
+					data-surface="<?php echo esc_attr( $surface ); ?>"
+					title="<?php echo esc_attr( $automation_title ); ?>">
+					<?php foreach ( $automation_labels as $mode => $label ) : ?>
+					<option value="<?php echo esc_attr( $mode ); ?>" <?php selected( $automation_mode, $mode ); ?>>
+						<?php echo esc_html( $label ); ?>
+					</option>
+					<?php endforeach; ?>
+				</select>
+			</td>
 			<td><?php echo esc_html( $profile['updated_at'] ); ?></td>
 			<td>
 				<?php foreach ( array( 'report-only', 'enforce', 'disabled' ) as $m ) : ?>
