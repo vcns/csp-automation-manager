@@ -12,18 +12,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 global $wpdb;
 
 // Current tab.
-$tab          = isset( $_GET['tab'] ) ? sanitize_text_field( wp_unslash( $_GET['tab'] ) ) : 'profiles';
-$allowed_tabs = array( 'profiles', 'violations', 'sources', 'policy-changes' );
+$tab          = isset( $_GET['tab'] ) ? sanitize_text_field( wp_unslash( $_GET['tab'] ) ) : 'violations';
+$allowed_tabs = array( 'violations', 'sources', 'policy-changes' );
 if ( ! in_array( $tab, $allowed_tabs, true ) ) {
-	$tab = 'profiles';
+	$tab = 'violations';
 }
 
 $base_url = admin_url( 'admin.php?page=csp-automation-manager-dashboard' );
 $tab_help = array(
-	'profiles'       => array(
-		'label'       => __( 'Profiles', 'csp-automation-manager' ),
-		'description' => __( 'Configure the CSP mode for each site surface. Use report-only while learning, enforce only after the surface is stable, or disabled when this plugin should not emit CSP for that surface.', 'csp-automation-manager' ),
-	),
 	'violations'     => array(
 		'label'       => __( 'Violations', 'csp-automation-manager' ),
 		'description' => __( 'Review browser-submitted CSP reports. Use these reports to identify required sources before promoting a surface from report-only to enforce mode.', 'csp-automation-manager' ),
@@ -39,12 +35,7 @@ $tab_help = array(
 );
 
 // ── Data queries ──────────────────────────────────────────────────────────────
-// phpcs:ignore WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-$profiles_raw      = $wpdb->get_results( "SELECT * FROM {$wpdb->prefix}csp_policy_profiles ORDER BY surface", ARRAY_A );
-$profiles          = ! empty( $profiles_raw ) ? $profiles_raw : array();
-$surfaces          = array( 'frontend', 'admin', 'login', 'api' );
-$automation_config = ( new \WP_CSP\CSP\Automation_Config() )->all();
-$automation_labels = \WP_CSP\CSP\Automation_Config::mode_labels();
+$surfaces = array( 'frontend', 'admin', 'login', 'api' );
 
 // Shared pagination defaults.
 $per_page = 20;
@@ -91,79 +82,7 @@ $violations     = ! empty( $violations_raw ) ? $violations_raw : array();
 
 	<div class="tab-content" style="margin-top:1em">
 
-	<?php if ( 'profiles' === $tab ) : ?>
-	<!-- ── Profiles tab ───────────────────────────────────────────────────── -->
-		<?php
-	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- No user input; only $wpdb->prefix used in query.
-		$profiles_raw = $wpdb->get_results( "SELECT * FROM {$wpdb->prefix}csp_policy_profiles ORDER BY surface", ARRAY_A );
-		$profiles     = ! empty( $profiles_raw ) ? $profiles_raw : array();
-		?>
-	<table class="widefat fixed striped">
-		<thead>
-			<tr>
-				<th><?php esc_html_e( 'Surface', 'csp-automation-manager' ); ?></th>
-				<th><?php esc_html_e( 'Mode', 'csp-automation-manager' ); ?></th>
-				<th><?php esc_html_e( 'Automation', 'csp-automation-manager' ); ?></th>
-				<th><?php esc_html_e( 'Last Updated', 'csp-automation-manager' ); ?></th>
-				<th><?php esc_html_e( 'Actions', 'csp-automation-manager' ); ?></th>
-			</tr>
-		</thead>
-		<tbody>
-		<?php foreach ( $profiles as $profile ) : ?>
-		<tr>
-			<td><?php echo esc_html( ucfirst( $profile['surface'] ) ); ?></td>
-			<td>
-				<span class="wp-csp-mode-badge mode-<?php echo esc_attr( $profile['mode'] ); ?>">
-					<?php echo esc_html( $profile['mode'] ); ?>
-				</span>
-			</td>
-			<td>
-				<?php
-				$surface          = (string) $profile['surface'];
-				$surface_config   = $automation_config[ $surface ] ?? \WP_CSP\CSP\Automation_Config::DEFAULT_SURFACE_CONFIG;
-				$automation_mode  = (string) ( $surface_config['mode'] ?? \WP_CSP\CSP\Automation_Config::MODE_MANUAL );
-				$automation_title = sprintf(
-					/* translators: %s: current automation mode label */
-					__( 'Automation posture: %s', 'csp-automation-manager' ),
-					\WP_CSP\CSP\Automation_Config::mode_label( $automation_mode )
-				);
-				?>
-				<label class="screen-reader-text" for="wp-csp-automation-mode-<?php echo esc_attr( $surface ); ?>">
-					<?php echo esc_html( $automation_title ); ?>
-				</label>
-				<select id="wp-csp-automation-mode-<?php echo esc_attr( $surface ); ?>"
-					class="wp-csp-automation-mode"
-					data-surface="<?php echo esc_attr( $surface ); ?>"
-					title="<?php echo esc_attr( $automation_title ); ?>">
-					<?php foreach ( $automation_labels as $mode => $label ) : ?>
-					<option value="<?php echo esc_attr( $mode ); ?>" <?php selected( $automation_mode, $mode ); ?>>
-						<?php echo esc_html( $label ); ?>
-					</option>
-					<?php endforeach; ?>
-				</select>
-			</td>
-			<td><?php echo esc_html( $profile['updated_at'] ); ?></td>
-			<td>
-				<?php foreach ( array( 'report-only', 'enforce', 'disabled' ) as $m ) : ?>
-					<?php if ( $m !== $profile['mode'] ) : ?>
-					<button type="button"
-						class="button button-small wp-csp-toggle-mode"
-						data-surface="<?php echo esc_attr( $profile['surface'] ); ?>"
-						data-mode="<?php echo esc_attr( $m ); ?>">
-						<?php echo esc_html( ucwords( str_replace( '-', ' ', $m ) ) ); ?>
-					</button>
-					<?php endif; ?>
-				<?php endforeach; ?>
-			</td>
-		</tr>
-		<?php endforeach; ?>
-		<?php if ( empty( $profiles ) ) : ?>
-		<tr><td colspan="5"><?php esc_html_e( 'No profiles found. Deactivate and reactivate the plugin to seed defaults.', 'csp-automation-manager' ); ?></td></tr>
-		<?php endif; ?>
-		</tbody>
-	</table>
-
-	<?php elseif ( 'sources' === $tab ) : ?>
+	<?php if ( 'sources' === $tab ) : ?>
 	<!-- ── Sources tab ────────────────────────────────────────────────────── -->
 		<?php
 		$src_surface = isset( $_GET['src_surface'] ) ? sanitize_text_field( wp_unslash( $_GET['src_surface'] ) ) : '';

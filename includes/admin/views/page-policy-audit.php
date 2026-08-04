@@ -16,10 +16,17 @@ $automation_config = get_option( 'wp_csp_automation_config', array() );
 $versions_table    = $wpdb->prefix . 'csp_policy_versions';
 $decisions_table   = $wpdb->prefix . 'csp_policy_change_decisions';
 $pending_table     = $wpdb->prefix . 'csp_source_inventory';
+$is_embedded       = ! empty( $wp_csp_settings_embedded );
 
 ?>
+<?php if ( ! $is_embedded ) : ?>
 <div class="wrap wp-csp-wrap">
+<?php endif; ?>
+	<?php if ( $is_embedded ) : ?>
+	<h2><?php esc_html_e( 'Policy Audit', 'csp-automation-manager' ); ?></h2>
+	<?php else : ?>
 	<h1><?php esc_html_e( 'CSP Policy Audit', 'csp-automation-manager' ); ?></h1>
+	<?php endif; ?>
 	<p><?php esc_html_e( 'Inspect effective policies, decision provenance, pending review items, and policy version history.', 'csp-automation-manager' ); ?></p>
 
 	<h2><?php esc_html_e( 'Current Policy', 'csp-automation-manager' ); ?></h2>
@@ -153,4 +160,6 @@ $pending_table     = $wpdb->prefix . 'csp_source_inventory';
 			<?php endif; ?>
 		</tbody>
 	</table>
+<?php if ( ! $is_embedded ) : ?>
 </div>
+<?php endif; ?>

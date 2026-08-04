@@ -3,10 +3,8 @@
  * WordPress Admin UI: menus, settings API, AJAX handlers.
  *
  * Registers admin pages:
- *   1. csp-automation-manager-dashboard  – CSP surface profiles, source inventory, violations, scan history
- *   2. csp-automation-manager-settings   – promotion gates, learning window, cron schedule, notify email
- *   3. csp-automation-manager-policy-audit – policy history, decisions, provenance
- *   4. csp-automation-manager-readiness  – plugin-specific health checks and reset
+ *   1. csp-automation-manager-dashboard  - violations, source review, policy changes
+ *   2. csp-automation-manager-settings   - surface modes, automation, readiness, audit, reset
  *
  * All form submissions are protected by check_admin_referer() and
  * current_user_can('manage_options').
@@ -86,24 +84,6 @@ class Admin_UI {
 			'csp-automation-manager-settings',
 			array( $this, 'render_settings' )
 		);
-
-		add_submenu_page(
-			'csp-automation-manager-dashboard',
-			__( 'Policy Audit', 'csp-automation-manager' ),
-			__( 'Policy Audit', 'csp-automation-manager' ),
-			'manage_options',
-			'csp-automation-manager-policy-audit',
-			array( $this, 'render_policy_audit' )
-		);
-
-		add_submenu_page(
-			'csp-automation-manager-dashboard',
-			__( 'Readiness', 'csp-automation-manager' ),
-			__( 'Readiness', 'csp-automation-manager' ),
-			'manage_options',
-			'csp-automation-manager-readiness',
-			array( $this, 'render_readiness' )
-		);
 	}
 
 	// ── Settings API ──────────────────────────────────────────────────────────
@@ -136,7 +116,7 @@ class Admin_UI {
 
 		$reset_link = sprintf(
 			'<a href="%1$s">%2$s</a>',
-			esc_url( admin_url( 'admin.php?page=csp-automation-manager-readiness#wp-csp-reset' ) ),
+			esc_url( admin_url( 'admin.php?page=csp-automation-manager-settings&settings-tab=readiness#wp-csp-reset' ) ),
 			esc_html__( 'Reset', 'csp-automation-manager' )
 		);
 
@@ -206,8 +186,6 @@ class Admin_UI {
 		$csp_pages = array(
 			'toplevel_page_csp-automation-manager-dashboard',
 			'csp-manager_page_csp-automation-manager-settings',
-			'csp-manager_page_csp-automation-manager-policy-audit',
-			'csp-manager_page_csp-automation-manager-readiness',
 		);
 		if ( ! in_array( $hook_suffix, $csp_pages, true ) ) {
 			return;
@@ -313,8 +291,11 @@ class Admin_UI {
 
 	private function redirect_to_readiness( string $result ): void {
 		$url = add_query_arg(
-			array( 'wp_csp_reset' => $result ),
-			admin_url( 'admin.php?page=csp-automation-manager-readiness#wp-csp-reset' )
+			array(
+				'settings-tab' => 'readiness',
+				'wp_csp_reset' => $result,
+			),
+			admin_url( 'admin.php?page=csp-automation-manager-settings#wp-csp-reset' )
 		);
 
 		wp_safe_redirect( $url );

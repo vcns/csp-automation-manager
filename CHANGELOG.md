@@ -6,6 +6,13 @@ The format is based on Keep a Changelog, and this project follows semantic versi
 
 ## [Unreleased]
 
+## [1.0.22] - 2026-08-04
+
+### Changed
+
+- Moved CSP surface mode controls from Dashboard > Profiles into Settings > Configuration > Deterministic Automation.
+- Moved Policy Audit and Readiness into Settings tabs and removed the redundant Dashboard > Profiles navigation.
+
 ## [1.0.21] - 2026-08-04
 
 ### Changed

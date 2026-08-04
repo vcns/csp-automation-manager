@@ -10,6 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 $reset_result = sanitize_text_field( wp_unslash( $_GET['wp_csp_reset'] ?? '' ) );
+$is_embedded  = ! empty( $wp_csp_settings_embedded );
 $status_badge = static function ( string $status ): void {
 	$labels = array(
 		'pass'    => __( 'Pass', 'csp-automation-manager' ),
@@ -25,8 +26,14 @@ $status_badge = static function ( string $status ): void {
 	);
 };
 ?>
+<?php if ( ! $is_embedded ) : ?>
 <div class="wrap wp-csp-wrap">
+<?php endif; ?>
+	<?php if ( $is_embedded ) : ?>
+	<h2><?php esc_html_e( 'Readiness', 'csp-automation-manager' ); ?></h2>
+	<?php else : ?>
 	<h1><?php esc_html_e( 'CSP Manager Readiness', 'csp-automation-manager' ); ?></h1>
+	<?php endif; ?>
 	<p class="description">
 		<?php esc_html_e( 'Plugin-specific checks for schema, runtime defaults, reporting configuration, and reset readiness.', 'csp-automation-manager' ); ?>
 	</p>
@@ -142,4 +149,6 @@ $status_badge = static function ( string $status ): void {
 		</table>
 		<?php submit_button( __( 'Reset CSP Data', 'csp-automation-manager' ), 'delete' ); ?>
 	</form>
+<?php if ( ! $is_embedded ) : ?>
 </div>
+<?php endif; ?>
