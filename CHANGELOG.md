@@ -6,6 +6,14 @@ The format is based on Keep a Changelog, and this project follows semantic versi
 
 ## [Unreleased]
 
+## [1.0.26] - 2026-08-04
+
+### Changed
+
+- Prevented checked Auto Approval from being silently disabled by a stored maximum-per-run value of 0.
+- Normalised enabled non-manual automation surfaces with a zero cap to the default cap of 50.
+- Clarified the Settings automation cap copy so disabling auto-approval is done with the Auto Approval checkbox.
+
 ## [1.0.25] - 2026-08-04
 
 ### Changed

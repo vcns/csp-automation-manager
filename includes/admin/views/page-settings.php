@@ -185,6 +185,7 @@ foreach ( ! empty( $profiles_raw ) ? $profiles_raw : array() as $profile ) {
 					</td>
 					<td>
 						<input type="number" class="small-text" min="0" max="50" name="wp_csp_automation_config[<?php echo esc_attr( $surface ); ?>][max_automatic_changes_per_scan]" value="<?php echo esc_attr( (string) ( $surface_config['max_automatic_changes_per_scan'] ?? 0 ) ); ?>" />
+						<p class="description"><?php esc_html_e( 'When Auto Approval is checked, 0 is saved as the default cap of 50. Uncheck Auto Approval to disable automatic approvals.', 'csp-automation-manager' ); ?></p>
 					</td>
 					<td>
 						<?php foreach ( $automation_directives as $directive ) : ?>

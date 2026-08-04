@@ -4,7 +4,7 @@ Tags: security, csp, content security policy, headers, wordpress security
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.0.25
+Stable tag: 1.0.26
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -40,6 +40,12 @@ Reports received by this plugin are validated and stored in this site's WordPres
 For Cloudflare, CDN, and reverse-proxy deployments, administrators can configure an origin-only policy header name such as X-Origin-CSP-Policy. The proxy can then copy that origin header into the browser-facing Content-Security-Policy-Report-Only or Content-Security-Policy header.
 
 == Changelog ==
+
+= 1.0.26 =
+
+* Prevents checked Auto Approval from being silently disabled by a stored maximum-per-run value of 0.
+* Normalises enabled non-manual automation surfaces with a zero cap to the default cap of 50.
+* Clarifies the Settings automation cap copy so disabling auto-approval is done with the Auto Approval checkbox.
 
 = 1.0.25 =
 

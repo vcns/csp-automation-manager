@@ -63,6 +63,38 @@ class AutomationConfigTest extends TestCase {
 		$this->assertTrue( $config['admin']['emergency_disabled'] );
 	}
 
+	public function test_auto_enabled_surface_with_zero_cap_defaults_to_safe_limit(): void {
+		$config = ( new Automation_Config() )->normalise_admin_input(
+			array(
+				'frontend' => array(
+					'mode'                           => Automation_Config::MODE_AUTOMATIC_HIGH_APPROVAL,
+					'emergency_disabled'             => '0',
+					'max_automatic_changes_per_scan' => '0',
+				),
+			)
+		);
+
+		$this->assertSame( Automation_Config::MODE_AUTOMATIC_HIGH_APPROVAL, $config['frontend']['mode'] );
+		$this->assertFalse( $config['frontend']['emergency_disabled'] );
+		$this->assertSame( 50, $config['frontend']['max_automatic_changes_per_scan'] );
+	}
+
+	public function test_manual_surface_forces_auto_approval_off(): void {
+		$config = ( new Automation_Config() )->normalise_admin_input(
+			array(
+				'frontend' => array(
+					'mode'                           => Automation_Config::MODE_MANUAL,
+					'emergency_disabled'             => '0',
+					'max_automatic_changes_per_scan' => '50',
+				),
+			)
+		);
+
+		$this->assertSame( Automation_Config::MODE_MANUAL, $config['frontend']['mode'] );
+		$this->assertTrue( $config['frontend']['emergency_disabled'] );
+		$this->assertSame( 0, $config['frontend']['max_automatic_changes_per_scan'] );
+	}
+
 	public function test_legacy_modes_normalise_to_new_approval_postures(): void {
 		update_option(
 			'wp_csp_automation_config',
