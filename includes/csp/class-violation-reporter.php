@@ -289,7 +289,16 @@ class Violation_Reporter {
 		}
 
 		$blocked_uri = trim( $blocked_uri );
-		if ( '' === $blocked_uri || $this->is_non_host_blocked_uri( $blocked_uri ) ) {
+		if ( '' === $blocked_uri ) {
+			return null;
+		}
+
+		$non_host_candidate = $this->non_host_source_candidate( $directive, $blocked_uri );
+		if ( null !== $non_host_candidate ) {
+			return $non_host_candidate;
+		}
+
+		if ( $this->is_non_host_blocked_uri( $blocked_uri ) ) {
 			return null;
 		}
 
@@ -323,6 +332,20 @@ class Violation_Reporter {
 			'uri'       => esc_url_raw( $blocked_uri ),
 			'scheme'    => $scheme,
 			'host'      => sanitize_text_field( substr( $host, 0, 255 ) ),
+		);
+	}
+
+	private function non_host_source_candidate( string $directive, string $blocked_uri ): ?array {
+		$value = strtolower( trim( $blocked_uri ) );
+		if ( 'font-src' !== $directive || ! ( 'data' === $value || str_starts_with( $value, 'data:' ) ) ) {
+			return null;
+		}
+
+		return array(
+			'directive' => $directive,
+			'uri'       => 'data:',
+			'scheme'    => 'data',
+			'host'      => 'data:',
 		);
 	}
 

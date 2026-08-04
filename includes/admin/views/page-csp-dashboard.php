@@ -534,6 +534,9 @@ $violations     = ! empty( $violations_raw ) ? $violations_raw : array();
 		);
 		?>
 	</p>
+	<p class="description">
+		<?php esc_html_e( 'Host and same-origin file reports can create review proposals while the learning window is open. Inline script/style element hashes are learned from rendered HTML and emitted under the matching element directive on later requests; style attributes remain evidence-only until exact unsafe-hashes approval is supported.', 'csp-automation-manager' ); ?>
+	</p>
 	<table class="widefat fixed striped">
 		<thead>
 			<tr>

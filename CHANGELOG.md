@@ -6,6 +6,14 @@ The format is based on Keep a Changelog, and this project follows semantic versi
 
 ## [Unreleased]
 
+## [1.0.25] - 2026-08-04
+
+### Changed
+
+- Recorded inline script and style hashes for CSP3 element directives (`script-src-elem` and `style-src-elem`) as well as the broader fallback directives.
+- Learned `font-src data:` browser reports as high-risk pending proposals for administrator review.
+- Kept style-attribute violations evidence-only until exact attribute hash approval with `unsafe-hashes` is implemented safely.
+
 ## [1.0.24] - 2026-08-04
 
 ### Changed

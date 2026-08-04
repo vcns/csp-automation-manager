@@ -4,7 +4,7 @@ Tags: security, csp, content security policy, headers, wordpress security
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.0.24
+Stable tag: 1.0.25
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -40,6 +40,12 @@ Reports received by this plugin are validated and stored in this site's WordPres
 For Cloudflare, CDN, and reverse-proxy deployments, administrators can configure an origin-only policy header name such as X-Origin-CSP-Policy. The proxy can then copy that origin header into the browser-facing Content-Security-Policy-Report-Only or Content-Security-Policy header.
 
 == Changelog ==
+
+= 1.0.25 =
+
+* Records inline script and style hashes for CSP3 element directives (`script-src-elem` and `style-src-elem`) as well as the broader fallback directives.
+* Learns `font-src data:` browser reports as high-risk pending proposals for administrator review.
+* Keeps style-attribute violations evidence-only until exact attribute hash approval with `unsafe-hashes` is implemented safely.
 
 = 1.0.24 =
 

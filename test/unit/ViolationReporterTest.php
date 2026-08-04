@@ -191,6 +191,28 @@ class ViolationReporterTest extends TestCase {
 		$this->assertSame( 'pending', $source_insert['approval_state'] );
 	}
 
+	public function test_report_endpoint_learning_creates_pending_data_font_candidate(): void {
+		update_option( Learning_Window::OPTION_LAST_CHANGE, gmdate( 'Y-m-d H:i:s' ) );
+		update_option( Learning_Window::OPTION_WINDOW_HOURS, 48 );
+		$GLOBALS['_wp_rest_headers']['content-type'] = 'application/csp-report';
+
+		$reporter = new Violation_Reporter( $this->audit, new Learning_Window() );
+		$request  = $this->make_request(
+			'{"csp-report":{"effective-directive":"font-src","violated-directive":"font-src","document-uri":"https://example.com/","blocked-uri":"data:application/font-woff;base64,d09GRg=="}}'
+		);
+
+		$reporter->handle( $request );
+
+		$this->assertCount( 1, $GLOBALS['_wpdb_inserted_rows'] );
+		$source_insert = $GLOBALS['_wpdb_inserted_rows'][0]['data'];
+		$this->assertSame( 'frontend', $source_insert['surface'] );
+		$this->assertSame( 'font-src', $source_insert['directive'] );
+		$this->assertSame( 'data:', $source_insert['source_host'] );
+		$this->assertSame( 'data', $source_insert['source_scheme'] );
+		$this->assertSame( 'high', $source_insert['risk_level'] );
+		$this->assertSame( 'pending', $source_insert['approval_state'] );
+	}
+
 	public function test_report_endpoint_learning_is_locked_after_window_expires(): void {
 		update_option( Learning_Window::OPTION_LAST_CHANGE, gmdate( 'Y-m-d H:i:s', time() - ( 49 * HOUR_IN_SECONDS ) ) );
 		update_option( Learning_Window::OPTION_WINDOW_HOURS, 48 );
