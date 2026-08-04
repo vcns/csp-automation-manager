@@ -74,6 +74,7 @@ class Activator {
 			'wp_csp_learning_window_hours',
 			'wp_csp_policy_header_name',
 			'wp_csp_report_endpoint_url',
+			'wp_csp_reporting_transport',
 			'wp_csp_schema_verified_version',
 			'wp_csp_last_material_change_at',
 			'wp_csp_automation_config',
@@ -476,6 +477,9 @@ class Activator {
 			// Blank uses rest_url( 'csp-manager/v1/report' ); set only when a
 			// public proxy/CDN hostname must be advertised to browsers.
 			'wp_csp_report_endpoint_url'           => '',
+			// Direct report-uri reporting is the default because it gives the
+			// fastest feedback loop for report-endpoint learning.
+			'wp_csp_reporting_transport'           => 'report-uri',
 			// Blank emits normal CSP headers. Set only when an edge proxy copies
 			// an origin-only policy header back to a browser-facing CSP header.
 			'wp_csp_policy_header_name'            => '',

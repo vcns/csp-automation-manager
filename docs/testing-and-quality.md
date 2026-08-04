@@ -76,13 +76,12 @@ Current baseline:
 - verify enforce mode is blocked when no approvals exist
 - verify conflict detection warns when `.htaccess`, server configuration, or another security-header plugin is already emitting `Content-Security-Policy`, `Content-Security-Policy-Report-Only`, or `X-Content-Security-Policy`
 
-**Reporting-Endpoints and Report-To:**
+**CSP reporting transport:**
 
-- load the frontend and run `curl -I <site_url>`; response must contain a `Reporting-Endpoints:` header with value `csp-endpoint="<report_endpoint_url>"`
-- response must also contain a `Report-To:` header with the legacy JSON group structure
-- the emitted CSP string must contain `report-to csp-endpoint` referencing the endpoint name declared in both headers
+- load the frontend and run `curl -I <site_url>`; by default, the emitted CSP string must contain `report-uri <report_endpoint_url>` and must not contain `report-to csp-endpoint`
 - leave the reporting server URL setting blank and confirm the emitted `report-uri` uses the current WordPress REST endpoint
-- set a public HTTPS reporting server URL override and confirm `Reporting-Endpoints`, `Report-To`, and `report-uri` all use the override
+- set a public HTTPS reporting server URL override and confirm `report-uri` uses the override
+- set Reporting transport to `Direct report-uri plus Reporting API`; confirm `Reporting-Endpoints`, `Report-To`, `report-uri`, and `report-to csp-endpoint` all use the configured endpoint
 
 **Policy correctness:**
 

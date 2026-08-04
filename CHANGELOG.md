@@ -6,6 +6,13 @@ The format is based on Keep a Changelog, and this project follows semantic versi
 
 ## [Unreleased]
 
+## [1.0.14] - 2026-08-04
+
+### Changed
+
+- CSP reporting now defaults to direct `report-uri` delivery so browser violations reach the local report endpoint promptly during learning.
+- Added an administrator setting to opt into Reporting API headers and the `report-to` directive when required.
+
 ## [1.0.13] - 2026-08-04
 
 ### Fixed

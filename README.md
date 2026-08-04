@@ -9,7 +9,7 @@ It provides per-surface CSP profiles, nonce injection, source discovery, violati
 - Per-surface CSP profiles for `frontend`, `admin`, `login`, and `api`
 - Strict defaults across CSP directives, including `upgrade-insecure-requests`, `child-src`, `fenced-frame-src`, and the `sandbox` document directive
 - `report-sample` support in fetch directives so inline snippets can appear in violation reports
-- `Reporting-Endpoints` and legacy `Report-To` headers emitted alongside CSP
+- Direct `report-uri` browser reporting by default, with optional Reporting API headers
 - Configurable origin policy header name for Cloudflare, CDN, and reverse-proxy deployments
 - Per-request nonce injection for compatible WordPress script output
 - Report-only rollout mode

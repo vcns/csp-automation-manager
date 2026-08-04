@@ -113,6 +113,7 @@ class Admin_UI {
 			'wp_csp_enforce_gate_violation_window' => 'absint',
 			'wp_csp_learning_window_hours'         => 'absint',
 			'wp_csp_report_endpoint_url'           => array( $this, 'sanitize_report_endpoint_url' ),
+			'wp_csp_reporting_transport'           => array( $this, 'sanitize_reporting_transport' ),
 			'wp_csp_policy_header_name'            => array( $this, 'sanitize_policy_header_name' ),
 			// Data retention: days to keep violation reports (0 = keep forever).
 			'wp_csp_violation_retention_days'      => 'absint',
@@ -185,6 +186,10 @@ class Admin_UI {
 	}
 
 	// ── Asset enqueue ─────────────────────────────────────────────────────────
+
+	public function sanitize_reporting_transport( mixed $transport ): string {
+		return Policy_Builder::sanitize_reporting_transport( $transport );
+	}
 
 	public function enqueue_assets( string $hook_suffix ): void {
 		$csp_pages = array(

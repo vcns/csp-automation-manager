@@ -55,6 +55,12 @@ class ActivatorTest extends TestCase {
 		$this->assertSame( '', get_option( 'wp_csp_report_endpoint_url' ) );
 	}
 
+	public function test_activate_seeds_direct_reporting_transport(): void {
+		Activator::activate();
+
+		$this->assertSame( 'report-uri', get_option( 'wp_csp_reporting_transport' ) );
+	}
+
 	public function test_activate_seeds_enforce_gate_violation_window_option(): void {
 		Activator::activate();
 
