@@ -78,6 +78,14 @@ class AdminUITest extends TestCase {
 		$this->assertStringNotContainsString( "'scan-log'", $view );
 	}
 
+	public function test_admin_enforce_notice_uses_single_clean_trac_link(): void {
+		$source = file_get_contents( dirname( __DIR__, 2 ) . '/includes/admin/class-admin-ui.php' );
+
+		$this->assertIsString( $source );
+		$this->assertStringContainsString( 'Learn more about Trac #59446', $source );
+		$this->assertSame( 1, substr_count( $source, 'https://core.trac.wordpress.org/ticket/59446' ) );
+	}
+
 	public function test_sanitize_policy_header_name_accepts_origin_header(): void {
 		$ui = $this->make_admin_ui();
 

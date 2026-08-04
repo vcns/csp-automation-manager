@@ -373,7 +373,7 @@ class Admin_UI {
 			wp_kses(
 				sprintf(
 					/* translators: %s: URL to WordPress core Trac ticket */
-					__( '<strong>CSP Automation Manager:</strong> The wp-admin CSP surface is in <strong>enforce mode</strong>. WordPress core <a href="%s" target="_blank" rel="noopener">Trac #59446</a> is unresolved - some admin UI components may be blocked. Monitor violation reports before keeping enforce mode active.', 'csp-automation-manager' ),
+					__( '<strong>CSP Automation Manager:</strong> The wp-admin CSP surface is in <strong>enforce mode</strong>. Some WordPress admin UI components may be blocked until strict admin CSP support improves. <a href="%s" target="_blank" rel="noopener">Learn more about Trac #59446</a>. Keep monitoring violation reports before leaving admin enforcement enabled.', 'csp-automation-manager' ),
 					'https://core.trac.wordpress.org/ticket/59446'
 				),
 				array(

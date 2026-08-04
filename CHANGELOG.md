@@ -6,6 +6,12 @@ The format is based on Keep a Changelog, and this project follows semantic versi
 
 ## [Unreleased]
 
+## [1.0.18] - 2026-08-04
+
+### Changed
+
+- Clarified the wp-admin enforce-mode warning and presents the Trac reference as a single clean "Learn more" link.
+
 ## [1.0.17] - 2026-08-04
 
 ### Changed
