@@ -6,6 +6,14 @@ The format is based on Keep a Changelog, and this project follows semantic versi
 
 ## [Unreleased]
 
+## [1.0.13] - 2026-08-04
+
+### Fixed
+
+- Policy version table creation now avoids the reserved `trigger` index name, fixing MariaDB activation failures.
+- Activation now skips initial policy version seeding when the policy version table could not be created, preventing missing-table follow-on errors.
+- Activation-time policy snapshots now use a safe local report endpoint fallback until WordPress REST routing has initialised.
+
 ## [1.0.12] - 2026-08-03
 
 ### Fixed

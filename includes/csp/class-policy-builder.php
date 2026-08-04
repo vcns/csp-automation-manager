@@ -182,7 +182,11 @@ class Policy_Builder {
 			return esc_url_raw( $override );
 		}
 
-		return esc_url_raw( rest_url( 'csp-manager/v1/report' ) );
+		if ( function_exists( 'did_action' ) && did_action( 'init' ) > 0 ) {
+			return esc_url_raw( rest_url( 'csp-manager/v1/report' ) );
+		}
+
+		return esc_url_raw( home_url( '/wp-json/csp-manager/v1/report' ) );
 	}
 
 	private function is_allowed_report_endpoint_url( string $url ): bool {
