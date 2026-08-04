@@ -4,7 +4,7 @@ Tags: security, csp, content security policy, headers, wordpress security
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.0.16
+Stable tag: 1.0.27
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -40,6 +40,62 @@ Reports received by this plugin are validated and stored in this site's WordPres
 For Cloudflare, CDN, and reverse-proxy deployments, administrators can configure an origin-only policy header name such as X-Origin-CSP-Policy. The proxy can then copy that origin header into the browser-facing Content-Security-Policy-Report-Only or Content-Security-Policy header.
 
 == Changelog ==
+
+= 1.0.27 =
+
+* Reprocesses pending source proposals immediately after automation settings change, so newly eligible items can be auto-approved without waiting for another discovery pass.
+* Records an audit event when a settings update auto-approves pending proposals.
+
+= 1.0.26 =
+
+* Prevents checked Auto Approval from being silently disabled by a stored maximum-per-run value of 0.
+* Normalises enabled non-manual automation surfaces with a zero cap to the default cap of 50.
+* Clarifies the Settings automation cap copy so disabling auto-approval is done with the Auto Approval checkbox.
+
+= 1.0.25 =
+
+* Records inline script and style hashes for CSP3 element directives (`script-src-elem` and `style-src-elem`) as well as the broader fallback directives.
+* Learns `font-src data:` browser reports as high-risk pending proposals for administrator review.
+* Keeps style-attribute violations evidence-only until exact attribute hash approval with `unsafe-hashes` is implemented safely.
+
+= 1.0.24 =
+
+* Learns same-origin browser file violations as reviewable `'self'` proposals instead of discarding them before review.
+* Applies the existing same-origin-as-low automation setting to deterministic risk scoring.
+* Clarifies that browser violations are evidence and only become Recent Decisions after approval, rejection, reversal, undo, or automation.
+
+= 1.0.23 =
+
+* Moves CSP surface mode controls from Dashboard > Profiles into Settings > Configuration > Deterministic Automation.
+* Moves Policy Audit and Readiness into tabs under Settings and removes the redundant Dashboard > Profiles tab.
+* Separates inline CSP violation evidence by source location and sample so different inline failures no longer collapse into one broad row.
+* Adds Violations tab totals and an Evidence column to explain grouped browser report processing.
+
+= 1.0.22 =
+
+* Moves CSP surface mode controls from Dashboard > Profiles into Settings > Configuration > Deterministic Automation.
+* Moves Policy Audit and Readiness into tabs under Settings and removes the redundant Dashboard > Profiles tab.
+
+= 1.0.21 =
+
+* Renames the Settings deterministic automation table columns to "Automation" and "Auto Approval" for clearer operator intent.
+
+= 1.0.20 =
+
+* Groups the Violations dashboard by canonical policy source so already-stored Google Fonts and similar file-level reports display as one host-level row with a summed occurrence count.
+
+= 1.0.19 =
+
+* Rolls up remote host-source violation reports by policy source, reducing Google Fonts and similar asset noise from many file-level rows into a single host-level occurrence count.
+
+= 1.0.18 =
+
+* Clarifies the wp-admin enforce-mode warning and presents the Trac reference as a single clean "Learn more" link.
+
+= 1.0.17 =
+
+* Reorders the Dashboard tabs to Profiles, Violations, For Review, and Policy Changes.
+* Moves the recent Scan Log table into Settings with the scan schedule controls.
 
 = 1.0.16 =
 

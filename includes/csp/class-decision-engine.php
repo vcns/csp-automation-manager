@@ -52,6 +52,7 @@ class Decision_Engine {
 		$findings   = array();
 		$exclusions = array();
 		$risk       = 'low';
+		$is_self    = "'self'" === $host;
 
 		$this->add_finding( $findings, 'CSP-SRC-001', 'pass', 'none', 'neutral', 'Source expression is narrow unless another rule flags it.' );
 
@@ -85,7 +86,9 @@ class Decision_Engine {
 			$this->add_finding( $findings, 'CSP-SRC-004', 'fail', 'critical', 'blocked', 'Unsafe CSP keywords are hard-excluded from automation.' );
 		}
 
-		if ( in_array( $directive, self::HIGH_RISK_DIRECTIVES, true ) ) {
+		if ( $is_self && ! empty( $automation_config['treat_same_origin_as_low'] ) ) {
+			$this->add_finding( $findings, 'CSP-SRC-005', 'pass', 'low', 'eligible', 'Same-origin source is treated as low risk by the active automation configuration.' );
+		} elseif ( in_array( $directive, self::HIGH_RISK_DIRECTIVES, true ) ) {
 			$risk = $this->max_risk( $risk, 'high' );
 			$this->add_finding( $findings, 'CSP-DIR-001', 'review', 'high', 'review', "{$directive} can materially change script, style, connection, form, frame, or worker behaviour." );
 		} elseif ( in_array( $directive, self::MEDIUM_RISK_DIRECTIVES, true ) ) {

@@ -27,7 +27,7 @@ class AdminUITest extends TestCase {
 		$this->assertArrayHasKey( 'settings', $links );
 		$this->assertArrayHasKey( 'reset', $links );
 		$this->assertStringContainsString( 'admin.php?page=csp-automation-manager-settings', $links['settings'] );
-		$this->assertStringContainsString( 'admin.php?page=csp-automation-manager-readiness#wp-csp-reset', $links['reset'] );
+		$this->assertStringContainsString( 'admin.php?page=csp-automation-manager-settings&settings-tab=readiness#wp-csp-reset', $links['reset'] );
 		$this->assertStringContainsString( 'Settings', $links['settings'] );
 		$this->assertStringContainsString( 'Reset', $links['reset'] );
 		$this->assertSame( 'settings', array_key_first( $links ) );
@@ -62,9 +62,56 @@ class AdminUITest extends TestCase {
 		$this->assertStringContainsString( 'This timeline shows proposal activity', $view );
 		$this->assertStringContainsString( 'Proposed source', $view );
 		$this->assertStringContainsString( 'Policy version', $view );
-		$this->assertStringContainsString( "'Automation'", $view );
-		$this->assertStringContainsString( 'wp-csp-automation-mode', $view );
 		$this->assertStringNotContainsString( "'Strict-Dynamic'", $view );
+	}
+
+	public function test_dashboard_tab_order_starts_with_violations(): void {
+		$view = file_get_contents( dirname( __DIR__, 2 ) . '/includes/admin/views/page-csp-dashboard.php' );
+
+		$this->assertIsString( $view );
+
+		$allowed_tabs = "array( 'violations', 'sources', 'policy-changes' )";
+
+		$this->assertStringContainsString( $allowed_tabs, $view );
+		$this->assertStringNotContainsString( "'profiles', 'violations'", $view );
+		$this->assertStringNotContainsString( "'scan-log'", $view );
+	}
+
+	public function test_settings_automation_table_owns_surface_mode_and_automation_controls(): void {
+		$view = file_get_contents( dirname( __DIR__, 2 ) . '/includes/admin/views/page-settings.php' );
+		$ui_source = file_get_contents( dirname( __DIR__, 2 ) . '/includes/admin/class-admin-ui.php' );
+
+		$this->assertIsString( $view );
+		$this->assertIsString( $ui_source );
+		$this->assertStringContainsString( "'Mode'", $view );
+		$this->assertStringContainsString( "'Automation'", $view );
+		$this->assertStringContainsString( "'Auto Approval'", $view );
+		$this->assertStringContainsString( "'Actions'", $view );
+		$this->assertStringContainsString( 'wp-csp-toggle-mode', $view );
+		$this->assertStringContainsString( 'process_automation_config_update', $ui_source );
+		$this->assertStringNotContainsString( "'Automation enabled'", $view );
+	}
+
+	public function test_policy_audit_and_readiness_are_settings_tabs(): void {
+		$ui_source     = file_get_contents( dirname( __DIR__, 2 ) . '/includes/admin/class-admin-ui.php' );
+		$settings_view = file_get_contents( dirname( __DIR__, 2 ) . '/includes/admin/views/page-settings.php' );
+
+		$this->assertIsString( $ui_source );
+		$this->assertIsString( $settings_view );
+		$this->assertStringContainsString( "'policy-audit'", $settings_view );
+		$this->assertStringContainsString( "'readiness'", $settings_view );
+		$this->assertStringContainsString( 'page-policy-audit.php', $settings_view );
+		$this->assertStringContainsString( 'page-readiness.php', $settings_view );
+		$this->assertStringNotContainsString( "'csp-automation-manager-policy-audit'", $ui_source );
+		$this->assertStringNotContainsString( "'csp-automation-manager-readiness'", $ui_source );
+	}
+
+	public function test_admin_enforce_notice_uses_single_clean_trac_link(): void {
+		$source = file_get_contents( dirname( __DIR__, 2 ) . '/includes/admin/class-admin-ui.php' );
+
+		$this->assertIsString( $source );
+		$this->assertStringContainsString( 'Learn more about Trac #59446', $source );
+		$this->assertSame( 1, substr_count( $source, 'https://core.trac.wordpress.org/ticket/59446' ) );
 	}
 
 	public function test_sanitize_policy_header_name_accepts_origin_header(): void {

@@ -87,6 +87,28 @@ class DecisionEngineTest extends TestCase {
 		$this->assertTrue( $result['required_human_review'] );
 	}
 
+	public function test_same_origin_source_can_be_treated_as_low_risk(): void {
+		$engine = new Decision_Engine();
+
+		$result = $engine->evaluate_source(
+			array(
+				'directive'      => 'media-src',
+				'source_scheme'  => 'https',
+				'source_host'    => "'self'",
+				'source_uri'     => 'https://example.com/wp-content/uploads/video.mp4',
+				'evidence_count' => 2,
+			),
+			array(
+				'mode'                     => Automation_Config::MODE_AUTOMATIC_MEDIUM_HIGH_APPROVAL,
+				'treat_same_origin_as_low' => true,
+			)
+		);
+
+		$this->assertSame( 'low', $result['risk'] );
+		$this->assertTrue( $result['automation_eligible'] );
+		$this->assertFalse( $result['required_human_review'] );
+	}
+
 	public function test_medium_risk_is_eligible_when_only_high_requires_approval(): void {
 		$engine = new Decision_Engine();
 

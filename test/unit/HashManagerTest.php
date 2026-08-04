@@ -167,6 +167,22 @@ class HashManagerTest extends TestCase {
 		$this->assertCount( 1, $manager->get_captured_hashes() );
 	}
 
+	public function test_process_inline_blocks_records_element_directive_hashes(): void {
+		$html = '<script>console.log("test");</script><style>body { color: red; }</style>';
+
+		$this->invoke_process_inline_blocks( $this->manager, $html, 'frontend' );
+
+		$directives = array_map(
+			static fn( array $row ): string => (string) $row['data']['directive'],
+			$GLOBALS['_wpdb_inserted_rows']
+		);
+
+		$this->assertContains( 'script-src', $directives );
+		$this->assertContains( 'script-src-elem', $directives );
+		$this->assertContains( 'style-src', $directives );
+		$this->assertContains( 'style-src-elem', $directives );
+	}
+
 	public function test_extract_and_record_normalises_crlf_line_endings(): void {
 		$manager  = $this->make_db_stub_manager();
 		$unix     = "var x = 1;\nvar y = 2;";
@@ -244,5 +260,11 @@ class HashManagerTest extends TestCase {
 		$ref = new ReflectionMethod( $manager, 'extract_and_record' );
 		$ref->setAccessible( true );
 		$ref->invoke( $manager, $html, $tag, $directive, $surface );
+	}
+
+	private function invoke_process_inline_blocks( Hash_Manager $manager, string $html, string $surface ): void {
+		$ref = new ReflectionMethod( $manager, 'process_inline_blocks' );
+		$ref->setAccessible( true );
+		$ref->invoke( $manager, $html, $surface );
 	}
 }

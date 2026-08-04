@@ -6,6 +6,84 @@ The format is based on Keep a Changelog, and this project follows semantic versi
 
 ## [Unreleased]
 
+## [1.0.27] - 2026-08-04
+
+### Changed
+
+- Reprocessed pending source proposals immediately after automation settings change, so newly eligible items can be auto-approved without waiting for another discovery pass.
+- Recorded an audit event when a settings update auto-approves pending proposals.
+
+## [1.0.26] - 2026-08-04
+
+### Changed
+
+- Prevented checked Auto Approval from being silently disabled by a stored maximum-per-run value of 0.
+- Normalised enabled non-manual automation surfaces with a zero cap to the default cap of 50.
+- Clarified the Settings automation cap copy so disabling auto-approval is done with the Auto Approval checkbox.
+
+## [1.0.25] - 2026-08-04
+
+### Changed
+
+- Recorded inline script and style hashes for CSP3 element directives (`script-src-elem` and `style-src-elem`) as well as the broader fallback directives.
+- Learned `font-src data:` browser reports as high-risk pending proposals for administrator review.
+- Kept style-attribute violations evidence-only until exact attribute hash approval with `unsafe-hashes` is implemented safely.
+
+## [1.0.24] - 2026-08-04
+
+### Changed
+
+- Learned same-origin browser file violations as reviewable `'self'` proposals instead of discarding them before review.
+- Applied the existing same-origin-as-low automation setting to deterministic risk scoring.
+- Clarified that browser violations are evidence and only appear as recent audit decisions after approval, rejection, reversal, undo, or automation.
+
+## [1.0.23] - 2026-08-04
+
+### Changed
+
+- Moved CSP surface mode controls from Dashboard > Profiles into Settings > Configuration > Deterministic Automation.
+- Moved Policy Audit and Readiness into Settings tabs and removed the redundant Dashboard > Profiles navigation.
+- Separated inline CSP violation evidence by source location and report sample so different inline failures no longer collapse into one broad row.
+- Added Violations tab totals and an Evidence column to clarify grouped browser report processing.
+
+## [1.0.22] - 2026-08-04
+
+### Changed
+
+- Moved CSP surface mode controls from Dashboard > Profiles into Settings > Configuration > Deterministic Automation.
+- Moved Policy Audit and Readiness into Settings tabs and removed the redundant Dashboard > Profiles navigation.
+
+## [1.0.21] - 2026-08-04
+
+### Changed
+
+- Renamed the Settings deterministic automation table columns to "Automation" and "Auto Approval" for clearer operator intent.
+
+## [1.0.20] - 2026-08-04
+
+### Changed
+
+- Grouped the Violations dashboard by canonical policy source so already-stored Google Fonts and similar file-level reports display as one host-level row with a summed occurrence count.
+
+## [1.0.19] - 2026-08-04
+
+### Changed
+
+- Rolled up remote host-source violation reports by policy source, reducing Google Fonts and similar asset noise from many file-level rows into a single host-level occurrence count.
+
+## [1.0.18] - 2026-08-04
+
+### Changed
+
+- Clarified the wp-admin enforce-mode warning and presents the Trac reference as a single clean "Learn more" link.
+
+## [1.0.17] - 2026-08-04
+
+### Changed
+
+- Reordered the Dashboard tabs to Profiles, Violations, For Review, and Policy Changes.
+- Moved the recent Scan Log table into Settings alongside the scan schedule controls.
+
 ## [1.0.16] - 2026-08-04
 
 ### Added

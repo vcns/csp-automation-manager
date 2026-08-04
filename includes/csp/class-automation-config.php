@@ -138,6 +138,13 @@ class Automation_Config {
 		$merged['max_automatic_changes_per_scan'] = max( 0, (int) $merged['max_automatic_changes_per_scan'] );
 		$merged['change_rate_guardrail']          = max( 0, (int) $merged['change_rate_guardrail'] );
 
+		if ( self::MODE_MANUAL === $merged['mode'] ) {
+			$merged['emergency_disabled']             = true;
+			$merged['max_automatic_changes_per_scan'] = 0;
+		} elseif ( ! $merged['emergency_disabled'] && $merged['max_automatic_changes_per_scan'] <= 0 ) {
+			$merged['max_automatic_changes_per_scan'] = 50;
+		}
+
 		return $merged;
 	}
 

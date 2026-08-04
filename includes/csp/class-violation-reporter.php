@@ -4,7 +4,7 @@
  *
  * Implements §4.13 of the directive:
  *   - Handles both CSP Level 3 (application/csp-report) and legacy formats.
- *   - Deduplicates by a stable fingerprint: hash(surface + blocked_uri + violated_directive).
+ *   - Deduplicates host-source reports by policy source: hash(surface + canonical blocked source + directive).
  *   - Stores one row per unique fingerprint, with first/last reported timestamps.
  *   - Increments occurrence_count on duplicate reports using a single database upsert.
  *   - Rate-limits storage: drops reports after 500 per hour per surface (soft cap).
@@ -187,7 +187,8 @@ class Violation_Reporter {
 		}
 		set_transient( $rate_key, $count + 1, self::RATE_LIMIT_WINDOW );
 
-		$fingerprint = hash( 'sha256', $surface . '|' . $blocked_uri . '|' . $violated_directive );
+		$fingerprint_source = $this->fingerprint_report_source( $r, $blocked_uri, $violated_directive );
+		$fingerprint        = hash( 'sha256', $surface . '|' . $fingerprint_source . '|' . $violated_directive );
 
 		$now = current_time( 'mysql', true );
 
@@ -288,7 +289,16 @@ class Violation_Reporter {
 		}
 
 		$blocked_uri = trim( $blocked_uri );
-		if ( '' === $blocked_uri || $this->is_non_host_blocked_uri( $blocked_uri ) ) {
+		if ( '' === $blocked_uri ) {
+			return null;
+		}
+
+		$non_host_candidate = $this->non_host_source_candidate( $directive, $blocked_uri );
+		if ( null !== $non_host_candidate ) {
+			return $non_host_candidate;
+		}
+
+		if ( $this->is_non_host_blocked_uri( $blocked_uri ) ) {
 			return null;
 		}
 
@@ -309,7 +319,12 @@ class Violation_Reporter {
 		$host      = strtolower( $parsed['host'] );
 		$site_host = wp_parse_url( home_url(), PHP_URL_HOST );
 		if ( ! empty( $site_host ) && strtolower( (string) $site_host ) === $host ) {
-			return null;
+			return array(
+				'directive' => $directive,
+				'uri'       => esc_url_raw( $blocked_uri ),
+				'scheme'    => $scheme,
+				'host'      => "'self'",
+			);
 		}
 
 		return array(
@@ -317,6 +332,77 @@ class Violation_Reporter {
 			'uri'       => esc_url_raw( $blocked_uri ),
 			'scheme'    => $scheme,
 			'host'      => sanitize_text_field( substr( $host, 0, 255 ) ),
+		);
+	}
+
+	private function non_host_source_candidate( string $directive, string $blocked_uri ): ?array {
+		$value = strtolower( trim( $blocked_uri ) );
+		if ( 'font-src' !== $directive || ! ( 'data' === $value || str_starts_with( $value, 'data:' ) ) ) {
+			return null;
+		}
+
+		return array(
+			'directive' => $directive,
+			'uri'       => 'data:',
+			'scheme'    => 'data',
+			'host'      => 'data:',
+		);
+	}
+
+	protected function fingerprint_blocked_source( string $blocked_uri, string $directive ): string {
+		$blocked_uri = trim( $blocked_uri );
+		if ( '' === $blocked_uri ) {
+			return '';
+		}
+
+		if ( $this->is_non_host_blocked_uri( $blocked_uri ) ) {
+			return $blocked_uri;
+		}
+
+		if ( str_starts_with( $blocked_uri, '//' ) ) {
+			$blocked_uri = 'https:' . $blocked_uri;
+		}
+
+		$parsed = wp_parse_url( $blocked_uri );
+		if ( ! is_array( $parsed ) || empty( $parsed['host'] ) ) {
+			return $blocked_uri;
+		}
+
+		$scheme = strtolower( isset( $parsed['scheme'] ) ? (string) $parsed['scheme'] : 'https' );
+		if ( ! in_array( $scheme, array( 'http', 'https', 'ws', 'wss' ), true ) ) {
+			return $blocked_uri;
+		}
+
+		$source = $scheme . '://' . strtolower( (string) $parsed['host'] );
+		if ( ! empty( $parsed['port'] ) ) {
+			$source .= ':' . (int) $parsed['port'];
+		}
+
+		return $source;
+	}
+
+	protected function fingerprint_report_source( array $report, string $blocked_uri, string $directive ): string {
+		$policy_source = $this->fingerprint_blocked_source( $blocked_uri, $directive );
+		if ( ! $this->is_non_host_blocked_uri( $blocked_uri ) ) {
+			return $policy_source;
+		}
+
+		$source_file   = sanitize_text_field( substr( (string) ( $report['source_file'] ?? '' ), 0, 512 ) );
+		$line_number   = isset( $report['line_number'] ) && null !== $report['line_number'] ? (string) (int) $report['line_number'] : '';
+		$column_number = isset( $report['column_number'] ) && null !== $report['column_number'] ? (string) (int) $report['column_number'] : '';
+		$sample        = sanitize_text_field( substr( (string) ( $report['sample'] ?? '' ), 0, 256 ) );
+		$sample_hash   = '' !== $sample ? hash( 'sha256', $sample ) : '';
+
+		return implode(
+			'|',
+			array(
+				'non-host',
+				strtolower( trim( $blocked_uri ) ),
+				$source_file,
+				$line_number,
+				$column_number,
+				$sample_hash,
+			)
 		);
 	}
 

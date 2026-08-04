@@ -120,7 +120,9 @@ class Hash_Manager {
 	 */
 	private function process_inline_blocks( string $html, string $surface ): void {
 		$this->extract_and_record( $html, 'script', 'script-src', $surface );
+		$this->extract_and_record( $html, 'script', 'script-src-elem', $surface );
 		$this->extract_and_record( $html, 'style', 'style-src', $surface );
+		$this->extract_and_record( $html, 'style', 'style-src-elem', $surface );
 	}
 
 	/**

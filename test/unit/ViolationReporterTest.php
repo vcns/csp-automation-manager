@@ -169,6 +169,50 @@ class ViolationReporterTest extends TestCase {
 		$this->assertSame( 'report-endpoint', $source_insert['owner_component'] );
 	}
 
+	public function test_report_endpoint_learning_creates_self_candidate_for_same_origin_file(): void {
+		update_option( Learning_Window::OPTION_LAST_CHANGE, gmdate( 'Y-m-d H:i:s' ) );
+		update_option( Learning_Window::OPTION_WINDOW_HOURS, 48 );
+		$GLOBALS['_wp_rest_headers']['content-type'] = 'application/csp-report';
+
+		$reporter = new Violation_Reporter( $this->audit, new Learning_Window() );
+		$request  = $this->make_request(
+			'{"csp-report":{"effective-directive":"media-src","violated-directive":"media-src","document-uri":"https://example.com/","blocked-uri":"https://example.com/wp-content/uploads/video.mp4"}}'
+		);
+
+		$reporter->handle( $request );
+
+		$this->assertCount( 1, $GLOBALS['_wpdb_inserted_rows'] );
+		$source_insert = $GLOBALS['_wpdb_inserted_rows'][0]['data'];
+		$this->assertSame( 'frontend', $source_insert['surface'] );
+		$this->assertSame( 'media-src', $source_insert['directive'] );
+		$this->assertSame( "'self'", $source_insert['source_host'] );
+		$this->assertSame( 'https', $source_insert['source_scheme'] );
+		$this->assertSame( 'low', $source_insert['risk_level'] );
+		$this->assertSame( 'pending', $source_insert['approval_state'] );
+	}
+
+	public function test_report_endpoint_learning_creates_pending_data_font_candidate(): void {
+		update_option( Learning_Window::OPTION_LAST_CHANGE, gmdate( 'Y-m-d H:i:s' ) );
+		update_option( Learning_Window::OPTION_WINDOW_HOURS, 48 );
+		$GLOBALS['_wp_rest_headers']['content-type'] = 'application/csp-report';
+
+		$reporter = new Violation_Reporter( $this->audit, new Learning_Window() );
+		$request  = $this->make_request(
+			'{"csp-report":{"effective-directive":"font-src","violated-directive":"font-src","document-uri":"https://example.com/","blocked-uri":"data:application/font-woff;base64,d09GRg=="}}'
+		);
+
+		$reporter->handle( $request );
+
+		$this->assertCount( 1, $GLOBALS['_wpdb_inserted_rows'] );
+		$source_insert = $GLOBALS['_wpdb_inserted_rows'][0]['data'];
+		$this->assertSame( 'frontend', $source_insert['surface'] );
+		$this->assertSame( 'font-src', $source_insert['directive'] );
+		$this->assertSame( 'data:', $source_insert['source_host'] );
+		$this->assertSame( 'data', $source_insert['source_scheme'] );
+		$this->assertSame( 'high', $source_insert['risk_level'] );
+		$this->assertSame( 'pending', $source_insert['approval_state'] );
+	}
+
 	public function test_report_endpoint_learning_is_locked_after_window_expires(): void {
 		update_option( Learning_Window::OPTION_LAST_CHANGE, gmdate( 'Y-m-d H:i:s', time() - ( 49 * HOUR_IN_SECONDS ) ) );
 		update_option( Learning_Window::OPTION_WINDOW_HOURS, 48 );
@@ -379,6 +423,75 @@ class ViolationReporterTest extends TestCase {
 
 	// ── Rate limiting ─────────────────────────────────────────────────────────
 
+	public function test_font_reports_for_same_host_share_fingerprint(): void {
+		$reporter = $this->make_capturing_reporter();
+
+		$report1 = [ 'csp-report' => [ 'blocked-uri' => 'https://fonts.gstatic.com/s/poppins/v24/pxiByp8kv8JHgFVrLDz8Z1JlFc-K.woff2', 'violated-directive' => 'font-src', 'document-uri' => 'https://example.com/' ] ];
+		$report2 = [ 'csp-report' => [ 'blocked-uri' => 'https://fonts.gstatic.com/s/poppins/v24/pxiDyp8kv8JHgFVrJJLm111VF9eO.woff2', 'violated-directive' => 'font-src', 'document-uri' => 'https://example.com/' ] ];
+
+		$stored1 = $reporter->capture_stored_reports( $report1 );
+		$stored2 = $reporter->capture_stored_reports( $report2 );
+
+		$this->assertCount( 1, $stored1 );
+		$this->assertCount( 1, $stored2 );
+		$this->assertSame( $stored1[0]['fingerprint'], $stored2[0]['fingerprint'] );
+		$this->assertSame( 'https://fonts.gstatic.com', $stored1[0]['fingerprint_source'] );
+	}
+
+	public function test_inline_reports_with_different_locations_have_different_fingerprints(): void {
+		$reporter = $this->make_capturing_reporter();
+
+		$report1 = [
+			'csp-report' => [
+				'blocked-uri'        => 'inline',
+				'violated-directive' => 'style-src-elem',
+				'document-uri'       => 'https://example.com/',
+				'source-file'        => 'https://example.com/',
+				'line-number'        => 63,
+				'column-number'      => 1,
+				'script-sample'      => '.hero { color: red; }',
+			],
+		];
+		$report2 = [
+			'csp-report' => [
+				'blocked-uri'        => 'inline',
+				'violated-directive' => 'style-src-elem',
+				'document-uri'       => 'https://example.com/',
+				'source-file'        => 'https://example.com/',
+				'line-number'        => 71,
+				'column-number'      => 1,
+				'script-sample'      => '.footer { color: blue; }',
+			],
+		];
+
+		$stored1 = $reporter->capture_stored_reports( $report1 );
+		$stored2 = $reporter->capture_stored_reports( $report2 );
+
+		$this->assertNotSame( $stored1[0]['fingerprint'], $stored2[0]['fingerprint'] );
+		$this->assertStringContainsString( 'non-host|inline|https://example.com/|63|1|', $stored1[0]['fingerprint_source'] );
+	}
+
+	public function test_same_inline_report_keeps_same_fingerprint(): void {
+		$reporter = $this->make_capturing_reporter();
+
+		$report = [
+			'csp-report' => [
+				'blocked-uri'        => 'inline',
+				'violated-directive' => 'script-src-elem',
+				'document-uri'       => 'https://example.com/',
+				'source-file'        => 'https://example.com/',
+				'line-number'        => 113,
+				'column-number'      => 1,
+				'script-sample'      => 'window.example = true;',
+			],
+		];
+
+		$stored1 = $reporter->capture_stored_reports( $report );
+		$stored2 = $reporter->capture_stored_reports( $report );
+
+		$this->assertSame( $stored1[0]['fingerprint'], $stored2[0]['fingerprint'] );
+	}
+
 	public function test_rate_limit_blocks_reports_beyond_cap(): void {
 		$reporter = $this->make_capturing_reporter( rate_limit_cap: 2 );
 
@@ -449,11 +562,13 @@ class ViolationReporterTest extends TestCase {
 
 				$blocked_uri        = substr( $r['blocked_uri'] ?? '', 0, 2048 );
 				$violated_directive = substr( $r['violated_directive'] ?? '', 0, 128 );
-				$fingerprint        = hash( 'sha256', $surface . '|' . $blocked_uri . '|' . $violated_directive );
+				$fingerprint_source = $this->fingerprint_report_source( $r, $blocked_uri, $violated_directive );
+				$fingerprint        = hash( 'sha256', $surface . '|' . $fingerprint_source . '|' . $violated_directive );
 
 				$this->captured[] = array_merge( $r, [
-					'profile_surface' => $surface,
-					'fingerprint'     => $fingerprint,
+					'profile_surface'    => $surface,
+					'fingerprint'        => $fingerprint,
+					'fingerprint_source' => $fingerprint_source,
 				] );
 			}
 

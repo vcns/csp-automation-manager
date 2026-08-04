@@ -3,10 +3,8 @@
  * WordPress Admin UI: menus, settings API, AJAX handlers.
  *
  * Registers admin pages:
- *   1. csp-automation-manager-dashboard  – CSP surface profiles, source inventory, violations, scan history
- *   2. csp-automation-manager-settings   – promotion gates, learning window, cron schedule, notify email
- *   3. csp-automation-manager-policy-audit – policy history, decisions, provenance
- *   4. csp-automation-manager-readiness  – plugin-specific health checks and reset
+ *   1. csp-automation-manager-dashboard  - violations, source review, policy changes
+ *   2. csp-automation-manager-settings   - surface modes, automation, readiness, audit, reset
  *
  * All form submissions are protected by check_admin_referer() and
  * current_user_can('manage_options').
@@ -42,6 +40,7 @@ class Admin_UI {
 		add_action( 'admin_init', array( $this, 'register_settings' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_assets' ) );
 		add_action( 'admin_notices', array( $this, 'display_admin_notices' ) );
+		add_action( 'updated_option', array( $this, 'process_automation_config_update' ), 10, 3 );
 		add_filter( 'plugin_action_links_' . plugin_basename( WP_CSP_FILE ), array( $this, 'add_plugin_action_links' ) );
 		add_filter( 'plugin_row_meta', array( $this, 'add_plugin_row_meta' ), 10, 2 );
 
@@ -86,24 +85,6 @@ class Admin_UI {
 			'csp-automation-manager-settings',
 			array( $this, 'render_settings' )
 		);
-
-		add_submenu_page(
-			'csp-automation-manager-dashboard',
-			__( 'Policy Audit', 'csp-automation-manager' ),
-			__( 'Policy Audit', 'csp-automation-manager' ),
-			'manage_options',
-			'csp-automation-manager-policy-audit',
-			array( $this, 'render_policy_audit' )
-		);
-
-		add_submenu_page(
-			'csp-automation-manager-dashboard',
-			__( 'Readiness', 'csp-automation-manager' ),
-			__( 'Readiness', 'csp-automation-manager' ),
-			'manage_options',
-			'csp-automation-manager-readiness',
-			array( $this, 'render_readiness' )
-		);
 	}
 
 	// ── Settings API ──────────────────────────────────────────────────────────
@@ -136,7 +117,7 @@ class Admin_UI {
 
 		$reset_link = sprintf(
 			'<a href="%1$s">%2$s</a>',
-			esc_url( admin_url( 'admin.php?page=csp-automation-manager-readiness#wp-csp-reset' ) ),
+			esc_url( admin_url( 'admin.php?page=csp-automation-manager-settings&settings-tab=readiness#wp-csp-reset' ) ),
 			esc_html__( 'Reset', 'csp-automation-manager' )
 		);
 
@@ -202,12 +183,31 @@ class Admin_UI {
 		return ( new Automation_Config() )->normalise_admin_input( is_array( $config ) ? $config : array() );
 	}
 
+	public function process_automation_config_update( string $option, mixed $old_value, mixed $value ): void {
+		if ( 'wp_csp_automation_config' !== $option || $old_value === $value || ! isset( $this->plugin->audit ) ) {
+			return;
+		}
+
+		$manager  = new Policy_Change_Manager( $this->plugin->audit );
+		$approved = $manager->process_pending_auto_approvals();
+		if ( $approved > 0 ) {
+			$this->plugin->audit->log(
+				'policy_change',
+				'pending_auto_approval_sweep',
+				sprintf(
+					/* translators: %d: number of proposals auto-approved after settings save */
+					__( 'Automation settings update auto-approved %d pending source proposal(s).', 'csp-automation-manager' ),
+					$approved
+				),
+				'info'
+			);
+		}
+	}
+
 	public function enqueue_assets( string $hook_suffix ): void {
 		$csp_pages = array(
 			'toplevel_page_csp-automation-manager-dashboard',
 			'csp-manager_page_csp-automation-manager-settings',
-			'csp-manager_page_csp-automation-manager-policy-audit',
-			'csp-manager_page_csp-automation-manager-readiness',
 		);
 		if ( ! in_array( $hook_suffix, $csp_pages, true ) ) {
 			return;
@@ -313,8 +313,11 @@ class Admin_UI {
 
 	private function redirect_to_readiness( string $result ): void {
 		$url = add_query_arg(
-			array( 'wp_csp_reset' => $result ),
-			admin_url( 'admin.php?page=csp-automation-manager-readiness#wp-csp-reset' )
+			array(
+				'settings-tab' => 'readiness',
+				'wp_csp_reset' => $result,
+			),
+			admin_url( 'admin.php?page=csp-automation-manager-settings#wp-csp-reset' )
 		);
 
 		wp_safe_redirect( $url );
@@ -373,7 +376,7 @@ class Admin_UI {
 			wp_kses(
 				sprintf(
 					/* translators: %s: URL to WordPress core Trac ticket */
-					__( '<strong>CSP Automation Manager:</strong> The wp-admin CSP surface is in <strong>enforce mode</strong>. WordPress core <a href="%s" target="_blank" rel="noopener">Trac #59446</a> is unresolved - some admin UI components may be blocked. Monitor violation reports before keeping enforce mode active.', 'csp-automation-manager' ),
+					__( '<strong>CSP Automation Manager:</strong> The wp-admin CSP surface is in <strong>enforce mode</strong>. Some WordPress admin UI components may be blocked until strict admin CSP support improves. <a href="%s" target="_blank" rel="noopener">Learn more about Trac #59446</a>. Keep monitoring violation reports before leaving admin enforcement enabled.', 'csp-automation-manager' ),
 					'https://core.trac.wordpress.org/ticket/59446'
 				),
 				array(

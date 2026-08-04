@@ -9,6 +9,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+global $wpdb;
+
 $learning_window            = new \WP_CSP\CSP\Learning_Window();
 $learning_status            = $learning_window->is_open() ? __( 'Open', 'csp-automation-manager' ) : __( 'Locked', 'csp-automation-manager' );
 $current_report_endpoint    = esc_url_raw( rest_url( 'csp-manager/v1/report' ) );
@@ -20,9 +22,78 @@ $automation_surfaces        = \WP_CSP\CSP\Automation_Config::SURFACES;
 $automation_mode_labels     = \WP_CSP\CSP\Automation_Config::mode_labels();
 $automation_directives      = array( 'default-src', 'img-src', 'font-src', 'media-src', 'manifest-src' );
 $automation_schemes         = array( 'https', 'wss' );
+$settings_tab               = isset( $_GET['settings-tab'] ) ? sanitize_key( wp_unslash( $_GET['settings-tab'] ) ) : 'configuration';
+$settings_tabs              = array(
+	'configuration' => array(
+		'label'       => __( 'Configuration', 'csp-automation-manager' ),
+		'description' => __( 'Configure promotion gates, surface modes, deterministic automation, reporting, proxy header emission, and scan schedule.', 'csp-automation-manager' ),
+	),
+	'policy-audit'  => array(
+		'label'       => __( 'Policy Audit', 'csp-automation-manager' ),
+		'description' => __( 'Inspect effective policies, decision provenance, pending review items, and policy version history.', 'csp-automation-manager' ),
+	),
+	'readiness'     => array(
+		'label'       => __( 'Readiness', 'csp-automation-manager' ),
+		'description' => __( 'Review plugin-specific schema, runtime, reporting, reset, and operational health checks.', 'csp-automation-manager' ),
+	),
+);
+if ( ! isset( $settings_tabs[ $settings_tab ] ) ) {
+	$settings_tab = 'configuration';
+}
+
+// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- No user input; only $wpdb->prefix used in query.
+$scan_logs_raw = $wpdb->get_results( "SELECT * FROM {$wpdb->prefix}csp_scan_logs ORDER BY started_at DESC LIMIT 20", ARRAY_A );
+$scan_logs     = ! empty( $scan_logs_raw ) ? $scan_logs_raw : array();
+
+// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- No user input; only $wpdb->prefix used in query.
+$profiles_raw = $wpdb->get_results( "SELECT * FROM {$wpdb->prefix}csp_policy_profiles ORDER BY surface", ARRAY_A );
+$profiles     = array();
+foreach ( ! empty( $profiles_raw ) ? $profiles_raw : array() as $profile ) {
+	$profiles[ (string) $profile['surface'] ] = $profile;
+}
 ?>
 <div class="wrap wp-csp-wrap">
 	<h1><?php esc_html_e( 'CSP Automation Manager Settings', 'csp-automation-manager' ); ?></h1>
+
+	<nav class="nav-tab-wrapper wp-csp-tab-wrapper" role="tablist" aria-label="<?php esc_attr_e( 'CSP settings sections', 'csp-automation-manager' ); ?>">
+		<?php foreach ( $settings_tabs as $tab_key => $tab_data ) : ?>
+		<a class="nav-tab<?php echo $tab_key === $settings_tab ? ' nav-tab-active' : ''; ?>"
+			href="<?php echo esc_url( add_query_arg( 'settings-tab', $tab_key, admin_url( 'admin.php?page=csp-automation-manager-settings' ) ) ); ?>"
+			role="tab"
+			title="<?php echo esc_attr( $tab_data['description'] ); ?>"
+			aria-describedby="wp-csp-settings-tab-help-<?php echo esc_attr( $tab_key ); ?>"
+			<?php echo $tab_key === $settings_tab ? 'aria-selected="true" aria-current="page"' : 'aria-selected="false"'; ?>>
+			<?php echo esc_html( $tab_data['label'] ); ?>
+			<span class="screen-reader-text" id="wp-csp-settings-tab-help-<?php echo esc_attr( $tab_key ); ?>">
+				<?php echo esc_html( $tab_data['description'] ); ?>
+			</span>
+		</a>
+		<?php endforeach; ?>
+	</nav>
+	<div class="wp-csp-tab-help" role="note">
+		<strong><?php echo esc_html( $settings_tabs[ $settings_tab ]['label'] ); ?>:</strong>
+		<?php echo esc_html( $settings_tabs[ $settings_tab ]['description'] ); ?>
+	</div>
+
+	<?php if ( 'policy-audit' === $settings_tab ) : ?>
+		<?php
+		$wp_csp_settings_embedded = true;
+		require WP_CSP_DIR . 'includes/admin/views/page-policy-audit.php';
+		?>
+	</div>
+		<?php return; ?>
+	<?php endif; ?>
+
+	<?php if ( 'readiness' === $settings_tab ) : ?>
+		<?php
+		$wp_csp_settings_embedded = true;
+		$readiness                = ( new \WP_CSP\Admin\Readiness_Checker() )->get_report();
+		require WP_CSP_DIR . 'includes/admin/views/page-readiness.php';
+		?>
+	</div>
+		<?php return; ?>
+	<?php endif; ?>
+
 	<form method="post" action="options.php">
 		<?php settings_fields( 'wp_csp_settings_group' ); ?>
 
@@ -60,17 +131,42 @@ $automation_schemes         = array( 'https', 'wss' );
 				<tr>
 					<th><?php esc_html_e( 'Surface', 'csp-automation-manager' ); ?></th>
 					<th><?php esc_html_e( 'Mode', 'csp-automation-manager' ); ?></th>
-					<th><?php esc_html_e( 'Automation enabled', 'csp-automation-manager' ); ?></th>
+					<th><?php esc_html_e( 'Automation', 'csp-automation-manager' ); ?></th>
+					<th><?php esc_html_e( 'Auto Approval', 'csp-automation-manager' ); ?></th>
 					<th><?php esc_html_e( 'Maximum per run', 'csp-automation-manager' ); ?></th>
 					<th><?php esc_html_e( 'Directive scope', 'csp-automation-manager' ); ?></th>
 					<th><?php esc_html_e( 'Allowed schemes', 'csp-automation-manager' ); ?></th>
+					<th><?php esc_html_e( 'Actions', 'csp-automation-manager' ); ?></th>
 				</tr>
 			</thead>
 			<tbody>
 			<?php foreach ( $automation_surfaces as $surface ) : ?>
-				<?php $surface_config = $automation_config[ $surface ] ?? \WP_CSP\CSP\Automation_Config::DEFAULT_SURFACE_CONFIG; ?>
+				<?php
+				$surface_config = $automation_config[ $surface ] ?? \WP_CSP\CSP\Automation_Config::DEFAULT_SURFACE_CONFIG;
+				$profile        = $profiles[ $surface ] ?? array(
+					'mode'       => 'unknown',
+					'updated_at' => '',
+				);
+				$profile_mode   = (string) ( $profile['mode'] ?? 'unknown' );
+				?>
 				<tr>
 					<td><strong><?php echo esc_html( ucfirst( $surface ) ); ?></strong></td>
+					<td>
+						<span class="wp-csp-mode-badge mode-<?php echo esc_attr( $profile_mode ); ?>">
+							<?php echo esc_html( $profile_mode ); ?>
+						</span>
+						<?php if ( ! empty( $profile['updated_at'] ) ) : ?>
+							<br><span class="description">
+								<?php
+								printf(
+									/* translators: %s: last update timestamp */
+									esc_html__( 'Updated %s', 'csp-automation-manager' ),
+									esc_html( (string) $profile['updated_at'] )
+								);
+								?>
+							</span>
+						<?php endif; ?>
+					</td>
 					<td>
 						<select name="wp_csp_automation_config[<?php echo esc_attr( $surface ); ?>][mode]">
 							<?php foreach ( $automation_mode_labels as $mode => $label ) : ?>
@@ -89,6 +185,7 @@ $automation_schemes         = array( 'https', 'wss' );
 					</td>
 					<td>
 						<input type="number" class="small-text" min="0" max="50" name="wp_csp_automation_config[<?php echo esc_attr( $surface ); ?>][max_automatic_changes_per_scan]" value="<?php echo esc_attr( (string) ( $surface_config['max_automatic_changes_per_scan'] ?? 0 ) ); ?>" />
+						<p class="description"><?php esc_html_e( 'When Auto Approval is checked, 0 is saved as the default cap of 50. Uncheck Auto Approval to disable automatic approvals.', 'csp-automation-manager' ); ?></p>
 					</td>
 					<td>
 						<?php foreach ( $automation_directives as $directive ) : ?>
@@ -105,6 +202,18 @@ $automation_schemes         = array( 'https', 'wss' );
 								<input type="checkbox" name="wp_csp_automation_config[<?php echo esc_attr( $surface ); ?>][allowed_source_schemes][]" value="<?php echo esc_attr( $scheme ); ?>" <?php checked( in_array( $scheme, $surface_config['allowed_source_schemes'] ?? array(), true ) ); ?> />
 								<code><?php echo esc_html( $scheme ); ?></code>
 							</label>
+						<?php endforeach; ?>
+					</td>
+					<td>
+						<?php foreach ( array( 'report-only', 'enforce', 'disabled' ) as $mode ) : ?>
+							<?php if ( $mode !== $profile_mode ) : ?>
+							<button type="button"
+								class="button button-small wp-csp-toggle-mode"
+								data-surface="<?php echo esc_attr( $surface ); ?>"
+								data-mode="<?php echo esc_attr( $mode ); ?>">
+								<?php echo esc_html( ucwords( str_replace( '-', ' ', $mode ) ) ); ?>
+							</button>
+							<?php endif; ?>
 						<?php endforeach; ?>
 					</td>
 				</tr>
@@ -229,6 +338,47 @@ $automation_schemes         = array( 'https', 'wss' );
 					<p class="description"><?php esc_html_e( 'Receive an email when the policy changes after a scheduled scan.', 'csp-automation-manager' ); ?></p>
 				</td>
 			</tr>
+		</table>
+
+		<h2 class="title"><?php esc_html_e( 'Scan Log', 'csp-automation-manager' ); ?></h2>
+		<p class="description">
+			<?php esc_html_e( 'Review recent manual and scheduled scan runs, policy-change counts, warnings, and completion status after site, theme, plugin, or content changes.', 'csp-automation-manager' ); ?>
+		</p>
+		<table class="widefat fixed striped">
+			<thead>
+				<tr>
+					<th><?php esc_html_e( 'Trigger', 'csp-automation-manager' ); ?></th>
+					<th><?php esc_html_e( 'Status', 'csp-automation-manager' ); ?></th>
+					<th><?php esc_html_e( 'Sources +/-', 'csp-automation-manager' ); ?></th>
+					<th><?php esc_html_e( 'Hashes +/-', 'csp-automation-manager' ); ?></th>
+					<th><?php esc_html_e( 'Policy Changed', 'csp-automation-manager' ); ?></th>
+					<th><?php esc_html_e( 'Started', 'csp-automation-manager' ); ?></th>
+					<th><?php esc_html_e( 'Duration', 'csp-automation-manager' ); ?></th>
+				</tr>
+			</thead>
+			<tbody>
+			<?php foreach ( $scan_logs as $log ) : ?>
+				<?php
+				$duration = '';
+				if ( ! empty( $log['completed_at'] ) && ! empty( $log['started_at'] ) ) {
+					$diff     = strtotime( $log['completed_at'] ) - strtotime( $log['started_at'] );
+					$duration = $diff . 's';
+				}
+				?>
+				<tr>
+					<td><?php echo esc_html( ucfirst( (string) $log['trigger_type'] ) ); ?></td>
+					<td><?php echo esc_html( ucfirst( (string) $log['status'] ) ); ?></td>
+					<td>+<?php echo esc_html( (string) $log['sources_added'] ); ?> / -<?php echo esc_html( (string) $log['sources_removed'] ); ?></td>
+					<td>+<?php echo esc_html( (string) $log['hashes_added'] ); ?> / -<?php echo esc_html( (string) $log['hashes_removed'] ); ?></td>
+					<td><?php echo ! empty( $log['policy_changed'] ) ? esc_html__( 'Yes', 'csp-automation-manager' ) : '&mdash;'; ?></td>
+					<td><?php echo esc_html( (string) $log['started_at'] ); ?></td>
+					<td><?php echo esc_html( $duration ); ?></td>
+				</tr>
+			<?php endforeach; ?>
+			<?php if ( empty( $scan_logs ) ) : ?>
+				<tr><td colspan="7"><?php esc_html_e( 'No scans run yet.', 'csp-automation-manager' ); ?></td></tr>
+			<?php endif; ?>
+			</tbody>
 		</table>
 
 

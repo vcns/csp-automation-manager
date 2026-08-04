@@ -1,7 +1,7 @@
 <?php
 /**
  * Admin view: CSP Automation Manager dashboard.
- * Shows per-surface policy profiles, source inventory, violations, scan log.
+ * Shows per-surface policy profiles, violations, source review, and policy changes.
  * Rendered by Admin_UI::render_dashboard().
  */
 
@@ -12,17 +12,17 @@ if ( ! defined( 'ABSPATH' ) ) {
 global $wpdb;
 
 // Current tab.
-$tab          = isset( $_GET['tab'] ) ? sanitize_text_field( wp_unslash( $_GET['tab'] ) ) : 'profiles';
-$allowed_tabs = array( 'profiles', 'sources', 'policy-changes', 'violations', 'scan-log' );
+$tab          = isset( $_GET['tab'] ) ? sanitize_text_field( wp_unslash( $_GET['tab'] ) ) : 'violations';
+$allowed_tabs = array( 'violations', 'sources', 'policy-changes' );
 if ( ! in_array( $tab, $allowed_tabs, true ) ) {
-	$tab = 'profiles';
+	$tab = 'violations';
 }
 
 $base_url = admin_url( 'admin.php?page=csp-automation-manager-dashboard' );
 $tab_help = array(
-	'profiles'       => array(
-		'label'       => __( 'Profiles', 'csp-automation-manager' ),
-		'description' => __( 'Configure the CSP mode for each site surface. Use report-only while learning, enforce only after the surface is stable, or disabled when this plugin should not emit CSP for that surface.', 'csp-automation-manager' ),
+	'violations'     => array(
+		'label'       => __( 'Violations', 'csp-automation-manager' ),
+		'description' => __( 'Review browser-submitted CSP reports. Use these reports to identify required sources before promoting a surface from report-only to enforce mode.', 'csp-automation-manager' ),
 	),
 	'sources'        => array(
 		'label'       => __( 'For Review', 'csp-automation-manager' ),
@@ -32,23 +32,10 @@ $tab_help = array(
 		'label'       => __( 'Policy Changes', 'csp-automation-manager' ),
 		'description' => __( 'Inspect policy activity across discovered proposals, administrator or automation decisions, and immutable policy snapshots.', 'csp-automation-manager' ),
 	),
-	'violations'     => array(
-		'label'       => __( 'Violations', 'csp-automation-manager' ),
-		'description' => __( 'Review browser-submitted CSP reports. Use these reports to identify required sources before promoting a surface from report-only to enforce mode.', 'csp-automation-manager' ),
-	),
-	'scan-log'       => array(
-		'label'       => __( 'Scan Log', 'csp-automation-manager' ),
-		'description' => __( 'Check manual and scheduled scan runs, policy-change counts, warnings, and completion status after site, theme, plugin, or content changes.', 'csp-automation-manager' ),
-	),
 );
 
 // ── Data queries ──────────────────────────────────────────────────────────────
-// phpcs:ignore WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-$profiles_raw      = $wpdb->get_results( "SELECT * FROM {$wpdb->prefix}csp_policy_profiles ORDER BY surface", ARRAY_A );
-$profiles          = ! empty( $profiles_raw ) ? $profiles_raw : array();
-$surfaces          = array( 'frontend', 'admin', 'login', 'api' );
-$automation_config = ( new \WP_CSP\CSP\Automation_Config() )->all();
-$automation_labels = \WP_CSP\CSP\Automation_Config::mode_labels();
+$surfaces = array( 'frontend', 'admin', 'login', 'api' );
 
 // Shared pagination defaults.
 $per_page = 20;
@@ -60,10 +47,6 @@ $offset   = ( $page_num - 1 ) * $per_page;
 $violations_raw = $wpdb->get_results( "SELECT * FROM {$wpdb->prefix}csp_violation_reports ORDER BY reported_at DESC LIMIT 50", ARRAY_A );
 $violations     = ! empty( $violations_raw ) ? $violations_raw : array();
 
-// Scan log – last 20 runs.
-// phpcs:ignore WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-$scan_logs_raw = $wpdb->get_results( "SELECT * FROM {$wpdb->prefix}csp_scan_logs ORDER BY started_at DESC LIMIT 20", ARRAY_A );
-$scan_logs     = ! empty( $scan_logs_raw ) ? $scan_logs_raw : array();
 ?>
 <div class="wrap wp-csp-wrap">
 	<h1><?php esc_html_e( 'CSP Automation Manager Dashboard', 'csp-automation-manager' ); ?></h1>
@@ -99,79 +82,7 @@ $scan_logs     = ! empty( $scan_logs_raw ) ? $scan_logs_raw : array();
 
 	<div class="tab-content" style="margin-top:1em">
 
-	<?php if ( 'profiles' === $tab ) : ?>
-	<!-- ── Profiles tab ───────────────────────────────────────────────────── -->
-		<?php
-	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- No user input; only $wpdb->prefix used in query.
-		$profiles_raw = $wpdb->get_results( "SELECT * FROM {$wpdb->prefix}csp_policy_profiles ORDER BY surface", ARRAY_A );
-		$profiles     = ! empty( $profiles_raw ) ? $profiles_raw : array();
-		?>
-	<table class="widefat fixed striped">
-		<thead>
-			<tr>
-				<th><?php esc_html_e( 'Surface', 'csp-automation-manager' ); ?></th>
-				<th><?php esc_html_e( 'Mode', 'csp-automation-manager' ); ?></th>
-				<th><?php esc_html_e( 'Automation', 'csp-automation-manager' ); ?></th>
-				<th><?php esc_html_e( 'Last Updated', 'csp-automation-manager' ); ?></th>
-				<th><?php esc_html_e( 'Actions', 'csp-automation-manager' ); ?></th>
-			</tr>
-		</thead>
-		<tbody>
-		<?php foreach ( $profiles as $profile ) : ?>
-		<tr>
-			<td><?php echo esc_html( ucfirst( $profile['surface'] ) ); ?></td>
-			<td>
-				<span class="wp-csp-mode-badge mode-<?php echo esc_attr( $profile['mode'] ); ?>">
-					<?php echo esc_html( $profile['mode'] ); ?>
-				</span>
-			</td>
-			<td>
-				<?php
-				$surface          = (string) $profile['surface'];
-				$surface_config   = $automation_config[ $surface ] ?? \WP_CSP\CSP\Automation_Config::DEFAULT_SURFACE_CONFIG;
-				$automation_mode  = (string) ( $surface_config['mode'] ?? \WP_CSP\CSP\Automation_Config::MODE_MANUAL );
-				$automation_title = sprintf(
-					/* translators: %s: current automation mode label */
-					__( 'Automation posture: %s', 'csp-automation-manager' ),
-					\WP_CSP\CSP\Automation_Config::mode_label( $automation_mode )
-				);
-				?>
-				<label class="screen-reader-text" for="wp-csp-automation-mode-<?php echo esc_attr( $surface ); ?>">
-					<?php echo esc_html( $automation_title ); ?>
-				</label>
-				<select id="wp-csp-automation-mode-<?php echo esc_attr( $surface ); ?>"
-					class="wp-csp-automation-mode"
-					data-surface="<?php echo esc_attr( $surface ); ?>"
-					title="<?php echo esc_attr( $automation_title ); ?>">
-					<?php foreach ( $automation_labels as $mode => $label ) : ?>
-					<option value="<?php echo esc_attr( $mode ); ?>" <?php selected( $automation_mode, $mode ); ?>>
-						<?php echo esc_html( $label ); ?>
-					</option>
-					<?php endforeach; ?>
-				</select>
-			</td>
-			<td><?php echo esc_html( $profile['updated_at'] ); ?></td>
-			<td>
-				<?php foreach ( array( 'report-only', 'enforce', 'disabled' ) as $m ) : ?>
-					<?php if ( $m !== $profile['mode'] ) : ?>
-					<button type="button"
-						class="button button-small wp-csp-toggle-mode"
-						data-surface="<?php echo esc_attr( $profile['surface'] ); ?>"
-						data-mode="<?php echo esc_attr( $m ); ?>">
-						<?php echo esc_html( ucwords( str_replace( '-', ' ', $m ) ) ); ?>
-					</button>
-					<?php endif; ?>
-				<?php endforeach; ?>
-			</td>
-		</tr>
-		<?php endforeach; ?>
-		<?php if ( empty( $profiles ) ) : ?>
-		<tr><td colspan="5"><?php esc_html_e( 'No profiles found. Deactivate and reactivate the plugin to seed defaults.', 'csp-automation-manager' ); ?></td></tr>
-		<?php endif; ?>
-		</tbody>
-	</table>
-
-	<?php elseif ( 'sources' === $tab ) : ?>
+	<?php if ( 'sources' === $tab ) : ?>
 	<!-- ── Sources tab ────────────────────────────────────────────────────── -->
 		<?php
 		$src_surface = isset( $_GET['src_surface'] ) ? sanitize_text_field( wp_unslash( $_GET['src_surface'] ) ) : '';
@@ -488,20 +399,150 @@ $scan_logs     = ! empty( $scan_logs_raw ) ? $scan_logs_raw : array();
 		if ( '' === trim( $report_endpoint_url ) ) {
 			$report_endpoint_url = rest_url( 'csp-manager/v1/report' );
 		}
+		$canonicalise_violation_source = static function ( array $violation ): array {
+			$blocked_uri = trim( (string) ( $violation['blocked_uri'] ?? '' ) );
+			if ( '' === $blocked_uri ) {
+				return array(
+					'display'  => '',
+					'group'    => '',
+					'evidence' => '',
+				);
+			}
+
+			$lower_blocked_uri = strtolower( $blocked_uri );
+			if (
+				in_array( $lower_blocked_uri, array( 'inline', 'eval', 'wasm-eval', 'data', 'blob', 'about' ), true )
+				|| str_starts_with( $lower_blocked_uri, 'data:' )
+				|| str_starts_with( $lower_blocked_uri, 'blob:' )
+				|| str_starts_with( $lower_blocked_uri, 'about:' )
+			) {
+				$source_file   = (string) ( $violation['source_file'] ?? '' );
+				$line_number   = ! empty( $violation['line_number'] ) ? (string) (int) $violation['line_number'] : '';
+				$column_number = ! empty( $violation['column_number'] ) ? (string) (int) $violation['column_number'] : '';
+				$sample        = (string) ( $violation['sample'] ?? '' );
+				$sample_hash   = '' !== $sample ? hash( 'sha256', $sample ) : '';
+				$evidence      = array();
+
+				if ( '' !== $source_file ) {
+					$evidence[] = sprintf(
+						/* translators: %s: violation source file URL */
+						__( 'Source: %s', 'csp-automation-manager' ),
+						$source_file
+					);
+				}
+				if ( '' !== $line_number ) {
+					$location   = '' !== $column_number ? $line_number . ':' . $column_number : $line_number;
+					$evidence[] = sprintf(
+						/* translators: %s: source line or line:column */
+						__( 'Location: %s', 'csp-automation-manager' ),
+						$location
+					);
+				}
+				if ( '' !== $sample ) {
+					$evidence[] = sprintf(
+						/* translators: %s: short CSP report sample */
+						__( 'Sample: %s', 'csp-automation-manager' ),
+						substr( $sample, 0, 120 )
+					);
+				}
+
+				return array(
+					'display'  => str_starts_with( $lower_blocked_uri, 'data:' ) ? 'data:' : $blocked_uri,
+					'group'    => implode( '|', array( 'non-host', $lower_blocked_uri, $source_file, $line_number, $column_number, $sample_hash ) ),
+					'evidence' => implode( ' | ', $evidence ),
+				);
+			}
+
+			if ( str_starts_with( $blocked_uri, '//' ) ) {
+				$blocked_uri = 'https:' . $blocked_uri;
+			}
+
+			$parsed = wp_parse_url( $blocked_uri );
+			if ( ! is_array( $parsed ) || empty( $parsed['host'] ) ) {
+				return array(
+					'display'  => $blocked_uri,
+					'group'    => $blocked_uri,
+					'evidence' => '',
+				);
+			}
+
+			$source = strtolower( (string) ( $parsed['scheme'] ?? 'https' ) ) . '://' . strtolower( (string) $parsed['host'] );
+			if ( ! empty( $parsed['port'] ) ) {
+				$source .= ':' . (int) $parsed['port'];
+			}
+
+			return array(
+				'display'  => $source,
+				'group'    => $source,
+				'evidence' => '',
+			);
+		};
 	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- No user input; only $wpdb->prefix used in query.
-		$viol_total    = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}csp_violation_reports" );
+		$violation_totals = $wpdb->get_row( "SELECT COUNT(*) AS stored_rows, COALESCE(SUM(occurrence_count), 0) AS total_occurrences FROM {$wpdb->prefix}csp_violation_reports", ARRAY_A );
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- No user input; only $wpdb->prefix used in query.
+		$violations_raw = $wpdb->get_results( "SELECT * FROM {$wpdb->prefix}csp_violation_reports ORDER BY reported_at DESC LIMIT 1000", ARRAY_A );
+		$viol_groups    = array();
+	foreach ( ! empty( $violations_raw ) ? $violations_raw : array() as $violation ) {
+		$blocked_source = $canonicalise_violation_source( $violation );
+		$group_key      = implode(
+			'|',
+			array(
+				(string) ( $violation['profile_surface'] ?? '' ),
+				(string) ( $violation['violated_directive'] ?? '' ),
+				(string) ( $violation['disposition'] ?? '' ),
+				$blocked_source['group'],
+			)
+		);
+
+		if ( ! isset( $viol_groups[ $group_key ] ) ) {
+			$viol_groups[ $group_key ]                     = $violation;
+			$viol_groups[ $group_key ]['blocked_uri']      = $blocked_source['display'];
+			$viol_groups[ $group_key ]['evidence_context'] = $blocked_source['evidence'];
+			$viol_groups[ $group_key ]['row_count']        = 0;
+			$viol_groups[ $group_key ]['sample_uri']       = (string) ( $violation['blocked_uri'] ?? '' );
+			$viol_groups[ $group_key ]['reported_at']      = (string) ( $violation['reported_at'] ?? '' );
+			$viol_groups[ $group_key ]['occurrence_count'] = 0;
+		}
+
+		$viol_groups[ $group_key ]['row_count']        = (int) $viol_groups[ $group_key ]['row_count'] + 1;
+		$viol_groups[ $group_key ]['occurrence_count'] = (int) $viol_groups[ $group_key ]['occurrence_count'] + max( 1, (int) ( $violation['occurrence_count'] ?? 1 ) );
+		if ( (string) ( $violation['reported_at'] ?? '' ) > (string) $viol_groups[ $group_key ]['reported_at'] ) {
+			$viol_groups[ $group_key ]['reported_at'] = (string) $violation['reported_at'];
+		}
+	}
+
+		$violations_grouped = array_values( $viol_groups );
+		usort(
+			$violations_grouped,
+			static fn ( array $a, array $b ): int => strcmp( (string) ( $b['reported_at'] ?? '' ), (string) ( $a['reported_at'] ?? '' ) )
+		);
+
+		$viol_total    = count( $violations_grouped );
 		$viol_pages    = max( 1, (int) ceil( $viol_total / $per_page ) );
 		$viol_page_num = min( $viol_page_num, $viol_pages );
 		$viol_offset   = ( $viol_page_num - 1 ) * $per_page;
-	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
-		$violations_raw = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}csp_violation_reports ORDER BY reported_at DESC LIMIT %d OFFSET %d", $per_page, $viol_offset ), ARRAY_A );
-		$violations     = ! empty( $violations_raw ) ? $violations_raw : array();
+		$violations    = array_slice( $violations_grouped, $viol_offset, $per_page );
 		?>
+	<p class="description">
+		<?php
+		printf(
+			/* translators: 1: grouped rows, 2: stored fingerprints, 3: browser report occurrences */
+			esc_html__( 'Showing %1$d grouped violation source(s) from %2$d stored fingerprint(s) and %3$d browser report occurrence(s). Remote asset URLs are grouped by policy source; inline, data, eval, blob, and about reports are separated by source location or report sample when the browser supplies that evidence.', 'csp-automation-manager' ),
+			(int) $viol_total,
+			(int) ( $violation_totals['stored_rows'] ?? 0 ),
+			(int) ( $violation_totals['total_occurrences'] ?? 0 )
+		);
+		?>
+	</p>
+	<p class="description">
+		<?php esc_html_e( 'Host and same-origin file reports can create review proposals while the learning window is open. Inline script/style element hashes are learned from rendered HTML and emitted under the matching element directive on later requests; style attributes remain evidence-only until exact unsafe-hashes approval is supported.', 'csp-automation-manager' ); ?>
+	</p>
 	<table class="widefat fixed striped">
 		<thead>
 			<tr>
 				<th><?php esc_html_e( 'Surface', 'csp-automation-manager' ); ?></th>
 				<th><?php esc_html_e( 'Blocked URI', 'csp-automation-manager' ); ?></th>
+				<th><?php esc_html_e( 'Evidence', 'csp-automation-manager' ); ?></th>
 				<th><?php esc_html_e( 'Directive', 'csp-automation-manager' ); ?></th>
 				<th><?php esc_html_e( 'Occurrences', 'csp-automation-manager' ); ?></th>
 				<th><?php esc_html_e( 'Last Seen', 'csp-automation-manager' ); ?></th>
@@ -512,7 +553,22 @@ $scan_logs     = ! empty( $scan_logs_raw ) ? $scan_logs_raw : array();
 		<?php foreach ( $violations as $v ) : ?>
 		<tr>
 			<td><?php echo esc_html( $v['profile_surface'] ); ?></td>
-			<td><code style="word-break:break-all"><?php echo esc_html( $v['blocked_uri'] ); ?></code></td>
+			<td>
+				<code style="word-break:break-all"><?php echo esc_html( $v['blocked_uri'] ); ?></code>
+				<?php if ( ! empty( $v['row_count'] ) && (int) $v['row_count'] > 1 ) : ?>
+					<br><span class="description">
+						<?php
+						printf(
+							/* translators: 1: number of grouped report rows, 2: example blocked URI */
+							esc_html__( 'Grouped from %1$d file-level reports. Example: %2$s', 'csp-automation-manager' ),
+							(int) $v['row_count'],
+							esc_html( (string) ( $v['sample_uri'] ?? '' ) )
+						);
+						?>
+					</span>
+				<?php endif; ?>
+			</td>
+			<td><?php echo '' !== (string) ( $v['evidence_context'] ?? '' ) ? esc_html( (string) $v['evidence_context'] ) : '&mdash;'; ?></td>
 			<td><code><?php echo esc_html( $v['violated_directive'] ); ?></code></td>
 			<td><?php echo esc_html( number_format( (int) $v['occurrence_count'] ) ); ?></td>
 			<td><?php echo esc_html( $v['reported_at'] ); ?></td>
@@ -521,7 +577,7 @@ $scan_logs     = ! empty( $scan_logs_raw ) ? $scan_logs_raw : array();
 		<?php endforeach; ?>
 		<?php if ( empty( $violations ) ) : ?>
 		<tr>
-			<td colspan="6">
+			<td colspan="7">
 				<p><?php esc_html_e( 'No browser violation reports have been recorded yet.', 'csp-automation-manager' ); ?></p>
 				<p>
 					<?php esc_html_e( 'Manual scans discover candidate sources, but they do not create violation reports. To collect violations, browse the live site while the relevant surface emits this plugin\'s report-only or enforce CSP header with reporting directives.', 'csp-automation-manager' ); ?>
@@ -582,50 +638,6 @@ $scan_logs     = ! empty( $scan_logs_raw ) ? $scan_logs_raw : array();
 		</div>
 	</div>
 	<?php endif; ?>
-
-	<?php elseif ( 'scan-log' === $tab ) : ?>
-	<!-- ── Scan log tab ───────────────────────────────────────────────────── -->
-		<?php
-	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- No user input; only $wpdb->prefix used in query.
-		$scan_logs_raw = $wpdb->get_results( "SELECT * FROM {$wpdb->prefix}csp_scan_logs ORDER BY started_at DESC LIMIT 20", ARRAY_A );
-		$scan_logs     = ! empty( $scan_logs_raw ) ? $scan_logs_raw : array();
-		?>
-	<table class="widefat fixed striped">
-		<thead>
-			<tr>
-				<th><?php esc_html_e( 'Trigger', 'csp-automation-manager' ); ?></th>
-				<th><?php esc_html_e( 'Status', 'csp-automation-manager' ); ?></th>
-				<th><?php esc_html_e( 'Sources +/-', 'csp-automation-manager' ); ?></th>
-				<th><?php esc_html_e( 'Hashes +/-', 'csp-automation-manager' ); ?></th>
-				<th><?php esc_html_e( 'Policy Changed', 'csp-automation-manager' ); ?></th>
-				<th><?php esc_html_e( 'Started', 'csp-automation-manager' ); ?></th>
-				<th><?php esc_html_e( 'Duration', 'csp-automation-manager' ); ?></th>
-			</tr>
-		</thead>
-		<tbody>
-		<?php foreach ( $scan_logs as $log ) : ?>
-			<?php
-			$duration = '';
-			if ( $log['completed_at'] && $log['started_at'] ) {
-				$diff     = strtotime( $log['completed_at'] ) - strtotime( $log['started_at'] );
-				$duration = $diff . 's';
-			}
-			?>
-		<tr>
-			<td><?php echo esc_html( ucfirst( $log['trigger_type'] ) ); ?></td>
-			<td><?php echo esc_html( ucfirst( $log['status'] ) ); ?></td>
-			<td>+<?php echo esc_html( $log['sources_added'] ); ?> / -<?php echo esc_html( $log['sources_removed'] ); ?></td>
-			<td>+<?php echo esc_html( $log['hashes_added'] ); ?> / -<?php echo esc_html( $log['hashes_removed'] ); ?></td>
-			<td><?php echo $log['policy_changed'] ? esc_html__( 'Yes', 'csp-automation-manager' ) : '&mdash;'; ?></td>
-			<td><?php echo esc_html( $log['started_at'] ); ?></td>
-			<td><?php echo esc_html( $duration ); ?></td>
-		</tr>
-		<?php endforeach; ?>
-		<?php if ( empty( $scan_logs ) ) : ?>
-		<tr><td colspan="7"><?php esc_html_e( 'No scans run yet.', 'csp-automation-manager' ); ?></td></tr>
-		<?php endif; ?>
-		</tbody>
-	</table>
 	<?php endif; ?>
 
 	</div><!-- .tab-content -->

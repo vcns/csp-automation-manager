@@ -155,6 +155,118 @@ class PolicyChangeManagerTest extends TestCase {
 		$this->assertSame( 'Automatically approved by the deterministic CSP automation engine.', $decision['reason'] );
 	}
 
+	public function test_zero_cap_does_not_disable_checked_auto_approval(): void {
+		update_option(
+			'wp_csp_automation_config',
+			array(
+				'frontend' => array(
+					'mode'                           => Automation_Config::MODE_AUTOMATIC_MEDIUM_HIGH_APPROVAL,
+					'emergency_disabled'             => false,
+					'max_automatic_changes_per_scan' => 0,
+					'allowed_source_schemes'         => array( 'https' ),
+				),
+			)
+		);
+
+		$GLOBALS['_wpdb_get_row_queue'] = array(
+			null,
+			null,
+			array(
+				'id'                   => 1,
+				'surface'              => 'frontend',
+				'directive'            => 'default-src',
+				'source_host'          => 'static.vendor.example',
+				'source_uri'           => 'https://static.vendor.example/',
+				'source_scheme'        => 'https',
+				'approval_state'       => 'pending',
+				'decision_fingerprint' => Policy_Change_Manager::fingerprint( 'frontend', 'default-src', 'static.vendor.example' ),
+				'risk_level'           => 'low',
+				'risk_reason'          => 'Narrow host-source proposal.',
+				'evidence_count'       => 1,
+			),
+			array(
+				'id'                   => 1,
+				'surface'              => 'frontend',
+				'directive'            => 'default-src',
+				'source_host'          => 'static.vendor.example',
+				'source_uri'           => 'https://static.vendor.example/',
+				'source_scheme'        => 'https',
+				'approval_state'       => 'pending',
+				'decision_fingerprint' => Policy_Change_Manager::fingerprint( 'frontend', 'default-src', 'static.vendor.example' ),
+				'risk_level'           => 'low',
+				'risk_reason'          => 'Narrow host-source proposal.',
+				'evidence_count'       => 1,
+			),
+			null,
+			null,
+		);
+
+		$result = $this->manager->propose_source(
+			'frontend',
+			array(
+				'directive' => 'default-src',
+				'uri'       => 'https://static.vendor.example/',
+				'scheme'    => 'https',
+				'host'      => 'static.vendor.example',
+			),
+			'discovery',
+			'crawl',
+			'Learned during scan.'
+		);
+
+		$this->assertSame( 'auto_approved', $result['status'] );
+		$this->assertSame( 'auto_approved', $GLOBALS['_wpdb_updated_rows'][0]['data']['last_decision'] );
+	}
+
+	public function test_pending_auto_approval_sweep_processes_existing_eligible_proposals(): void {
+		update_option(
+			'wp_csp_automation_config',
+			array(
+				'frontend' => array(
+					'mode'                           => Automation_Config::MODE_AUTOMATIC_MEDIUM_HIGH_APPROVAL,
+					'emergency_disabled'             => false,
+					'max_automatic_changes_per_scan' => 0,
+					'allowed_source_schemes'         => array( 'https' ),
+				),
+			)
+		);
+
+		$GLOBALS['_wpdb_get_results'] = array( array( 'id' => 7 ) );
+		$GLOBALS['_wpdb_get_row_queue'] = array(
+			array(
+				'id'                   => 7,
+				'surface'              => 'frontend',
+				'directive'            => 'default-src',
+				'source_host'          => 'static.vendor.example',
+				'source_uri'           => 'https://static.vendor.example/',
+				'source_scheme'        => 'https',
+				'approval_state'       => 'pending',
+				'decision_fingerprint' => Policy_Change_Manager::fingerprint( 'frontend', 'default-src', 'static.vendor.example' ),
+				'risk_level'           => 'low',
+				'risk_reason'          => 'Narrow host-source proposal.',
+				'evidence_count'       => 1,
+			),
+			array(
+				'id'                   => 7,
+				'surface'              => 'frontend',
+				'directive'            => 'default-src',
+				'source_host'          => 'static.vendor.example',
+				'source_uri'           => 'https://static.vendor.example/',
+				'source_scheme'        => 'https',
+				'approval_state'       => 'pending',
+				'decision_fingerprint' => Policy_Change_Manager::fingerprint( 'frontend', 'default-src', 'static.vendor.example' ),
+				'risk_level'           => 'low',
+				'risk_reason'          => 'Narrow host-source proposal.',
+				'evidence_count'       => 1,
+			),
+			null,
+			null,
+		);
+
+		$this->assertSame( 1, $this->manager->process_pending_auto_approvals() );
+		$this->assertSame( 'auto_approved', $GLOBALS['_wpdb_updated_rows'][0]['data']['last_decision'] );
+	}
+
 	public function test_undo_returns_rejected_source_to_pending_and_clears_suppression(): void {
 		$GLOBALS['_wpdb_get_row_queue'] = array(
 			array(
