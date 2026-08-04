@@ -150,9 +150,13 @@ class Admin_UI {
 			return $links;
 		}
 
+		$update_posture = 'github' === WP_CSP_DISTRIBUTION_CHANNEL
+			? __( 'Updates: GitHub Releases channel with checksum verification.', 'csp-automation-manager' )
+			: __( 'Updates: WordPress.org package; no custom updater runs in this build.', 'csp-automation-manager' );
+
 		$links[] = sprintf(
 			'<span class="wp-csp-update-posture">%s</span>',
-			esc_html__( 'Updates: WordPress.org only; no custom updater runs from this plugin.', 'csp-automation-manager' )
+			esc_html( $update_posture )
 		);
 
 		return $links;

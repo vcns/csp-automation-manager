@@ -6,6 +6,18 @@ The format is based on Keep a Changelog, and this project follows semantic versi
 
 ## [Unreleased]
 
+## [1.0.16] - 2026-08-04
+
+### Added
+
+- Added a separate GitHub-channel release ZIP with native WordPress update integration, plugin-information support, stale-offer suppression, package host validation, checksum verification, cache busting, and a `WP_CSP_DISABLE_AUTO_UPDATE` kill switch.
+- Added release workflow generation of `vcns/wp-updates` metadata for GitHub-channel installs when `WP_UPDATES_TOKEN` is configured.
+
+### Changed
+
+- Split release artifacts so the plain ZIP remains WordPress.org-safe while the GitHub-channel ZIP contains the updater and generated `Update URI` metadata.
+- Updated installed-plugin row messaging and release documentation to identify the active update channel.
+
 ## [1.0.15] - 2026-08-04
 
 ### Changed

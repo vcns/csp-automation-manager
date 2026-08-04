@@ -189,7 +189,9 @@ Before tagging a release:
 - update `WP_CSP_DB_VERSION` constant if schema changed; update version table in `docs/database-schema.md`
 - update `readme.txt` stable tag if needed
 - update `CHANGELOG.md`
-- confirm the plugin header `Version`, `WP_CSP_VERSION`, `readme.txt` stable tag, changelog release heading, and sample update manifest version match
+- confirm the plugin header `Version`, `WP_CSP_VERSION`, `readme.txt` stable tag, and changelog release heading match
+- confirm the release workflow builds both the WordPress.org-safe ZIP and GitHub-channel ZIP from the same tag
+- confirm the GitHub-channel update manifest version, package URL, and SHA-256 checksum match the GitHub-channel ZIP
 - review public docs for accuracy
 - run full CI pipeline on the release branch
 - perform one clean-install smoke test from the packaged artifact

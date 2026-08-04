@@ -48,13 +48,15 @@ Once published to WordPress.org:
 
 ### Install from GitHub Releases
 
-Tagged releases publish a ready-to-install ZIP to the
+Tagged releases publish ready-to-install ZIPs to the
 [Releases page](https://github.com/vcns/csp-automation-manager/releases).
 
-1. Download `csp-automation-manager-vX.Y.Z.zip` from the release assets.
+1. Download `csp-automation-manager-github-vX.Y.Z.zip` from the release assets when installing from GitHub.
 2. In WordPress go to **Plugins -> Add New Plugin -> Upload Plugin**.
 3. Choose the downloaded ZIP and click **Install Now**.
 4. Activate the plugin.
+
+The GitHub-channel ZIP includes a checksum-verified updater that uses WordPress' native plugin update screen and the `https://vcns.github.io/wp-updates/csp-automation-manager/update.json` manifest. The plain `csp-automation-manager-vX.Y.Z.zip` artifact is the WordPress.org-safe package and does not contain the GitHub updater.
 
 ## Getting Started
 
@@ -70,13 +72,15 @@ Tagged releases publish a ready-to-install ZIP to the
 
 ## Automation Posture
 
-Automation is currently scaffolded but defaults to `manual` for every surface. The shipped plugin retains source discovery, manual review, deterministic risk classification, decision history, policy history, and rollback-oriented provenance.
+Automation defaults to `manual` for every surface. Administrators may explicitly enable conservative deterministic automation per surface from the Settings page. Automatic approvals are limited to eligible low-risk proposals, record `automation_engine` decision provenance, and can be undone without rewriting history.
 
-Future automation and AI-assisted recommendation work must keep deterministic product rules as the authority. AI output must not directly modify an enforced CSP policy.
+Future AI-assisted recommendation work must keep deterministic product rules as the authority. AI output must not directly modify an enforced CSP policy.
 
 ## External Services
 
 The WordPress.org plugin package does not contact third-party services for plugin updates, licensing, checkout, telemetry, or remote product configuration.
+
+The GitHub-channel ZIP checks `https://vcns.github.io/wp-updates/csp-automation-manager/update.json` from administrator update contexts only, validates the advertised package host and SHA-256 checksum, and then lets WordPress perform the update. Define `WP_CSP_DISABLE_AUTO_UPDATE` as `true` in `wp-config.php` to prevent background auto-updates for the GitHub-channel package.
 
 By default, the plugin emits CSP reporting headers that point browsers back to this WordPress site's own REST endpoint:
 

@@ -41,7 +41,7 @@ class AdminUITest extends TestCase {
 			plugin_basename( WP_CSP_FILE )
 		);
 
-		$this->assertStringContainsString( 'WordPress.org only', implode( ' ', $links ) );
+		$this->assertStringContainsString( 'WordPress.org package', implode( ' ', $links ) );
 		$this->assertStringContainsString( 'no custom updater', implode( ' ', $links ) );
 	}
 
