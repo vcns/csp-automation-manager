@@ -480,14 +480,70 @@ $violations     = ! empty( $violations_raw ) ? $violations_raw : array();
 		if ( '' === trim( $report_endpoint_url ) ) {
 			$report_endpoint_url = rest_url( 'csp-manager/v1/report' );
 		}
+		$canonicalise_violation_source = static function ( string $blocked_uri ): string {
+			$blocked_uri = trim( $blocked_uri );
+			if ( '' === $blocked_uri ) {
+				return '';
+			}
+
+			if ( str_starts_with( $blocked_uri, '//' ) ) {
+				$blocked_uri = 'https:' . $blocked_uri;
+			}
+
+			$parsed = wp_parse_url( $blocked_uri );
+			if ( ! is_array( $parsed ) || empty( $parsed['host'] ) ) {
+				return $blocked_uri;
+			}
+
+			$source = strtolower( (string) ( $parsed['scheme'] ?? 'https' ) ) . '://' . strtolower( (string) $parsed['host'] );
+			if ( ! empty( $parsed['port'] ) ) {
+				$source .= ':' . (int) $parsed['port'];
+			}
+
+			return $source;
+		};
 	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- No user input; only $wpdb->prefix used in query.
-		$viol_total    = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}csp_violation_reports" );
+		$violations_raw = $wpdb->get_results( "SELECT * FROM {$wpdb->prefix}csp_violation_reports ORDER BY reported_at DESC LIMIT 500", ARRAY_A );
+		$viol_groups    = array();
+	foreach ( ! empty( $violations_raw ) ? $violations_raw : array() as $violation ) {
+		$blocked_source = $canonicalise_violation_source( (string) ( $violation['blocked_uri'] ?? '' ) );
+		$group_key      = implode(
+			'|',
+			array(
+				(string) ( $violation['profile_surface'] ?? '' ),
+				(string) ( $violation['violated_directive'] ?? '' ),
+				(string) ( $violation['disposition'] ?? '' ),
+				$blocked_source,
+			)
+		);
+
+		if ( ! isset( $viol_groups[ $group_key ] ) ) {
+			$viol_groups[ $group_key ]                     = $violation;
+			$viol_groups[ $group_key ]['blocked_uri']      = $blocked_source;
+			$viol_groups[ $group_key ]['row_count']        = 0;
+			$viol_groups[ $group_key ]['sample_uri']       = (string) ( $violation['blocked_uri'] ?? '' );
+			$viol_groups[ $group_key ]['reported_at']      = (string) ( $violation['reported_at'] ?? '' );
+			$viol_groups[ $group_key ]['occurrence_count'] = 0;
+		}
+
+		$viol_groups[ $group_key ]['row_count']        = (int) $viol_groups[ $group_key ]['row_count'] + 1;
+		$viol_groups[ $group_key ]['occurrence_count'] = (int) $viol_groups[ $group_key ]['occurrence_count'] + max( 1, (int) ( $violation['occurrence_count'] ?? 1 ) );
+		if ( (string) ( $violation['reported_at'] ?? '' ) > (string) $viol_groups[ $group_key ]['reported_at'] ) {
+			$viol_groups[ $group_key ]['reported_at'] = (string) $violation['reported_at'];
+		}
+	}
+
+		$violations_grouped = array_values( $viol_groups );
+		usort(
+			$violations_grouped,
+			static fn ( array $a, array $b ): int => strcmp( (string) ( $b['reported_at'] ?? '' ), (string) ( $a['reported_at'] ?? '' ) )
+		);
+
+		$viol_total    = count( $violations_grouped );
 		$viol_pages    = max( 1, (int) ceil( $viol_total / $per_page ) );
 		$viol_page_num = min( $viol_page_num, $viol_pages );
 		$viol_offset   = ( $viol_page_num - 1 ) * $per_page;
-	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
-		$violations_raw = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}csp_violation_reports ORDER BY reported_at DESC LIMIT %d OFFSET %d", $per_page, $viol_offset ), ARRAY_A );
-		$violations     = ! empty( $violations_raw ) ? $violations_raw : array();
+		$violations    = array_slice( $violations_grouped, $viol_offset, $per_page );
 		?>
 	<table class="widefat fixed striped">
 		<thead>
@@ -504,7 +560,21 @@ $violations     = ! empty( $violations_raw ) ? $violations_raw : array();
 		<?php foreach ( $violations as $v ) : ?>
 		<tr>
 			<td><?php echo esc_html( $v['profile_surface'] ); ?></td>
-			<td><code style="word-break:break-all"><?php echo esc_html( $v['blocked_uri'] ); ?></code></td>
+			<td>
+				<code style="word-break:break-all"><?php echo esc_html( $v['blocked_uri'] ); ?></code>
+				<?php if ( ! empty( $v['row_count'] ) && (int) $v['row_count'] > 1 ) : ?>
+					<br><span class="description">
+						<?php
+						printf(
+							/* translators: 1: number of grouped report rows, 2: example blocked URI */
+							esc_html__( 'Grouped from %1$d file-level reports. Example: %2$s', 'csp-automation-manager' ),
+							(int) $v['row_count'],
+							esc_html( (string) ( $v['sample_uri'] ?? '' ) )
+						);
+						?>
+					</span>
+				<?php endif; ?>
+			</td>
 			<td><code><?php echo esc_html( $v['violated_directive'] ); ?></code></td>
 			<td><?php echo esc_html( number_format( (int) $v['occurrence_count'] ) ); ?></td>
 			<td><?php echo esc_html( $v['reported_at'] ); ?></td>

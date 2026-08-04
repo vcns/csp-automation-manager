@@ -6,6 +6,12 @@ The format is based on Keep a Changelog, and this project follows semantic versi
 
 ## [Unreleased]
 
+## [1.0.20] - 2026-08-04
+
+### Changed
+
+- Grouped the Violations dashboard by canonical policy source so already-stored Google Fonts and similar file-level reports display as one host-level row with a summed occurrence count.
+
 ## [1.0.19] - 2026-08-04
 
 ### Changed
