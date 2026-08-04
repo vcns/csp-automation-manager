@@ -61,7 +61,7 @@ Responsibilities:
 
 - create a per-request nonce (≥128-bit entropy from CSPRNG)
 - inject nonce attributes into script and style tags
-- build per-surface CSP headers (including `Reporting-Endpoints`, legacy `Report-To`, and optional origin-only policy header names for proxy deployments)
+- build per-surface CSP headers (including direct `report-uri` reporting by default, optional Reporting API headers, and optional origin-only policy header names for proxy deployments)
 - strip deprecated and forbidden directives from policy overrides at emit time
 - discover remote sources from crawled pages
 - record inline hashes
@@ -122,11 +122,12 @@ Responsibilities:
 8. `sandbox` is skipped if null or if the profile is in report-only mode (CSP spec — `sandbox` is ignored in `Content-Security-Policy-Report-Only`).
 9. Trusted Types directives (`require-trusted-types-for`, `trusted-types`) are skipped when their arrays are empty; when enabled they are always emitted as report-only regardless of surface mode.
 10. The reporting endpoint is resolved from `wp_csp_report_endpoint_url` when an administrator has configured an absolute `http` or `https` override; otherwise it falls back to `rest_url( 'csp-manager/v1/report' )`.
-11. Two additional headers are emitted before the CSP header:
+11. The CSP includes `report-uri <report_uri>` by default so browser reports are delivered directly and promptly to the local learning endpoint.
+12. If `wp_csp_reporting_transport` is set to `both` or `report-to`, two additional Reporting API headers are emitted before the CSP header:
     - `Reporting-Endpoints: csp-endpoint="<report_uri>"` — Structured Fields Dictionary (RFC 9651); required for browsers to honour `report-to csp-endpoint` in the CSP
     - `Report-To: {"group":"csp-endpoint","max_age":86400,"endpoints":[{"url":"<report_uri>"}]}` — deprecated JSON format retained as a legacy fallback for pre-Reporting-API browsers
-12. The policy header name is resolved from `wp_csp_policy_header_name`. Blank emits the normal mode-aware `Content-Security-Policy-Report-Only` or `Content-Security-Policy` header. A validated custom value emits the exact origin header name for a proxy to copy back into the browser-facing CSP header.
-13. The CSP or CSP-Report-Only policy value is emitted via `send_headers`.
+13. The policy header name is resolved from `wp_csp_policy_header_name`. Blank emits the normal mode-aware `Content-Security-Policy-Report-Only` or `Content-Security-Policy` header. A validated custom value emits the exact origin header name for a proxy to copy back into the browser-facing CSP header.
+14. The CSP or CSP-Report-Only policy value is emitted via `send_headers`.
 
 ### Conflict detection
 
@@ -247,8 +248,9 @@ These design choices should not be changed casually:
 - remote config must contain public metadata only, never keys or webhook secrets
 - local entitlement checks must not make network calls during page rendering
 - per-site identity is derived from site URL hash rather than stored in plain text everywhere
+- direct `report-uri` is the default reporting transport because operators need prompt feedback while learning a policy
 - the `Reporting-Endpoints` header must always be emitted alongside any CSP containing `report-to`; without it browsers silently discard the directive and violation reports are never delivered
-- `report-to` without a corresponding `Reporting-Endpoints` header is a silent failure — this is the most common misconfiguration in deployed CSP policies
+- `report-to` without a corresponding `Reporting-Endpoints` header is a silent failure, and browsers that use `report-to` may ignore `report-uri`, so Reporting API transport must remain an explicit administrator choice
 - when `strict-dynamic` is active, host-based sources are suppressed from `script-src` at emit time; emitting them is harmless but creates misleading policy noise since browsers ignore them
 - cross-origin violation reports are silently discarded; only reports whose `document-uri` matches the site's own origin are stored
 - `csp_audit_log` is append-only — no `UPDATE` or `DELETE` may ever be issued against it; it is the permanent operational audit trail

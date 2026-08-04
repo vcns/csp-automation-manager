@@ -14,6 +14,7 @@ $learning_status            = $learning_window->is_open() ? __( 'Open', 'csp-aut
 $current_report_endpoint    = esc_url_raw( rest_url( 'csp-manager/v1/report' ) );
 $configured_report_endpoint = (string) get_option( 'wp_csp_report_endpoint_url', '' );
 $configured_policy_header   = (string) get_option( 'wp_csp_policy_header_name', '' );
+$reporting_transport        = \WP_CSP\CSP\Policy_Builder::sanitize_reporting_transport( get_option( 'wp_csp_reporting_transport', 'report-uri' ) );
 ?>
 <div class="wrap wp-csp-wrap">
 	<h1><?php esc_html_e( 'CSP Automation Manager Settings', 'csp-automation-manager' ); ?></h1>
@@ -88,6 +89,25 @@ $configured_policy_header   = (string) get_option( 'wp_csp_policy_header_name', 
 					<p class="description">
 						<?php esc_html_e( 'Detected current endpoint:', 'csp-automation-manager' ); ?>
 						<code><?php echo esc_html( $current_report_endpoint ); ?></code>
+					</p>
+				</td>
+			</tr>
+			<tr>
+				<th scope="row"><label for="wp_csp_reporting_transport"><?php esc_html_e( 'Reporting transport', 'csp-automation-manager' ); ?></label></th>
+				<td>
+					<select id="wp_csp_reporting_transport" name="wp_csp_reporting_transport">
+						<option value="report-uri" <?php selected( $reporting_transport, 'report-uri' ); ?>>
+							<?php esc_html_e( 'Direct report-uri (recommended)', 'csp-automation-manager' ); ?>
+						</option>
+						<option value="both" <?php selected( $reporting_transport, 'both' ); ?>>
+							<?php esc_html_e( 'Direct report-uri plus Reporting API', 'csp-automation-manager' ); ?>
+						</option>
+						<option value="report-to" <?php selected( $reporting_transport, 'report-to' ); ?>>
+							<?php esc_html_e( 'Reporting API only', 'csp-automation-manager' ); ?>
+						</option>
+					</select>
+					<p class="description">
+						<?php esc_html_e( 'Use direct report-uri while learning so browser reports arrive promptly in the Violations tab. Reporting API delivery can be queued or delayed by the browser, and browsers that use report-to may ignore report-uri.', 'csp-automation-manager' ); ?>
 					</p>
 				</td>
 			</tr>

@@ -9,10 +9,9 @@
  *   - Nonce injected from Nonce_Manager at request time.
  *   - Approved hashes from csp_hash_inventory appended to script-src / style-src.
  *   - Approved hosts from csp_source_inventory appended per directive.
- *   - report-to and report-uri appended automatically.
- *   - Reporting-Endpoints (RFC 9651 Structured Fields Dictionary) emitted so that
- *     the report-to directive is resolved by the browser. Also emits the deprecated
- *     Report-To JSON header as a legacy fallback for pre-Reporting-API browsers.
+ *   - report-uri appended automatically for direct browser reporting.
+ *   - Reporting API headers and the report-to directive are optional because direct
+ *     report-uri delivery gives administrators faster learning feedback.
  *   - 'strict-dynamic' added to script-src when profile enables it.
  *     When active, approved host sources are suppressed from script-src — browsers
  *     silently ignore host allowlists when strict-dynamic is present (CSP3 §8.2),
@@ -39,6 +38,9 @@ class Policy_Builder {
 
 	public const DEFAULT_ENFORCE_HEADER     = 'Content-Security-Policy';
 	public const DEFAULT_REPORT_ONLY_HEADER = 'Content-Security-Policy-Report-Only';
+	public const REPORTING_TRANSPORT_DIRECT = 'report-uri';
+	public const REPORTING_TRANSPORT_API    = 'report-to';
+	public const REPORTING_TRANSPORT_BOTH   = 'both';
 
 	/**
 	 * Directives removed or deprecated by W3C that must never be emitted.
@@ -106,22 +108,23 @@ class Policy_Builder {
 		$is_report_only = ( 'report-only' === $profile['mode'] );
 		$header_name    = $this->get_policy_header_name( $is_report_only );
 
-		// Declare the reporting endpoint so browsers can resolve the report-to directive.
-		// Reporting-Endpoints is a Structured Fields Dictionary per RFC 9651 (obsoletes 8941).
-		// Report-To (JSON) is deprecated but kept as a legacy fallback for older browsers.
+		// Declare the Reporting API endpoint only when explicitly enabled. The default
+		// direct report-uri path is intentionally quicker and easier to observe.
 		$report_uri = $this->get_report_endpoint_url();
-		$report_to  = wp_json_encode(
-			array(
-				'group'     => 'csp-endpoint',
-				'max_age'   => 86400,
-				'endpoints' => array(
-					array( 'url' => $report_uri ),
-				),
-			)
-		);
-		header( 'Reporting-Endpoints: csp-endpoint="' . $report_uri . '"' );
-		if ( false !== $report_to ) {
-			header( 'Report-To: ' . $report_to );
+		if ( $this->uses_reporting_api() ) {
+			$report_to = wp_json_encode(
+				array(
+					'group'     => 'csp-endpoint',
+					'max_age'   => 86400,
+					'endpoints' => array(
+						array( 'url' => $report_uri ),
+					),
+				)
+			);
+			header( 'Reporting-Endpoints: csp-endpoint="' . $report_uri . '"' );
+			if ( false !== $report_to ) {
+				header( 'Report-To: ' . $report_to );
+			}
 		}
 
 		header( $header_name . ': ' . $policy );
@@ -171,6 +174,23 @@ class Policy_Builder {
 		return in_array( strtolower( $header_name ), $blocked, true ) ? '' : $header_name;
 	}
 
+	public static function sanitize_reporting_transport( mixed $transport ): string {
+		$transport = (string) $transport;
+		if ( in_array( $transport, self::get_reporting_transport_options(), true ) ) {
+			return $transport;
+		}
+
+		return self::REPORTING_TRANSPORT_DIRECT;
+	}
+
+	public static function get_reporting_transport_options(): array {
+		return array(
+			self::REPORTING_TRANSPORT_DIRECT,
+			self::REPORTING_TRANSPORT_API,
+			self::REPORTING_TRANSPORT_BOTH,
+		);
+	}
+
 	private function is_conflict_probe_request(): bool {
 		return isset( $_SERVER['HTTP_X_WP_CSP_PROBE'] )
 			&& '1' === (string) $_SERVER['HTTP_X_WP_CSP_PROBE'];
@@ -187,6 +207,18 @@ class Policy_Builder {
 		}
 
 		return esc_url_raw( home_url( '/wp-json/csp-manager/v1/report' ) );
+	}
+
+	private function uses_reporting_api(): bool {
+		return in_array(
+			$this->get_reporting_transport(),
+			array( self::REPORTING_TRANSPORT_API, self::REPORTING_TRANSPORT_BOTH ),
+			true
+		);
+	}
+
+	private function get_reporting_transport(): string {
+		return self::sanitize_reporting_transport( get_option( 'wp_csp_reporting_transport', self::REPORTING_TRANSPORT_DIRECT ) );
 	}
 
 	private function is_allowed_report_endpoint_url( string $url ): bool {
@@ -295,10 +327,15 @@ class Policy_Builder {
 			unset( $directives['require-trusted-types-for'], $directives['trusted-types'] );
 		}
 
-		// Append reporting directives. The endpoint name 'csp-endpoint' must match
-		// the Reporting-Endpoints header value emitted in emit_header().
-		$directives['report-uri'] = array( $this->get_report_endpoint_url() );
-		$directives['report-to']  = array( 'csp-endpoint' );
+		// Append direct reporting by default. Reporting API is opt-in because some
+		// browsers ignore report-uri when report-to is present, which delays learning.
+		$reporting_transport = $this->get_reporting_transport();
+		if ( self::REPORTING_TRANSPORT_API !== $reporting_transport ) {
+			$directives['report-uri'] = array( $this->get_report_endpoint_url() );
+		}
+		if ( in_array( $reporting_transport, array( self::REPORTING_TRANSPORT_API, self::REPORTING_TRANSPORT_BOTH ), true ) ) {
+			$directives['report-to'] = array( 'csp-endpoint' );
+		}
 
 		$directives = $this->normalize_none_sources( $directives );
 

@@ -180,6 +180,7 @@ class PolicyBuilderTest extends TestCase {
 
 		$this->assertStringContainsString( 'report-uri', $policy );
 		$this->assertStringContainsString( 'csp-manager/v1/report', $policy );
+		$this->assertStringNotContainsString( 'report-to csp-endpoint', $policy );
 	}
 
 	public function test_build_uses_configured_report_endpoint_url(): void {
@@ -219,11 +220,22 @@ class PolicyBuilderTest extends TestCase {
 		$this->assertStringContainsString( 'report-uri https://example.com/wp-json/csp-manager/v1/report', $policy );
 	}
 
-	public function test_build_appends_report_to(): void {
+	public function test_build_appends_report_to_when_reporting_api_is_enabled(): void {
+		update_option( 'wp_csp_reporting_transport', 'both' );
 		$profile = $this->make_profile( [ 'default-src' => [ "'none'" ] ] );
 
 		$policy = $this->builder->build_policy_string( $profile, 'frontend' );
 
+		$this->assertStringContainsString( 'report-to csp-endpoint', $policy );
+	}
+
+	public function test_build_omits_report_uri_when_reporting_api_only_is_enabled(): void {
+		update_option( 'wp_csp_reporting_transport', 'report-to' );
+		$profile = $this->make_profile( [ 'default-src' => [ "'none'" ] ] );
+
+		$policy = $this->builder->build_policy_string( $profile, 'frontend' );
+
+		$this->assertStringNotContainsString( 'report-uri', $policy );
 		$this->assertStringContainsString( 'report-to csp-endpoint', $policy );
 	}
 
