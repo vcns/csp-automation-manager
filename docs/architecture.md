@@ -169,16 +169,18 @@ Conflicts are warning-level audit events. The detector never removes or rewrites
 2. `Policy_Change_Manager` computes a stable fingerprint from `(surface, directive, source_host)`.
 3. High-risk proposals include script/style execution, connection, form, frame, worker, wildcard, cleartext HTTP, broad browser schemes, and unsafe keyword patterns.
 4. `Decision_Engine` evaluates proposals through versioned deterministic rules and returns risk, hard exclusions, automation eligibility, and rule findings.
-5. Administrators approve, reject, revert, or undo decisions from the Source Inventory queue. Every material decision requires an administrator reason.
-6. Every decision is appended to `csp_policy_change_decisions`, mirrored to `csp_audit_log`, and linked to deterministic rule findings in `csp_decision_rule_evaluations`.
-7. Approved and reverted decisions capture a `csp_policy_versions` snapshot for the affected surface.
-8. Rejected and reverted decisions set suppression on that fingerprint; future automation skips the same source until a later approval or undo becomes the newest decision.
+5. Administrators approve, reject, revert, or undo decisions from the For Review queue. Every material administrator decision requires a reason.
+6. When a surface is explicitly configured for automation, emergency disable is off, and a per-run limit is set, deterministic low-risk proposals may be approved automatically with actor `automation_engine`.
+7. Medium, high, unknown, ambiguous, hard-excluded, disallowed-scheme, excluded-directive, and AI-agreement-required proposals remain pending for administrator review.
+8. Every decision is appended to `csp_policy_change_decisions`, mirrored to `csp_audit_log`, and linked to deterministic rule findings in `csp_decision_rule_evaluations`.
+9. Approved, automatically approved, and reverted decisions capture a `csp_policy_versions` snapshot for the affected surface.
+10. Rejected and reverted decisions set suppression on that fingerprint; future automation skips the same source until a later approval or undo becomes the newest decision.
 
 ### 6. Policy audit flow
 
 1. Administrators open **CSP Manager -> Policy Audit**.
 2. The current surface summary shows CSP mode, automation mode, latest policy version, pending proposal count, unresolved high-risk count, and the latest captured header.
-3. The review queue lists pending proposals with surface, directive, source, risk, evidence count, first seen, and last seen.
+3. The For Review queue lists pending proposals with surface, directive, source, risk, evidence count, first seen, and last seen.
 4. Recent decisions show actor, state, surface, directive, source, risk, decision-engine version, and linked policy version.
 5. Privileged REST endpoints under `/wp-json/csp-manager/v1/admin/*` expose policy history, policy diffs, decisions, pending reviews, and automation configuration for richer future UI workflows.
 

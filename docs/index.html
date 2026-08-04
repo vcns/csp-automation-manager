@@ -60,7 +60,7 @@
         <div class='callout-stack'>
           <div class='callout'>
             <h3>Best first use</h3>
-            <p>Use it on staging first. Run a scan, browse representative pages, review the source inventory, and keep report-only enabled until the violations table is quiet.</p>
+            <p>Use it on staging first. Run a scan, browse representative pages, review For Review, and keep report-only enabled until the violations table is quiet.</p>
           </div>
           <div class='warning-callout'>
             <h3>Do not start in enforce mode</h3>
@@ -91,7 +91,7 @@
           </article>
           <article class='card'>
             <h3>5. Record decisions</h3>
-            <p>Approvals, rejections, reversions, and undo actions are recorded in the policy change ledger with required administrator reasons. Rejected or reverted fingerprints suppress repeated automatic proposals until a later approval or undo clears suppression.</p>
+            <p>Approvals, automatic low-risk approvals, rejections, reversions, and undo actions are recorded in the policy change ledger. Rejected or reverted fingerprints suppress repeated automatic proposals until a later approval or undo clears suppression.</p>
           </article>
           <article class='card'>
             <h3>6. Promote safely</h3>
@@ -119,7 +119,7 @@
             <span class='stage-number'>2</span>
             <div>
               <h3>Dashboard reading</h3>
-              <p>Use Profiles for mode, Source Inventory for pending hosts, Policy Changes for the decision ledger, Violations for browser evidence, and Scan Log for crawl history.</p>
+              <p>Use Profiles for mode, For Review for pending hosts, Policy Changes for the activity timeline, Violations for browser evidence, and Scan Log for crawl history.</p>
             </div>
           </div>
           <div class='stage'>
@@ -156,7 +156,7 @@
             </thead>
             <tbody>
               <tr><td>Prepare</td><td>Install on staging and confirm requirements.</td><td>Plugin activates, dashboard opens, no competing CSP header is reported.</td><td>The site still renders normally.</td></tr>
-              <tr><td>Scan</td><td>Run a manual scan from the dashboard.</td><td>Source Inventory contains expected external hosts.</td><td>Obvious required sources have been reviewed.</td></tr>
+              <tr><td>Scan</td><td>Run a manual scan from the dashboard.</td><td>For Review contains expected external hosts.</td><td>Obvious required sources have been reviewed.</td></tr>
               <tr><td>Exercise</td><td>Browse real user journeys in report-only mode.</td><td>Violations table shows blocked runtime activity without breaking the site.</td><td>Required runtime sources are understood.</td></tr>
               <tr><td>Approve</td><td>Approve narrow legitimate sources; reject unknown or unwanted sources.</td><td>Policy Changes ledger contains required decision reasons.</td><td>Inventory is stable and recent violations are resolved.</td></tr>
               <tr><td>Enforce</td><td>Promote one surface to enforce mode.</td><td>No user-facing breakage and no fresh unresolved violations.</td><td>The surface remains stable through normal use.</td></tr>
@@ -173,8 +173,8 @@
           <p>Open <strong>CSP Manager</strong> in the WordPress admin. The main dashboard is split into tabs that match the product workflow.</p>
           <ul class='bullets'>
             <li><strong>Profiles:</strong> see each surface and switch between report-only, enforce, and disabled.</li>
-            <li><strong>Source Inventory:</strong> review discovered hosts, risk, state, evidence count, and last-seen time.</li>
-            <li><strong>Policy Changes:</strong> review the audit trail for approvals, rejections, reversions, undo actions, and suppressions.</li>
+            <li><strong>For Review:</strong> review discovered hosts, risk, state, evidence count, and last-seen time.</li>
+            <li><strong>Policy Changes:</strong> review the activity timeline for proposals, decisions, actors, policy snapshots, reversions, undo actions, and suppressions.</li>
             <li><strong>Violations:</strong> inspect browser-reported blocked resources and occurrence counts.</li>
             <li><strong>Scan Log:</strong> check manual and scheduled scan results.</li>
           </ul>
@@ -187,6 +187,10 @@
           <div class='callout'>
             <h3>Scheduled scan</h3>
             <p>The plugin schedules a daily scan. Notification email is used when a scheduled scan detects a policy change.</p>
+          </div>
+          <div class='callout'>
+            <h3>Automation settings</h3>
+            <p>Use <strong>CSP Manager -> Settings -> Deterministic Automation</strong> to move a surface out of manual mode, clear the emergency disable switch, and set a per-run automatic-change limit.</p>
           </div>
         </div>
       </section>

@@ -74,6 +74,86 @@ class PolicyChangeManagerTest extends TestCase {
 		$this->assertSame( array(), $GLOBALS['_wpdb_inserted_rows'] );
 	}
 
+	public function test_eligible_source_is_auto_approved_when_surface_automation_is_enabled(): void {
+		update_option(
+			'wp_csp_automation_config',
+			array(
+				'frontend' => array(
+					'mode'                           => 'conservative',
+					'emergency_disabled'             => false,
+					'max_automatic_changes_per_scan' => 2,
+					'allowed_source_schemes'         => array( 'https' ),
+				),
+			)
+		);
+
+		$GLOBALS['_wpdb_get_row_queue'] = array(
+			null,
+			null,
+			array(
+				'id'                   => 1,
+				'surface'              => 'frontend',
+				'directive'            => 'default-src',
+				'source_host'          => 'static.vendor.example',
+				'source_uri'           => 'https://static.vendor.example/',
+				'source_scheme'        => 'https',
+				'approval_state'       => 'pending',
+				'decision_fingerprint' => Policy_Change_Manager::fingerprint( 'frontend', 'default-src', 'static.vendor.example' ),
+				'risk_level'           => 'low',
+				'risk_reason'          => 'Narrow host-source proposal.',
+				'evidence_count'       => 1,
+			),
+			array(
+				'id'                   => 1,
+				'surface'              => 'frontend',
+				'directive'            => 'default-src',
+				'source_host'          => 'static.vendor.example',
+				'source_uri'           => 'https://static.vendor.example/',
+				'source_scheme'        => 'https',
+				'approval_state'       => 'pending',
+				'decision_fingerprint' => Policy_Change_Manager::fingerprint( 'frontend', 'default-src', 'static.vendor.example' ),
+				'risk_level'           => 'low',
+				'risk_reason'          => 'Narrow host-source proposal.',
+				'evidence_count'       => 1,
+			),
+			null,
+			null,
+		);
+
+		$result = $this->manager->propose_source(
+			'frontend',
+			array(
+				'directive' => 'default-src',
+				'uri'       => 'https://static.vendor.example/',
+				'scheme'    => 'https',
+				'host'      => 'static.vendor.example',
+			),
+			'discovery',
+			'crawl',
+			'Learned during scan.'
+		);
+
+		$this->assertSame( 'auto_approved', $result['status'] );
+
+		$update = $GLOBALS['_wpdb_updated_rows'][0]['data'];
+		$this->assertSame( 'approved', $update['approval_state'] );
+		$this->assertSame( 'auto_approved', $update['last_decision'] );
+
+		$decision_rows = array_values(
+			array_filter(
+				$GLOBALS['_wpdb_inserted_rows'],
+				static fn( array $row ): bool => 'wp_csp_policy_change_decisions' === $row['table']
+			)
+		);
+
+		$this->assertCount( 1, $decision_rows );
+		$decision = $decision_rows[0]['data'];
+		$this->assertSame( 'auto_approved', $decision['action'] );
+		$this->assertSame( 'auto_approved', $decision['state'] );
+		$this->assertSame( 'automation_engine', $decision['actor_type'] );
+		$this->assertSame( 'Automatically approved by the deterministic CSP automation engine.', $decision['reason'] );
+	}
+
 	public function test_undo_returns_rejected_source_to_pending_and_clears_suppression(): void {
 		$GLOBALS['_wpdb_get_row_queue'] = array(
 			array(

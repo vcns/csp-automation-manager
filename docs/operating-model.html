@@ -108,7 +108,7 @@ sequenceDiagram
     Report->>DB: Deduplicate, rate-limit and store violation report
     Report->>DB: During learning window, create or refresh pending sources
 
-    Admin->>WP: Review Source Inventory and Violations
+    Admin->>WP: Review For Review and Violations
     Admin->>DB: Approve, reject or revert proposals
     WP->>DB: Record decision, risk context and suppression fingerprint
 

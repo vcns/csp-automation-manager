@@ -58,7 +58,7 @@
             <li>Open <strong>CSP Manager</strong> in the WordPress admin.</li>
             <li>Confirm all profiles are in <strong>report-only</strong> mode.</li>
             <li>Run a manual scan.</li>
-            <li>Open the Source Inventory tab and review pending sources.</li>
+            <li>Open the For Review tab and review pending sources.</li>
             <li>Browse important site journeys while report-only remains active.</li>
             <li>Review the Violations tab and approve only required sources.</li>
             <li>Wait for the configured violation-free window before enforcing a surface.</li>
@@ -177,7 +177,8 @@
             </thead>
             <tbody>
               <tr><td>Promotion Gates</td><td>The number of violation-free hours required before enforce mode is allowed.</td><td>Use at least 24 hours for production. Increase it for complex sites.</td></tr>
-              <tr><td>Report Endpoint Learning</td><td>The time window after content or plugin changes where reports can create pending source candidates.</td><td>Use the default 48 hours, then review proposals.</td></tr>
+          <tr><td>Report Endpoint Learning</td><td>The time window after content or plugin changes where reports can create pending source candidates.</td><td>Use the default 48 hours, then review proposals.</td></tr>
+              <tr><td>Deterministic Automation</td><td>Per-surface automation mode, emergency disable switch, per-run limit, directive scope, and allowed schemes.</td><td>Keep manual while learning. Enable conservative automation only after reviewing the site behaviour and choose a small per-run limit.</td></tr>
               <tr><td>Scan Schedule</td><td>Daily scan hour and notification email.</td><td>Use a quiet UTC hour and a monitored mailbox.</td></tr>
             </tbody>
           </table>
@@ -190,7 +191,8 @@
           <p class='section-label'>Scan and learn</p>
           <h2>Build evidence before enforcement.</h2>
           <p>The manual scan crawls representative URLs and extracts external sources from static HTML and linked CSS. It can find scripts, styles, images, fonts, frames, forms, media, and manifests. It cannot fully infer runtime behaviour such as XHR, fetch, WebSocket, EventSource, and workers. Those are learned from browser violation reports while report-only mode is active.</p>
-          <p>After a scan, open Source Inventory. Pending sources must be approved before they affect emitted CSP headers.</p>
+          <p>After a scan, open For Review. Pending sources must be approved before they affect emitted CSP headers.</p>
+          <p>If deterministic automation is enabled for the surface, eligible low-risk proposals may be approved automatically and recorded with actor <code>automation_engine</code>. Medium, high, unknown, hard-excluded, and disallowed-scheme proposals remain pending.</p>
         </div>
         <div class='callout-stack'>
           <div class='callout'>
@@ -301,7 +303,7 @@
         <div class='callout-stack'>
           <div class='callout'>
             <h3>Good operating habit</h3>
-            <p>Review Source Inventory and Violations after each release or plugin update. Treat new high-risk proposals as a change-control item.</p>
+            <p>Review For Review and Violations after each release or plugin update. Treat new high-risk proposals as a change-control item.</p>
           </div>
           <div class='callout'>
             <h3>Avoid broad exceptions</h3>

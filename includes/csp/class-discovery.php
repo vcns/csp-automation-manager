@@ -316,7 +316,7 @@ class Discovery {
 
 			if ( 'updated' === $result['status'] ) {
 				++$updated;
-			} elseif ( 'added' === $result['status'] ) {
+			} elseif ( in_array( $result['status'], array( 'added', 'auto_approved' ), true ) ) {
 				++$added;
 			}
 		}

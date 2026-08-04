@@ -40,4 +40,26 @@ class AutomationConfigTest extends TestCase {
 		$this->assertSame( 'manual', $config['mode'] );
 		$this->assertSame( array( 'https', 'javascript:' ), $config['allowed_source_schemes'] );
 	}
+
+	public function test_admin_input_can_enable_conservative_surface_automation(): void {
+		$config = ( new Automation_Config() )->normalise_admin_input(
+			array(
+				'frontend' => array(
+					'mode'                           => 'conservative',
+					'emergency_disabled'             => '0',
+					'max_automatic_changes_per_scan' => '5',
+					'enabled_directives'             => array( 'DEFAULT-SRC', 'img-src' ),
+					'allowed_source_schemes'         => array( 'HTTPS', 'wss' ),
+				),
+			)
+		);
+
+		$this->assertSame( 'conservative', $config['frontend']['mode'] );
+		$this->assertFalse( $config['frontend']['emergency_disabled'] );
+		$this->assertSame( 5, $config['frontend']['max_automatic_changes_per_scan'] );
+		$this->assertSame( array( 'default-src', 'img-src' ), $config['frontend']['enabled_directives'] );
+		$this->assertSame( array( 'https', 'wss' ), $config['frontend']['allowed_source_schemes'] );
+		$this->assertSame( 'manual', $config['admin']['mode'] );
+		$this->assertTrue( $config['admin']['emergency_disabled'] );
+	}
 }
