@@ -54,6 +54,16 @@ class AdminUITest extends TestCase {
 		$this->assertSame( $original, $links );
 	}
 
+	public function test_dashboard_uses_review_queue_and_policy_timeline_language(): void {
+		$view = file_get_contents( dirname( __DIR__, 2 ) . '/includes/admin/views/page-csp-dashboard.php' );
+
+		$this->assertIsString( $view );
+		$this->assertStringContainsString( "'For Review'", $view );
+		$this->assertStringContainsString( 'This timeline shows proposal activity', $view );
+		$this->assertStringContainsString( 'Proposed source', $view );
+		$this->assertStringContainsString( 'Policy version', $view );
+	}
+
 	public function test_sanitize_policy_header_name_accepts_origin_header(): void {
 		$ui = $this->make_admin_ui();
 

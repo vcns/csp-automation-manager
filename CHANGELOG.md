@@ -6,6 +6,13 @@ The format is based on Keep a Changelog, and this project follows semantic versi
 
 ## [Unreleased]
 
+## [1.0.15] - 2026-08-04
+
+### Changed
+
+- Renamed the dashboard Source Inventory tab to For Review so the operator queue matches the approval workflow.
+- Expanded the Policy Changes tab into a policy activity timeline that includes discovered proposals, decisions, actors, suppression state, and policy version snapshots.
+
 ## [1.0.14] - 2026-08-04
 
 ### Changed

@@ -25,12 +25,12 @@ $tab_help = array(
 		'description' => __( 'Configure the CSP mode for each site surface. Use report-only while learning, enforce only after the surface is stable, or disabled when this plugin should not emit CSP for that surface.', 'csp-automation-manager' ),
 	),
 	'sources'        => array(
-		'label'       => __( 'Source Inventory', 'csp-automation-manager' ),
-		'description' => __( 'Review discovered hosts and decide whether each source belongs in the policy. Approvals, rejections, reversions, and undo actions require a reason and are written to the decision ledger.', 'csp-automation-manager' ),
+		'label'       => __( 'For Review', 'csp-automation-manager' ),
+		'description' => __( 'Review discovered source candidates and decide whether each source belongs in the policy. Discovery adds review items; approvals, rejections, reversions, and undo actions require a reason and are written to the decision ledger.', 'csp-automation-manager' ),
 	),
 	'policy-changes' => array(
 		'label'       => __( 'Policy Changes', 'csp-automation-manager' ),
-		'description' => __( 'Inspect the append-only decision history for source approvals, rejections, reversions, undo actions, suppression state, risk, actor, and reason.', 'csp-automation-manager' ),
+		'description' => __( 'Inspect policy activity across discovered proposals, administrator or automation decisions, and immutable policy snapshots.', 'csp-automation-manager' ),
 	),
 	'violations'     => array(
 		'label'       => __( 'Violations', 'csp-automation-manager' ),
@@ -318,44 +318,138 @@ $scan_logs     = ! empty( $scan_logs_raw ) ? $scan_logs_raw : array();
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- No user input; only $wpdb->prefix used in query.
 		$policy_decisions_raw = $wpdb->get_results( "SELECT * FROM {$wpdb->prefix}csp_policy_change_decisions ORDER BY created_at DESC LIMIT 100", ARRAY_A );
 		$policy_decisions     = ! empty( $policy_decisions_raw ) ? $policy_decisions_raw : array();
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- No user input; only $wpdb->prefix used in query.
+		$policy_versions_raw = $wpdb->get_results( "SELECT id, surface, version_number, mode, trigger_type, trigger_id, software_version, created_at FROM {$wpdb->prefix}csp_policy_versions ORDER BY created_at DESC LIMIT 100", ARRAY_A );
+		$policy_versions     = ! empty( $policy_versions_raw ) ? $policy_versions_raw : array();
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- No user input; only $wpdb->prefix used in query.
+		$policy_audit_raw = $wpdb->get_results( "SELECT id, component, event, detail, severity, user_id, created_at FROM {$wpdb->prefix}csp_audit_log WHERE component = 'policy_change' AND event IN ('source_proposed', 'proposal_suppressed') ORDER BY created_at DESC LIMIT 100", ARRAY_A );
+		$policy_audit     = ! empty( $policy_audit_raw ) ? $policy_audit_raw : array();
+		$policy_events    = array();
+
+		foreach ( $policy_decisions as $decision ) {
+			$policy_events[] = array(
+				'created_at'     => (string) $decision['created_at'],
+				'event'          => ucfirst( (string) $decision['action'] ),
+				'type'           => __( 'Decision', 'csp-automation-manager' ),
+				'actor'          => (string) ( $decision['actor_type'] ?? 'administrator' ),
+				'surface'        => (string) $decision['surface'],
+				'directive'      => (string) $decision['directive'],
+				'source'         => (string) $decision['source_host'],
+				'risk_level'     => (string) $decision['risk_level'],
+				'risk_reason'    => (string) $decision['risk_reason'],
+				'policy_version' => ! empty( $decision['policy_version_id'] ) ? (string) $decision['policy_version_id'] : '',
+				'suppression'    => ! empty( $decision['suppression_active'] ) ? __( 'Active', 'csp-automation-manager' ) : '',
+				'detail'         => (string) $decision['reason'],
+			);
+		}
+
+		foreach ( $policy_versions as $version ) {
+			$policy_events[] = array(
+				'created_at'     => (string) $version['created_at'],
+				'event'          => __( 'Snapshot', 'csp-automation-manager' ),
+				'type'           => __( 'Policy version', 'csp-automation-manager' ),
+				'actor'          => 'decision' === (string) $version['trigger_type'] ? __( 'system', 'csp-automation-manager' ) : (string) $version['trigger_type'],
+				'surface'        => (string) $version['surface'],
+				'directive'      => '',
+				'source'         => '',
+				'risk_level'     => '',
+				'risk_reason'    => '',
+				'policy_version' => (string) $version['version_number'],
+				'suppression'    => '',
+				'detail'         => sprintf(
+					/* translators: 1: policy mode, 2: trigger type, 3: trigger identifier */
+					__( 'Captured %1$s policy snapshot from %2$s trigger %3$s.', 'csp-automation-manager' ),
+					(string) $version['mode'],
+					(string) $version['trigger_type'],
+					! empty( $version['trigger_id'] ) ? '#' . (string) $version['trigger_id'] : __( 'without an ID', 'csp-automation-manager' )
+				),
+			);
+		}
+
+		foreach ( $policy_audit as $audit_event ) {
+			$policy_events[] = array(
+				'created_at'     => (string) $audit_event['created_at'],
+				'event'          => 'proposal_suppressed' === (string) $audit_event['event'] ? __( 'Suppressed proposal', 'csp-automation-manager' ) : __( 'Proposed source', 'csp-automation-manager' ),
+				'type'           => __( 'Discovery', 'csp-automation-manager' ),
+				'actor'          => empty( $audit_event['user_id'] ) ? __( 'system', 'csp-automation-manager' ) : __( 'administrator', 'csp-automation-manager' ),
+				'surface'        => '',
+				'directive'      => '',
+				'source'         => '',
+				'risk_level'     => '',
+				'risk_reason'    => '',
+				'policy_version' => '',
+				'suppression'    => 'proposal_suppressed' === (string) $audit_event['event'] ? __( 'Active', 'csp-automation-manager' ) : '',
+				'detail'         => (string) $audit_event['detail'],
+			);
+		}
+
+		usort(
+			$policy_events,
+			static function ( array $a, array $b ): int {
+				return strcmp( $b['created_at'], $a['created_at'] );
+			}
+		);
+		$policy_events = array_slice( $policy_events, 0, 100 );
 		?>
 	<p class="description">
-		<?php esc_html_e( 'Every approval, rejection, and revert is recorded here. Rejected and reverted changes suppress the same source fingerprint until a later approval becomes the newest decision.', 'csp-automation-manager' ); ?>
+		<?php esc_html_e( 'Discovered candidates appear in For Review first. This timeline shows proposal activity, administrator or automation decisions, suppression state, and the policy snapshots created after material changes.', 'csp-automation-manager' ); ?>
 	</p>
 	<table class="widefat fixed striped">
 		<thead>
 			<tr>
 				<th><?php esc_html_e( 'When', 'csp-automation-manager' ); ?></th>
-				<th><?php esc_html_e( 'Action', 'csp-automation-manager' ); ?></th>
+				<th><?php esc_html_e( 'Event', 'csp-automation-manager' ); ?></th>
+				<th><?php esc_html_e( 'Type', 'csp-automation-manager' ); ?></th>
+				<th><?php esc_html_e( 'Actor', 'csp-automation-manager' ); ?></th>
 				<th><?php esc_html_e( 'Surface', 'csp-automation-manager' ); ?></th>
 				<th><?php esc_html_e( 'Directive', 'csp-automation-manager' ); ?></th>
 				<th><?php esc_html_e( 'Host', 'csp-automation-manager' ); ?></th>
 				<th><?php esc_html_e( 'Risk', 'csp-automation-manager' ); ?></th>
+				<th><?php esc_html_e( 'Policy Version', 'csp-automation-manager' ); ?></th>
 				<th><?php esc_html_e( 'Suppression', 'csp-automation-manager' ); ?></th>
-				<th><?php esc_html_e( 'Reason', 'csp-automation-manager' ); ?></th>
+				<th><?php esc_html_e( 'Detail', 'csp-automation-manager' ); ?></th>
 			</tr>
 		</thead>
 		<tbody>
-		<?php foreach ( $policy_decisions as $decision ) : ?>
+		<?php foreach ( $policy_events as $event ) : ?>
 		<tr>
-			<td><?php echo esc_html( $decision['created_at'] ); ?></td>
-			<td><?php echo esc_html( ucfirst( $decision['action'] ) ); ?></td>
-			<td><?php echo esc_html( $decision['surface'] ); ?></td>
-			<td><code><?php echo esc_html( $decision['directive'] ); ?></code></td>
-			<td><code><?php echo esc_html( $decision['source_host'] ); ?></code></td>
+			<td><?php echo esc_html( $event['created_at'] ); ?></td>
+			<td><?php echo esc_html( $event['event'] ); ?></td>
+			<td><?php echo esc_html( $event['type'] ); ?></td>
+			<td><?php echo esc_html( $event['actor'] ); ?></td>
+			<td><?php echo '' !== $event['surface'] ? esc_html( $event['surface'] ) : '&mdash;'; ?></td>
 			<td>
-				<span class="wp-csp-risk-badge risk-<?php echo esc_attr( $decision['risk_level'] ); ?>" title="<?php echo esc_attr( $decision['risk_reason'] ); ?>">
-					<?php echo esc_html( ucfirst( $decision['risk_level'] ) ); ?>
+				<?php if ( '' !== $event['directive'] ) : ?>
+					<code><?php echo esc_html( $event['directive'] ); ?></code>
+				<?php else : ?>
+					&mdash;
+				<?php endif; ?>
+			</td>
+			<td>
+				<?php if ( '' !== $event['source'] ) : ?>
+					<code><?php echo esc_html( $event['source'] ); ?></code>
+				<?php else : ?>
+					&mdash;
+				<?php endif; ?>
+			</td>
+			<td>
+				<?php if ( '' !== $event['risk_level'] ) : ?>
+				<span class="wp-csp-risk-badge risk-<?php echo esc_attr( $event['risk_level'] ); ?>" title="<?php echo esc_attr( $event['risk_reason'] ); ?>">
+					<?php echo esc_html( ucfirst( $event['risk_level'] ) ); ?>
 				</span>
+				<?php else : ?>
+					&mdash;
+				<?php endif; ?>
 			</td>
+			<td><?php echo '' !== $event['policy_version'] ? esc_html( $event['policy_version'] ) : '&mdash;'; ?></td>
 			<td>
-				<?php echo ! empty( $decision['suppression_active'] ) ? esc_html__( 'Active', 'csp-automation-manager' ) : '&mdash;'; ?>
+				<?php echo '' !== $event['suppression'] ? esc_html( $event['suppression'] ) : '&mdash;'; ?>
 			</td>
-			<td><?php echo esc_html( $decision['reason'] ); ?></td>
+			<td><?php echo esc_html( $event['detail'] ); ?></td>
 		</tr>
 		<?php endforeach; ?>
-		<?php if ( empty( $policy_decisions ) ) : ?>
-		<tr><td colspan="8"><?php esc_html_e( 'No policy decisions have been recorded yet.', 'csp-automation-manager' ); ?></td></tr>
+		<?php if ( empty( $policy_events ) ) : ?>
+		<tr><td colspan="11"><?php esc_html_e( 'No policy activity has been recorded yet.', 'csp-automation-manager' ); ?></td></tr>
 		<?php endif; ?>
 		</tbody>
 	</table>
