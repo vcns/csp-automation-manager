@@ -40,6 +40,7 @@ class Policy_Change_Manager {
 	private Decision_Engine $decision_engine;
 	private Automation_Config $automation_config;
 	private ?Policy_Version_Manager $policy_versions;
+	private int $automatic_changes_this_run = 0;
 
 	public function __construct( Audit_Log $audit, ?Decision_Engine $decision_engine = null, ?Policy_Version_Manager $policy_versions = null, ?Automation_Config $automation_config = null ) {
 		$this->audit             = $audit;
@@ -130,6 +131,15 @@ class Policy_Change_Manager {
 				array( '%d' )
 			);
 
+			if ( 'pending' === (string) ( $existing['approval_state'] ?? '' ) && $this->maybe_auto_approve_source( (int) $existing['id'] ) ) {
+				return array(
+					'status'      => 'auto_approved',
+					'id'          => (int) $existing['id'],
+					'risk_level'  => $risk['level'],
+					'risk_reason' => $risk['reason'],
+				);
+			}
+
 			return array(
 				'status'      => 'updated',
 				'id'          => (int) $existing['id'],
@@ -168,9 +178,19 @@ class Policy_Change_Manager {
 			$severity
 		);
 
+		$source_id = (int) ( $wpdb->insert_id ?? 0 );
+		if ( $this->maybe_auto_approve_source( $source_id ) ) {
+			return array(
+				'status'      => 'auto_approved',
+				'id'          => $source_id,
+				'risk_level'  => $risk['level'],
+				'risk_reason' => $risk['reason'],
+			);
+		}
+
 		return array(
 			'status'      => 'added',
-			'id'          => (int) ( $wpdb->insert_id ?? 0 ),
+			'id'          => $source_id,
 			'risk_level'  => $risk['level'],
 			'risk_reason' => $risk['reason'],
 		);
@@ -238,7 +258,7 @@ class Policy_Change_Manager {
 		);
 	}
 
-	private function decide_source( int $source_id, string $action, string $reason, bool $suppress ): bool {
+	private function decide_source( int $source_id, string $action, string $reason, bool $suppress, string $actor_type = 'administrator', ?int $actor_user_id = null ): bool {
 		if ( $source_id <= 0 ) {
 			return false;
 		}
@@ -265,11 +285,11 @@ class Policy_Change_Manager {
 		}
 
 		$now     = current_time( 'mysql', true );
-		$user_id = function_exists( 'get_current_user_id' ) ? (int) get_current_user_id() : 0;
+		$user_id = null !== $actor_user_id ? $actor_user_id : ( function_exists( 'get_current_user_id' ) ? (int) get_current_user_id() : 0 );
 		$state   = match ( $action ) {
-			'approved' => 'approved',
-			'undone'   => 'pending',
-			default    => 'denied',
+			'approved', 'auto_approved' => 'approved',
+			'undone'                    => 'pending',
+			default                     => 'denied',
 		};
 		$fingerprint = ! empty( $source['decision_fingerprint'] ) ? $source['decision_fingerprint'] : self::fingerprint( $source['surface'], $source['directive'], $source['source_host'] );
 		$risk_level  = ! empty( $source['risk_level'] ) ? $source['risk_level'] : 'low';
@@ -311,7 +331,7 @@ class Policy_Change_Manager {
 		$deterministic       = $this->decision_engine->evaluate_source( $source, $automation );
 		$previous_version_id = $this->latest_policy_version_id( (string) $source['surface'] );
 		$policy_version_id   = 0;
-		if ( in_array( $action, array( 'approved', 'reverted' ), true ) || ( 'undone' === $action && 'approved' === ( $source['approval_state'] ?? '' ) ) ) {
+		if ( in_array( $action, array( 'approved', 'auto_approved', 'reverted' ), true ) || ( 'undone' === $action && 'approved' === ( $source['approval_state'] ?? '' ) ) ) {
 			$policy_version_id = $this->policy_versions()->capture_snapshot( (string) $source['surface'], 'decision', $source_id );
 		}
 		$undone_decision_id = 'undone' === $action ? $this->latest_decision_id( $fingerprint ) : 0;
@@ -329,7 +349,8 @@ class Policy_Change_Manager {
 			$deterministic,
 			$previous_version_id,
 			$policy_version_id,
-			$undone_decision_id
+			$undone_decision_id,
+			$actor_type
 		);
 		if ( $decision_id <= 0 ) {
 			return false;
@@ -340,7 +361,9 @@ class Policy_Change_Manager {
 		$this->audit->log(
 			'policy_change',
 			"source_{$action}",
-			"Administrator {$action} {$source['surface']} {$source['directive']} {$source['source_host']}.",
+			'automation_engine' === $actor_type
+				? "Automation engine {$action} {$source['surface']} {$source['directive']} {$source['source_host']}."
+				: "Administrator {$action} {$source['surface']} {$source['directive']} {$source['source_host']}.",
 			in_array( $action, array( 'reverted', 'rejected', 'undone' ), true ) ? 'warning' : 'info'
 		);
 
@@ -360,16 +383,18 @@ class Policy_Change_Manager {
 		array $deterministic,
 		int $previous_policy_version_id,
 		int $policy_version_id,
-		int $reverted_decision_id = 0
+		int $reverted_decision_id = 0,
+		string $actor_type = 'administrator'
 	): int {
 		global $wpdb;
 
 		$state = match ( $action ) {
-			'approved' => 'approved',
-			'rejected' => 'rejected',
-			'reverted' => 'reverted',
-			'undone'   => 'pending',
-			default    => 'pending',
+			'approved'      => 'approved',
+			'auto_approved' => 'auto_approved',
+			'rejected'      => 'rejected',
+			'reverted'      => 'reverted',
+			'undone'        => 'pending',
+			default         => 'pending',
 		};
 		$previous_policy_version_value = $previous_policy_version_id > 0 ? (string) $previous_policy_version_id : null;
 		$policy_version_value          = $policy_version_id > 0 ? (string) $policy_version_id : null;
@@ -391,7 +416,7 @@ class Policy_Change_Manager {
 				'risk_reason'                => $risk_reason,
 				'reason'                     => sanitize_text_field( substr( $reason, 0, 512 ) ),
 				'user_id'                    => $user_id,
-				'actor_type'                 => 'administrator',
+				'actor_type'                 => $this->normalise_actor_type( $actor_type ),
 				'actor_id'                   => $user_id > 0 ? (string) $user_id : null,
 				'previous_policy_version_id' => $previous_policy_version_value,
 				'policy_version_id'          => $policy_version_value,
@@ -411,6 +436,91 @@ class Policy_Change_Manager {
 		}
 
 		return (int) ( $wpdb->insert_id ?? 0 );
+	}
+
+	private function maybe_auto_approve_source( int $source_id ): bool {
+		if ( $source_id <= 0 ) {
+			return false;
+		}
+
+		global $wpdb;
+		$table  = $wpdb->prefix . 'csp_source_inventory';
+		$source = $wpdb->get_row(
+			$wpdb->prepare(
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				"SELECT * FROM {$table} WHERE id = %d LIMIT 1",
+				$source_id
+			),
+			ARRAY_A
+		);
+
+		if ( ! is_array( $source ) || 'pending' !== (string) ( $source['approval_state'] ?? '' ) ) {
+			return false;
+		}
+
+		$automation = $this->automation_config->for_surface( (string) $source['surface'] );
+		if ( ! $this->automation_config_allows_source( $source, $automation ) ) {
+			return false;
+		}
+
+		$deterministic = $this->decision_engine->evaluate_source( $source, $automation );
+		if ( empty( $deterministic['automation_eligible'] ) ) {
+			return false;
+		}
+
+		if ( ! $this->auto_approve_source( $source_id ) ) {
+			return false;
+		}
+
+		++$this->automatic_changes_this_run;
+		return true;
+	}
+
+	private function auto_approve_source( int $source_id ): bool {
+		return $this->decide_source(
+			$source_id,
+			'auto_approved',
+			'Automatically approved by the deterministic CSP automation engine.',
+			false,
+			'automation_engine',
+			0
+		);
+	}
+
+	private function automation_config_allows_source( array $source, array $automation ): bool {
+		$mode = (string) ( $automation['mode'] ?? 'manual' );
+		if ( 'manual' === $mode || ! in_array( $mode, Automation_Config::MODES, true ) ) {
+			return false;
+		}
+
+		if ( ! empty( $automation['emergency_disabled'] ) ) {
+			return false;
+		}
+
+		$max_changes = (int) ( $automation['max_automatic_changes_per_scan'] ?? 0 );
+		if ( $max_changes <= 0 || $this->automatic_changes_this_run >= $max_changes ) {
+			return false;
+		}
+
+		if ( ! empty( $automation['require_ai_agreement'] ) ) {
+			return false;
+		}
+
+		$directive = strtolower( (string) ( $source['directive'] ?? '' ) );
+		$scheme    = strtolower( (string) ( $source['source_scheme'] ?? '' ) );
+
+		$excluded_directives = is_array( $automation['excluded_directives'] ?? null ) ? $automation['excluded_directives'] : array();
+		if ( in_array( $directive, $excluded_directives, true ) ) {
+			return false;
+		}
+
+		$enabled_directives = is_array( $automation['enabled_directives'] ?? null ) ? $automation['enabled_directives'] : array();
+		if ( ! empty( $enabled_directives ) && ! in_array( $directive, $enabled_directives, true ) ) {
+			return false;
+		}
+
+		$allowed_schemes = is_array( $automation['allowed_source_schemes'] ?? null ) ? $automation['allowed_source_schemes'] : array();
+		return empty( $allowed_schemes ) || in_array( $scheme, $allowed_schemes, true );
 	}
 
 	private function record_rule_evaluations( int $source_id, int $decision_id, array $deterministic, string $now ): void {
@@ -495,5 +605,9 @@ class Policy_Change_Manager {
 
 	private function normalise_decision_reason( string $reason ): string {
 		return sanitize_text_field( substr( trim( $reason ), 0, 512 ) );
+	}
+
+	private function normalise_actor_type( string $actor_type ): string {
+		return in_array( $actor_type, array( 'administrator', 'automation_engine', 'system_migration', 'system_recovery' ), true ) ? $actor_type : 'administrator';
 	}
 }

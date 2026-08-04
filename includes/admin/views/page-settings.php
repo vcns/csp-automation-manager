@@ -15,6 +15,10 @@ $current_report_endpoint    = esc_url_raw( rest_url( 'csp-manager/v1/report' ) )
 $configured_report_endpoint = (string) get_option( 'wp_csp_report_endpoint_url', '' );
 $configured_policy_header   = (string) get_option( 'wp_csp_policy_header_name', '' );
 $reporting_transport        = \WP_CSP\CSP\Policy_Builder::sanitize_reporting_transport( get_option( 'wp_csp_reporting_transport', 'report-uri' ) );
+$automation_config          = ( new \WP_CSP\CSP\Automation_Config() )->all();
+$automation_surfaces        = \WP_CSP\CSP\Automation_Config::SURFACES;
+$automation_directives      = array( 'default-src', 'img-src', 'font-src', 'media-src', 'manifest-src' );
+$automation_schemes         = array( 'https', 'wss' );
 ?>
 <div class="wrap wp-csp-wrap">
 	<h1><?php esc_html_e( 'CSP Automation Manager Settings', 'csp-automation-manager' ); ?></h1>
@@ -45,6 +49,70 @@ $reporting_transport        = \WP_CSP\CSP\Policy_Builder::sanitize_reporting_tra
 				</td>
 			</tr>
 		</table>
+
+		<h2 class="title"><?php esc_html_e( 'Deterministic Automation', 'csp-automation-manager' ); ?></h2>
+		<p class="description">
+			<?php esc_html_e( 'Enable automatic approval only for proposals that pass the deterministic low-risk rule boundary. Manual mode remains the default. Medium, high, unknown, and hard-excluded proposals still require administrator review.', 'csp-automation-manager' ); ?>
+		</p>
+		<table class="widefat striped" role="presentation">
+			<thead>
+				<tr>
+					<th><?php esc_html_e( 'Surface', 'csp-automation-manager' ); ?></th>
+					<th><?php esc_html_e( 'Mode', 'csp-automation-manager' ); ?></th>
+					<th><?php esc_html_e( 'Automation enabled', 'csp-automation-manager' ); ?></th>
+					<th><?php esc_html_e( 'Maximum per run', 'csp-automation-manager' ); ?></th>
+					<th><?php esc_html_e( 'Directive scope', 'csp-automation-manager' ); ?></th>
+					<th><?php esc_html_e( 'Allowed schemes', 'csp-automation-manager' ); ?></th>
+				</tr>
+			</thead>
+			<tbody>
+			<?php foreach ( $automation_surfaces as $surface ) : ?>
+				<?php $surface_config = $automation_config[ $surface ] ?? \WP_CSP\CSP\Automation_Config::DEFAULT_SURFACE_CONFIG; ?>
+				<tr>
+					<td><strong><?php echo esc_html( ucfirst( $surface ) ); ?></strong></td>
+					<td>
+						<select name="wp_csp_automation_config[<?php echo esc_attr( $surface ); ?>][mode]">
+							<?php foreach ( \WP_CSP\CSP\Automation_Config::MODES as $mode ) : ?>
+							<option value="<?php echo esc_attr( $mode ); ?>" <?php selected( $surface_config['mode'], $mode ); ?>>
+								<?php echo esc_html( ucwords( str_replace( '_', ' ', $mode ) ) ); ?>
+							</option>
+							<?php endforeach; ?>
+						</select>
+					</td>
+					<td>
+						<input type="hidden" name="wp_csp_automation_config[<?php echo esc_attr( $surface ); ?>][emergency_disabled]" value="1" />
+						<label>
+							<input type="checkbox" name="wp_csp_automation_config[<?php echo esc_attr( $surface ); ?>][emergency_disabled]" value="0" <?php checked( empty( $surface_config['emergency_disabled'] ) ); ?> />
+							<?php esc_html_e( 'Allow eligible auto-approvals', 'csp-automation-manager' ); ?>
+						</label>
+					</td>
+					<td>
+						<input type="number" class="small-text" min="0" max="50" name="wp_csp_automation_config[<?php echo esc_attr( $surface ); ?>][max_automatic_changes_per_scan]" value="<?php echo esc_attr( (string) ( $surface_config['max_automatic_changes_per_scan'] ?? 0 ) ); ?>" />
+					</td>
+					<td>
+						<?php foreach ( $automation_directives as $directive ) : ?>
+							<label style="display:block">
+								<input type="checkbox" name="wp_csp_automation_config[<?php echo esc_attr( $surface ); ?>][enabled_directives][]" value="<?php echo esc_attr( $directive ); ?>" <?php checked( in_array( $directive, $surface_config['enabled_directives'] ?? array(), true ) ); ?> />
+								<code><?php echo esc_html( $directive ); ?></code>
+							</label>
+						<?php endforeach; ?>
+						<p class="description"><?php esc_html_e( 'Leave all unchecked to permit any deterministic low-risk directive. High and medium risk directives are still blocked by the engine.', 'csp-automation-manager' ); ?></p>
+					</td>
+					<td>
+						<?php foreach ( $automation_schemes as $scheme ) : ?>
+							<label style="display:block">
+								<input type="checkbox" name="wp_csp_automation_config[<?php echo esc_attr( $surface ); ?>][allowed_source_schemes][]" value="<?php echo esc_attr( $scheme ); ?>" <?php checked( in_array( $scheme, $surface_config['allowed_source_schemes'] ?? array(), true ) ); ?> />
+								<code><?php echo esc_html( $scheme ); ?></code>
+							</label>
+						<?php endforeach; ?>
+					</td>
+				</tr>
+			<?php endforeach; ?>
+			</tbody>
+		</table>
+		<p class="description">
+			<?php esc_html_e( 'Automatic decisions are recorded with actor automation_engine and can be reverted from the review queue like administrator approvals.', 'csp-automation-manager' ); ?>
+		</p>
 
 		<h2 class="title"><?php esc_html_e( 'Proxy Header Emission', 'csp-automation-manager' ); ?></h2>
 		<p class="description">

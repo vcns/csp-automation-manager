@@ -52,6 +52,10 @@ class Automation_Config {
 		return $normalised;
 	}
 
+	public function normalise_admin_input( array $config ): array {
+		return $this->normalise_all( $config );
+	}
+
 	private function normalise_all( array $config ): array {
 		$normalised = array();
 		foreach ( self::SURFACES as $surface ) {

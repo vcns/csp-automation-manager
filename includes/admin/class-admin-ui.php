@@ -17,6 +17,7 @@ declare( strict_types=1 );
 namespace WP_CSP\Admin;
 
 use WP_CSP\Plugin;
+use WP_CSP\CSP\Automation_Config;
 use WP_CSP\CSP\Policy_Builder;
 use WP_CSP\CSP\Policy_Change_Manager;
 use WP_CSP\CSP\Policy_Version_Manager;
@@ -115,6 +116,7 @@ class Admin_UI {
 			'wp_csp_report_endpoint_url'           => array( $this, 'sanitize_report_endpoint_url' ),
 			'wp_csp_reporting_transport'           => array( $this, 'sanitize_reporting_transport' ),
 			'wp_csp_policy_header_name'            => array( $this, 'sanitize_policy_header_name' ),
+			'wp_csp_automation_config'             => array( $this, 'sanitize_automation_config' ),
 			// Data retention: days to keep violation reports (0 = keep forever).
 			'wp_csp_violation_retention_days'      => 'absint',
 		);
@@ -189,6 +191,10 @@ class Admin_UI {
 
 	public function sanitize_reporting_transport( mixed $transport ): string {
 		return Policy_Builder::sanitize_reporting_transport( $transport );
+	}
+
+	public function sanitize_automation_config( mixed $config ): array {
+		return ( new Automation_Config() )->normalise_admin_input( is_array( $config ) ? $config : array() );
 	}
 
 	public function enqueue_assets( string $hook_suffix ): void {

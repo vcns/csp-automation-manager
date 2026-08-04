@@ -261,7 +261,7 @@ $scan_logs     = ! empty( $scan_logs_raw ) ? $scan_logs_raw : array();
 					<?php esc_html_e( 'Revert', 'csp-automation-manager' ); ?>
 				</button>
 				<?php endif; ?>
-				<?php if ( in_array( $src['last_decision'] ?? '', array( 'approved', 'rejected' ), true ) ) : ?>
+				<?php if ( in_array( $src['last_decision'] ?? '', array( 'approved', 'auto_approved', 'rejected' ), true ) ) : ?>
 				<button type="button" class="button button-small wp-csp-undo-source-decision" data-id="<?php echo esc_attr( $src['id'] ); ?>">
 					<?php esc_html_e( 'Undo', 'csp-automation-manager' ); ?>
 				</button>

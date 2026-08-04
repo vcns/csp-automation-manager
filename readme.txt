@@ -43,6 +43,7 @@ For Cloudflare, CDN, and reverse-proxy deployments, administrators can configure
 
 * Renames the dashboard source review queue to "For Review".
 * Expands Policy Changes into a policy activity timeline showing source proposals, decisions, actors, suppression state, and policy snapshots.
+* Adds per-surface deterministic automation settings and records eligible automatic approvals as `automation_engine` decisions.
 
 = 1.0.14 =
 
