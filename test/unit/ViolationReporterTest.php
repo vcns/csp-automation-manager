@@ -379,6 +379,21 @@ class ViolationReporterTest extends TestCase {
 
 	// ── Rate limiting ─────────────────────────────────────────────────────────
 
+	public function test_font_reports_for_same_host_share_fingerprint(): void {
+		$reporter = $this->make_capturing_reporter();
+
+		$report1 = [ 'csp-report' => [ 'blocked-uri' => 'https://fonts.gstatic.com/s/poppins/v24/pxiByp8kv8JHgFVrLDz8Z1JlFc-K.woff2', 'violated-directive' => 'font-src', 'document-uri' => 'https://example.com/' ] ];
+		$report2 = [ 'csp-report' => [ 'blocked-uri' => 'https://fonts.gstatic.com/s/poppins/v24/pxiDyp8kv8JHgFVrJJLm111VF9eO.woff2', 'violated-directive' => 'font-src', 'document-uri' => 'https://example.com/' ] ];
+
+		$stored1 = $reporter->capture_stored_reports( $report1 );
+		$stored2 = $reporter->capture_stored_reports( $report2 );
+
+		$this->assertCount( 1, $stored1 );
+		$this->assertCount( 1, $stored2 );
+		$this->assertSame( $stored1[0]['fingerprint'], $stored2[0]['fingerprint'] );
+		$this->assertSame( 'https://fonts.gstatic.com', $stored1[0]['fingerprint_source'] );
+	}
+
 	public function test_rate_limit_blocks_reports_beyond_cap(): void {
 		$reporter = $this->make_capturing_reporter( rate_limit_cap: 2 );
 
@@ -449,11 +464,13 @@ class ViolationReporterTest extends TestCase {
 
 				$blocked_uri        = substr( $r['blocked_uri'] ?? '', 0, 2048 );
 				$violated_directive = substr( $r['violated_directive'] ?? '', 0, 128 );
-				$fingerprint        = hash( 'sha256', $surface . '|' . $blocked_uri . '|' . $violated_directive );
+				$fingerprint_source = $this->fingerprint_blocked_source( $blocked_uri, $violated_directive );
+				$fingerprint        = hash( 'sha256', $surface . '|' . $fingerprint_source . '|' . $violated_directive );
 
 				$this->captured[] = array_merge( $r, [
-					'profile_surface' => $surface,
-					'fingerprint'     => $fingerprint,
+					'profile_surface'    => $surface,
+					'fingerprint'        => $fingerprint,
+					'fingerprint_source' => $fingerprint_source,
 				] );
 			}
 

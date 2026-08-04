@@ -4,7 +4,7 @@
  *
  * Implements §4.13 of the directive:
  *   - Handles both CSP Level 3 (application/csp-report) and legacy formats.
- *   - Deduplicates by a stable fingerprint: hash(surface + blocked_uri + violated_directive).
+ *   - Deduplicates host-source reports by policy source: hash(surface + canonical blocked source + directive).
  *   - Stores one row per unique fingerprint, with first/last reported timestamps.
  *   - Increments occurrence_count on duplicate reports using a single database upsert.
  *   - Rate-limits storage: drops reports after 500 per hour per surface (soft cap).
@@ -187,7 +187,8 @@ class Violation_Reporter {
 		}
 		set_transient( $rate_key, $count + 1, self::RATE_LIMIT_WINDOW );
 
-		$fingerprint = hash( 'sha256', $surface . '|' . $blocked_uri . '|' . $violated_directive );
+		$fingerprint_source = $this->fingerprint_blocked_source( $blocked_uri, $violated_directive );
+		$fingerprint        = hash( 'sha256', $surface . '|' . $fingerprint_source . '|' . $violated_directive );
 
 		$now = current_time( 'mysql', true );
 
@@ -318,6 +319,22 @@ class Violation_Reporter {
 			'scheme'    => $scheme,
 			'host'      => sanitize_text_field( substr( $host, 0, 255 ) ),
 		);
+	}
+
+	protected function fingerprint_blocked_source( string $blocked_uri, string $directive ): string {
+		$candidate = $this->source_candidate_from_report(
+			array(
+				'effective_directive' => $directive,
+				'violated_directive'  => $directive,
+			),
+			$blocked_uri
+		);
+
+		if ( null === $candidate ) {
+			return $blocked_uri;
+		}
+
+		return $candidate['scheme'] . '://' . $candidate['host'];
 	}
 
 	private function normalise_directive( string $directive ): string {

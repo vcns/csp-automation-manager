@@ -6,6 +6,12 @@ The format is based on Keep a Changelog, and this project follows semantic versi
 
 ## [Unreleased]
 
+## [1.0.19] - 2026-08-04
+
+### Changed
+
+- Rolled up remote host-source violation reports by policy source, reducing Google Fonts and similar asset noise from many file-level rows into a single host-level occurrence count.
+
 ## [1.0.18] - 2026-08-04
 
 ### Changed
