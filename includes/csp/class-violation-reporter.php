@@ -187,7 +187,7 @@ class Violation_Reporter {
 		}
 		set_transient( $rate_key, $count + 1, self::RATE_LIMIT_WINDOW );
 
-		$fingerprint_source = $this->fingerprint_blocked_source( $blocked_uri, $violated_directive );
+		$fingerprint_source = $this->fingerprint_report_source( $r, $blocked_uri, $violated_directive );
 		$fingerprint        = hash( 'sha256', $surface . '|' . $fingerprint_source . '|' . $violated_directive );
 
 		$now = current_time( 'mysql', true );
@@ -322,19 +322,60 @@ class Violation_Reporter {
 	}
 
 	protected function fingerprint_blocked_source( string $blocked_uri, string $directive ): string {
-		$candidate = $this->source_candidate_from_report(
-			array(
-				'effective_directive' => $directive,
-				'violated_directive'  => $directive,
-			),
-			$blocked_uri
-		);
+		$blocked_uri = trim( $blocked_uri );
+		if ( '' === $blocked_uri ) {
+			return '';
+		}
 
-		if ( null === $candidate ) {
+		if ( $this->is_non_host_blocked_uri( $blocked_uri ) ) {
 			return $blocked_uri;
 		}
 
-		return $candidate['scheme'] . '://' . $candidate['host'];
+		if ( str_starts_with( $blocked_uri, '//' ) ) {
+			$blocked_uri = 'https:' . $blocked_uri;
+		}
+
+		$parsed = wp_parse_url( $blocked_uri );
+		if ( ! is_array( $parsed ) || empty( $parsed['host'] ) ) {
+			return $blocked_uri;
+		}
+
+		$scheme = strtolower( isset( $parsed['scheme'] ) ? (string) $parsed['scheme'] : 'https' );
+		if ( ! in_array( $scheme, array( 'http', 'https', 'ws', 'wss' ), true ) ) {
+			return $blocked_uri;
+		}
+
+		$source = $scheme . '://' . strtolower( (string) $parsed['host'] );
+		if ( ! empty( $parsed['port'] ) ) {
+			$source .= ':' . (int) $parsed['port'];
+		}
+
+		return $source;
+	}
+
+	protected function fingerprint_report_source( array $report, string $blocked_uri, string $directive ): string {
+		$policy_source = $this->fingerprint_blocked_source( $blocked_uri, $directive );
+		if ( ! $this->is_non_host_blocked_uri( $blocked_uri ) ) {
+			return $policy_source;
+		}
+
+		$source_file   = sanitize_text_field( substr( (string) ( $report['source_file'] ?? '' ), 0, 512 ) );
+		$line_number   = isset( $report['line_number'] ) && null !== $report['line_number'] ? (string) (int) $report['line_number'] : '';
+		$column_number = isset( $report['column_number'] ) && null !== $report['column_number'] ? (string) (int) $report['column_number'] : '';
+		$sample        = sanitize_text_field( substr( (string) ( $report['sample'] ?? '' ), 0, 256 ) );
+		$sample_hash   = '' !== $sample ? hash( 'sha256', $sample ) : '';
+
+		return implode(
+			'|',
+			array(
+				'non-host',
+				strtolower( trim( $blocked_uri ) ),
+				$source_file,
+				$line_number,
+				$column_number,
+				$sample_hash,
+			)
+		);
 	}
 
 	private function normalise_directive( string $directive ): string {

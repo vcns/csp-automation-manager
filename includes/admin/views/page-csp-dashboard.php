@@ -399,10 +399,58 @@ $violations     = ! empty( $violations_raw ) ? $violations_raw : array();
 		if ( '' === trim( $report_endpoint_url ) ) {
 			$report_endpoint_url = rest_url( 'csp-manager/v1/report' );
 		}
-		$canonicalise_violation_source = static function ( string $blocked_uri ): string {
-			$blocked_uri = trim( $blocked_uri );
+		$canonicalise_violation_source = static function ( array $violation ): array {
+			$blocked_uri = trim( (string) ( $violation['blocked_uri'] ?? '' ) );
 			if ( '' === $blocked_uri ) {
-				return '';
+				return array(
+					'display'  => '',
+					'group'    => '',
+					'evidence' => '',
+				);
+			}
+
+			$lower_blocked_uri = strtolower( $blocked_uri );
+			if (
+				in_array( $lower_blocked_uri, array( 'inline', 'eval', 'wasm-eval', 'data', 'blob', 'about' ), true )
+				|| str_starts_with( $lower_blocked_uri, 'data:' )
+				|| str_starts_with( $lower_blocked_uri, 'blob:' )
+				|| str_starts_with( $lower_blocked_uri, 'about:' )
+			) {
+				$source_file   = (string) ( $violation['source_file'] ?? '' );
+				$line_number   = ! empty( $violation['line_number'] ) ? (string) (int) $violation['line_number'] : '';
+				$column_number = ! empty( $violation['column_number'] ) ? (string) (int) $violation['column_number'] : '';
+				$sample        = (string) ( $violation['sample'] ?? '' );
+				$sample_hash   = '' !== $sample ? hash( 'sha256', $sample ) : '';
+				$evidence      = array();
+
+				if ( '' !== $source_file ) {
+					$evidence[] = sprintf(
+						/* translators: %s: violation source file URL */
+						__( 'Source: %s', 'csp-automation-manager' ),
+						$source_file
+					);
+				}
+				if ( '' !== $line_number ) {
+					$location   = '' !== $column_number ? $line_number . ':' . $column_number : $line_number;
+					$evidence[] = sprintf(
+						/* translators: %s: source line or line:column */
+						__( 'Location: %s', 'csp-automation-manager' ),
+						$location
+					);
+				}
+				if ( '' !== $sample ) {
+					$evidence[] = sprintf(
+						/* translators: %s: short CSP report sample */
+						__( 'Sample: %s', 'csp-automation-manager' ),
+						substr( $sample, 0, 120 )
+					);
+				}
+
+				return array(
+					'display'  => str_starts_with( $lower_blocked_uri, 'data:' ) ? 'data:' : $blocked_uri,
+					'group'    => implode( '|', array( 'non-host', $lower_blocked_uri, $source_file, $line_number, $column_number, $sample_hash ) ),
+					'evidence' => implode( ' | ', $evidence ),
+				);
 			}
 
 			if ( str_starts_with( $blocked_uri, '//' ) ) {
@@ -411,7 +459,11 @@ $violations     = ! empty( $violations_raw ) ? $violations_raw : array();
 
 			$parsed = wp_parse_url( $blocked_uri );
 			if ( ! is_array( $parsed ) || empty( $parsed['host'] ) ) {
-				return $blocked_uri;
+				return array(
+					'display'  => $blocked_uri,
+					'group'    => $blocked_uri,
+					'evidence' => '',
+				);
 			}
 
 			$source = strtolower( (string) ( $parsed['scheme'] ?? 'https' ) ) . '://' . strtolower( (string) $parsed['host'] );
@@ -419,26 +471,33 @@ $violations     = ! empty( $violations_raw ) ? $violations_raw : array();
 				$source .= ':' . (int) $parsed['port'];
 			}
 
-			return $source;
+			return array(
+				'display'  => $source,
+				'group'    => $source,
+				'evidence' => '',
+			);
 		};
 	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- No user input; only $wpdb->prefix used in query.
-		$violations_raw = $wpdb->get_results( "SELECT * FROM {$wpdb->prefix}csp_violation_reports ORDER BY reported_at DESC LIMIT 500", ARRAY_A );
+		$violation_totals = $wpdb->get_row( "SELECT COUNT(*) AS stored_rows, COALESCE(SUM(occurrence_count), 0) AS total_occurrences FROM {$wpdb->prefix}csp_violation_reports", ARRAY_A );
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- No user input; only $wpdb->prefix used in query.
+		$violations_raw = $wpdb->get_results( "SELECT * FROM {$wpdb->prefix}csp_violation_reports ORDER BY reported_at DESC LIMIT 1000", ARRAY_A );
 		$viol_groups    = array();
 	foreach ( ! empty( $violations_raw ) ? $violations_raw : array() as $violation ) {
-		$blocked_source = $canonicalise_violation_source( (string) ( $violation['blocked_uri'] ?? '' ) );
+		$blocked_source = $canonicalise_violation_source( $violation );
 		$group_key      = implode(
 			'|',
 			array(
 				(string) ( $violation['profile_surface'] ?? '' ),
 				(string) ( $violation['violated_directive'] ?? '' ),
 				(string) ( $violation['disposition'] ?? '' ),
-				$blocked_source,
+				$blocked_source['group'],
 			)
 		);
 
 		if ( ! isset( $viol_groups[ $group_key ] ) ) {
 			$viol_groups[ $group_key ]                     = $violation;
-			$viol_groups[ $group_key ]['blocked_uri']      = $blocked_source;
+			$viol_groups[ $group_key ]['blocked_uri']      = $blocked_source['display'];
+			$viol_groups[ $group_key ]['evidence_context'] = $blocked_source['evidence'];
 			$viol_groups[ $group_key ]['row_count']        = 0;
 			$viol_groups[ $group_key ]['sample_uri']       = (string) ( $violation['blocked_uri'] ?? '' );
 			$viol_groups[ $group_key ]['reported_at']      = (string) ( $violation['reported_at'] ?? '' );
@@ -464,11 +523,23 @@ $violations     = ! empty( $violations_raw ) ? $violations_raw : array();
 		$viol_offset   = ( $viol_page_num - 1 ) * $per_page;
 		$violations    = array_slice( $violations_grouped, $viol_offset, $per_page );
 		?>
+	<p class="description">
+		<?php
+		printf(
+			/* translators: 1: grouped rows, 2: stored fingerprints, 3: browser report occurrences */
+			esc_html__( 'Showing %1$d grouped violation source(s) from %2$d stored fingerprint(s) and %3$d browser report occurrence(s). Remote asset URLs are grouped by policy source; inline, data, eval, blob, and about reports are separated by source location or report sample when the browser supplies that evidence.', 'csp-automation-manager' ),
+			(int) $viol_total,
+			(int) ( $violation_totals['stored_rows'] ?? 0 ),
+			(int) ( $violation_totals['total_occurrences'] ?? 0 )
+		);
+		?>
+	</p>
 	<table class="widefat fixed striped">
 		<thead>
 			<tr>
 				<th><?php esc_html_e( 'Surface', 'csp-automation-manager' ); ?></th>
 				<th><?php esc_html_e( 'Blocked URI', 'csp-automation-manager' ); ?></th>
+				<th><?php esc_html_e( 'Evidence', 'csp-automation-manager' ); ?></th>
 				<th><?php esc_html_e( 'Directive', 'csp-automation-manager' ); ?></th>
 				<th><?php esc_html_e( 'Occurrences', 'csp-automation-manager' ); ?></th>
 				<th><?php esc_html_e( 'Last Seen', 'csp-automation-manager' ); ?></th>
@@ -494,6 +565,7 @@ $violations     = ! empty( $violations_raw ) ? $violations_raw : array();
 					</span>
 				<?php endif; ?>
 			</td>
+			<td><?php echo '' !== (string) ( $v['evidence_context'] ?? '' ) ? esc_html( (string) $v['evidence_context'] ) : '&mdash;'; ?></td>
 			<td><code><?php echo esc_html( $v['violated_directive'] ); ?></code></td>
 			<td><?php echo esc_html( number_format( (int) $v['occurrence_count'] ) ); ?></td>
 			<td><?php echo esc_html( $v['reported_at'] ); ?></td>
@@ -502,7 +574,7 @@ $violations     = ! empty( $violations_raw ) ? $violations_raw : array();
 		<?php endforeach; ?>
 		<?php if ( empty( $violations ) ) : ?>
 		<tr>
-			<td colspan="6">
+			<td colspan="7">
 				<p><?php esc_html_e( 'No browser violation reports have been recorded yet.', 'csp-automation-manager' ); ?></p>
 				<p>
 					<?php esc_html_e( 'Manual scans discover candidate sources, but they do not create violation reports. To collect violations, browse the live site while the relevant surface emits this plugin\'s report-only or enforce CSP header with reporting directives.', 'csp-automation-manager' ); ?>

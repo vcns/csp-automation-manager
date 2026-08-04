@@ -4,7 +4,7 @@ Tags: security, csp, content security policy, headers, wordpress security
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.0.22
+Stable tag: 1.0.23
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -40,6 +40,13 @@ Reports received by this plugin are validated and stored in this site's WordPres
 For Cloudflare, CDN, and reverse-proxy deployments, administrators can configure an origin-only policy header name such as X-Origin-CSP-Policy. The proxy can then copy that origin header into the browser-facing Content-Security-Policy-Report-Only or Content-Security-Policy header.
 
 == Changelog ==
+
+= 1.0.23 =
+
+* Moves CSP surface mode controls from Dashboard > Profiles into Settings > Configuration > Deterministic Automation.
+* Moves Policy Audit and Readiness into tabs under Settings and removes the redundant Dashboard > Profiles tab.
+* Separates inline CSP violation evidence by source location and sample so different inline failures no longer collapse into one broad row.
+* Adds Violations tab totals and an Evidence column to explain grouped browser report processing.
 
 = 1.0.22 =
 

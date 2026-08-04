@@ -6,6 +6,15 @@ The format is based on Keep a Changelog, and this project follows semantic versi
 
 ## [Unreleased]
 
+## [1.0.23] - 2026-08-04
+
+### Changed
+
+- Moved CSP surface mode controls from Dashboard > Profiles into Settings > Configuration > Deterministic Automation.
+- Moved Policy Audit and Readiness into Settings tabs and removed the redundant Dashboard > Profiles navigation.
+- Separated inline CSP violation evidence by source location and report sample so different inline failures no longer collapse into one broad row.
+- Added Violations tab totals and an Evidence column to clarify grouped browser report processing.
+
 ## [1.0.22] - 2026-08-04
 
 ### Changed

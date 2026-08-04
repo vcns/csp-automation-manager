@@ -394,6 +394,60 @@ class ViolationReporterTest extends TestCase {
 		$this->assertSame( 'https://fonts.gstatic.com', $stored1[0]['fingerprint_source'] );
 	}
 
+	public function test_inline_reports_with_different_locations_have_different_fingerprints(): void {
+		$reporter = $this->make_capturing_reporter();
+
+		$report1 = [
+			'csp-report' => [
+				'blocked-uri'        => 'inline',
+				'violated-directive' => 'style-src-elem',
+				'document-uri'       => 'https://example.com/',
+				'source-file'        => 'https://example.com/',
+				'line-number'        => 63,
+				'column-number'      => 1,
+				'script-sample'      => '.hero { color: red; }',
+			],
+		];
+		$report2 = [
+			'csp-report' => [
+				'blocked-uri'        => 'inline',
+				'violated-directive' => 'style-src-elem',
+				'document-uri'       => 'https://example.com/',
+				'source-file'        => 'https://example.com/',
+				'line-number'        => 71,
+				'column-number'      => 1,
+				'script-sample'      => '.footer { color: blue; }',
+			],
+		];
+
+		$stored1 = $reporter->capture_stored_reports( $report1 );
+		$stored2 = $reporter->capture_stored_reports( $report2 );
+
+		$this->assertNotSame( $stored1[0]['fingerprint'], $stored2[0]['fingerprint'] );
+		$this->assertStringContainsString( 'non-host|inline|https://example.com/|63|1|', $stored1[0]['fingerprint_source'] );
+	}
+
+	public function test_same_inline_report_keeps_same_fingerprint(): void {
+		$reporter = $this->make_capturing_reporter();
+
+		$report = [
+			'csp-report' => [
+				'blocked-uri'        => 'inline',
+				'violated-directive' => 'script-src-elem',
+				'document-uri'       => 'https://example.com/',
+				'source-file'        => 'https://example.com/',
+				'line-number'        => 113,
+				'column-number'      => 1,
+				'script-sample'      => 'window.example = true;',
+			],
+		];
+
+		$stored1 = $reporter->capture_stored_reports( $report );
+		$stored2 = $reporter->capture_stored_reports( $report );
+
+		$this->assertSame( $stored1[0]['fingerprint'], $stored2[0]['fingerprint'] );
+	}
+
 	public function test_rate_limit_blocks_reports_beyond_cap(): void {
 		$reporter = $this->make_capturing_reporter( rate_limit_cap: 2 );
 
@@ -464,7 +518,7 @@ class ViolationReporterTest extends TestCase {
 
 				$blocked_uri        = substr( $r['blocked_uri'] ?? '', 0, 2048 );
 				$violated_directive = substr( $r['violated_directive'] ?? '', 0, 128 );
-				$fingerprint_source = $this->fingerprint_blocked_source( $blocked_uri, $violated_directive );
+				$fingerprint_source = $this->fingerprint_report_source( $r, $blocked_uri, $violated_directive );
 				$fingerprint        = hash( 'sha256', $surface . '|' . $fingerprint_source . '|' . $violated_directive );
 
 				$this->captured[] = array_merge( $r, [
