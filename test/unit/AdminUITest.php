@@ -78,6 +78,15 @@ class AdminUITest extends TestCase {
 		$this->assertStringNotContainsString( "'scan-log'", $view );
 	}
 
+	public function test_settings_automation_table_uses_operator_friendly_labels(): void {
+		$view = file_get_contents( dirname( __DIR__, 2 ) . '/includes/admin/views/page-settings.php' );
+
+		$this->assertIsString( $view );
+		$this->assertStringContainsString( "'Automation'", $view );
+		$this->assertStringContainsString( "'Auto Approval'", $view );
+		$this->assertStringNotContainsString( "'Automation enabled'", $view );
+	}
+
 	public function test_admin_enforce_notice_uses_single_clean_trac_link(): void {
 		$source = file_get_contents( dirname( __DIR__, 2 ) . '/includes/admin/class-admin-ui.php' );
 

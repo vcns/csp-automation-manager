@@ -65,8 +65,8 @@ $scan_logs     = ! empty( $scan_logs_raw ) ? $scan_logs_raw : array();
 			<thead>
 				<tr>
 					<th><?php esc_html_e( 'Surface', 'csp-automation-manager' ); ?></th>
-					<th><?php esc_html_e( 'Mode', 'csp-automation-manager' ); ?></th>
-					<th><?php esc_html_e( 'Automation enabled', 'csp-automation-manager' ); ?></th>
+					<th><?php esc_html_e( 'Automation', 'csp-automation-manager' ); ?></th>
+					<th><?php esc_html_e( 'Auto Approval', 'csp-automation-manager' ); ?></th>
 					<th><?php esc_html_e( 'Maximum per run', 'csp-automation-manager' ); ?></th>
 					<th><?php esc_html_e( 'Directive scope', 'csp-automation-manager' ); ?></th>
 					<th><?php esc_html_e( 'Allowed schemes', 'csp-automation-manager' ); ?></th>

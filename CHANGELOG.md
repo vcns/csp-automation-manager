@@ -6,6 +6,12 @@ The format is based on Keep a Changelog, and this project follows semantic versi
 
 ## [Unreleased]
 
+## [1.0.21] - 2026-08-04
+
+### Changed
+
+- Renamed the Settings deterministic automation table columns to "Automation" and "Auto Approval" for clearer operator intent.
+
 ## [1.0.20] - 2026-08-04
 
 ### Changed
