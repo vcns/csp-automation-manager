@@ -13,6 +13,7 @@ The plugin creates custom tables on activation. All table names are prefixed wit
 | v5 | source proposal risk/decision metadata and `csp_policy_change_decisions` append-only ledger added |
 | v6 | `csp_violation_reports` gains first/last reported roll-up timestamps and unique fingerprint upsert support |
 | v7 | decision provenance columns, policy version snapshots, deterministic rule evaluations, and manual automation defaults |
+| v8 | adds `last_seen_at` and `source_host` indexes to `csp_source_inventory`, and an `occurrence_count` index to `csp_violation_reports`, for the sortable/filterable dashboard tables |
 
 ## Table list
 
@@ -336,9 +337,9 @@ Primary runtime relationships:
 
 The following fields are indexed or uniquely constrained in the activation SQL:
 
-- `csp_source_inventory`: `surface`, `directive`, `approval_state`; UNIQUE on `(surface, directive, source_host)`
+- `csp_source_inventory`: `surface`, `directive`, `approval_state`, `risk_level`, `last_seen_at`, `source_host`; UNIQUE on `(surface, directive, source_host)`
 - `csp_hash_inventory`: `surface`, `directive`, `status`; UNIQUE on `(directive, hash_value)`
-- `csp_violation_reports`: `profile_surface`, `violated_directive`, `fingerprint`, `reported_at`
+- `csp_violation_reports`: `profile_surface`, `violated_directive`, `fingerprint`, `reported_at`, `last_reported_at`, `occurrence_count`
 - `csp_scan_logs`: `status`, `trigger_type`
 - `csp_entitlements`: `site_identity`, `product_key`, `status`; UNIQUE on `stripe_session_id`
 - `csp_processed_events`: UNIQUE on `stripe_event_id`; index on `stripe_session_id`

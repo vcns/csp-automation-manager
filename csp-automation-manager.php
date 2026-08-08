@@ -35,8 +35,11 @@ define( 'WP_CSP_VERSION', '1.0.16' );
  * v5 -- adds policy change proposal metadata and decision/suppression ledger
  * v6 -- adds violation first/last reported roll-up timestamps and unique fingerprint upsert support
  * v7 -- adds decision provenance, policy version snapshots, and deterministic rule evaluations
+ * v8 -- adds last_seen_at and source_host indexes to csp_source_inventory, and an
+ *        occurrence_count index to csp_violation_reports, for the sortable/filterable
+ *        dashboard tables
  */
-define( 'WP_CSP_DB_VERSION', '7' );
+define( 'WP_CSP_DB_VERSION', '8' );
 
 define( 'WP_CSP_FILE', __FILE__ );
 define( 'WP_CSP_DIR', plugin_dir_path( __FILE__ ) );

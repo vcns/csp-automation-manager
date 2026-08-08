@@ -26,7 +26,8 @@ class AdminUITest extends TestCase {
 
 		$this->assertArrayHasKey( 'settings', $links );
 		$this->assertArrayHasKey( 'reset', $links );
-		$this->assertStringContainsString( 'admin.php?page=csp-automation-manager-settings', $links['settings'] );
+		$this->assertStringContainsString( 'admin.php?page=csp-automation-manager-dashboard', $links['settings'] );
+		$this->assertStringContainsString( 'tab=settings', $links['settings'] );
 		$this->assertStringContainsString( 'admin.php?page=csp-automation-manager-readiness#wp-csp-reset', $links['reset'] );
 		$this->assertStringContainsString( 'Settings', $links['settings'] );
 		$this->assertStringContainsString( 'Reset', $links['reset'] );

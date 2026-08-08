@@ -37,7 +37,6 @@ class Automation_Config {
 		'automatic_rejection_enabled'    => false,
 		'max_automatic_changes_per_scan' => 0,
 		'change_rate_guardrail'          => 0,
-		'emergency_disabled'             => true,
 	);
 
 	private const LEGACY_MODE_MAP = array(
@@ -69,8 +68,7 @@ class Automation_Config {
 		$normalised_mode = $this->normalise_mode( $mode );
 		$surface_config  = $config[ $surface ] ?? self::DEFAULT_SURFACE_CONFIG;
 
-		$surface_config['mode']               = $normalised_mode;
-		$surface_config['emergency_disabled'] = self::MODE_MANUAL === $normalised_mode;
+		$surface_config['mode'] = $normalised_mode;
 
 		if ( self::MODE_MANUAL === $normalised_mode ) {
 			$surface_config['max_automatic_changes_per_scan'] = 0;
@@ -130,7 +128,7 @@ class Automation_Config {
 			);
 		}
 
-		foreach ( array( 'treat_same_origin_as_low', 'treat_known_cdn_as_low', 'allow_wildcards', 'allow_cleartext_http', 'allow_browser_schemes', 'allow_ip_literals', 'allow_non_standard_ports', 'require_ai_agreement', 'automatic_rejection_enabled', 'emergency_disabled' ) as $key ) {
+		foreach ( array( 'treat_same_origin_as_low', 'treat_known_cdn_as_low', 'allow_wildcards', 'allow_cleartext_http', 'allow_browser_schemes', 'allow_ip_literals', 'allow_non_standard_ports', 'require_ai_agreement', 'automatic_rejection_enabled' ) as $key ) {
 			$merged[ $key ] = (bool) $merged[ $key ];
 		}
 
