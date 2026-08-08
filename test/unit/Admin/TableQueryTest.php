@@ -66,7 +66,7 @@ class TableQueryTest extends TestCase {
 		$this->assertSame( 'reported_at', $resolved['expr'] );
 	}
 
-	public function test_order_by_sql_builds_expected_clause(): void {
+	public function test_order_by_sql_returns_expected_clause_string(): void {
 		$resolved = Table_Query::resolve_sort( $this->whitelist(), 'last_seen', 'host', 'asc' );
 
 		$this->assertSame( 'ORDER BY source_host ASC', Table_Query::order_by_sql( $resolved ) );
@@ -78,7 +78,7 @@ class TableQueryTest extends TestCase {
 		$this->assertNull( Table_Query::multi_select_where( 'surface', array() ) );
 	}
 
-	public function test_multi_select_where_builds_in_clause(): void {
+	public function test_multi_select_where_returns_in_clause_fragment(): void {
 		$fragment = Table_Query::multi_select_where( 'surface', array( 'frontend', 'admin' ) );
 
 		$this->assertSame( 'surface IN (%s,%s)', $fragment['sql'] );
@@ -134,7 +134,7 @@ class TableQueryTest extends TestCase {
 		$this->assertNull( Table_Query::date_range_where( 'reported_at', 'not-a-date', '' ) );
 	}
 
-	public function test_date_range_where_builds_both_bounds(): void {
+	public function test_date_range_where_returns_both_bound_fragments(): void {
 		$fragment = Table_Query::date_range_where( 'reported_at', '2026-01-01', '2026-01-31' );
 
 		$this->assertSame( 'reported_at >= %s AND reported_at <= %s', $fragment['sql'] );
