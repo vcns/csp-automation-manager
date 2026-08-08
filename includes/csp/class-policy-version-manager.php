@@ -39,7 +39,7 @@ class Policy_Version_Manager {
 		$snapshot = $this->build_snapshot( $surface, $profile );
 
 		$inserted = $wpdb->insert(
-			$wpdb->prefix . 'csp_policy_versions',
+			$wpdb->prefix . 'sam_policy_versions',
 			array(
 				'surface'             => $surface,
 				'version_number'      => $version,
@@ -61,7 +61,7 @@ class Policy_Version_Manager {
 	public function latest_version( string $surface ): ?array {
 		global $wpdb;
 
-		$table = $wpdb->prefix . 'csp_policy_versions';
+		$table = $wpdb->prefix . 'sam_policy_versions';
 		$row   = $wpdb->get_row(
 			$wpdb->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
@@ -77,7 +77,7 @@ class Policy_Version_Manager {
 	public function get_version( int $version_id ): ?array {
 		global $wpdb;
 
-		$table = $wpdb->prefix . 'csp_policy_versions';
+		$table = $wpdb->prefix . 'sam_policy_versions';
 		$row   = $wpdb->get_row(
 			$wpdb->prepare(
 				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared

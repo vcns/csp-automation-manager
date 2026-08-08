@@ -48,14 +48,14 @@ class Admin_UI {
 		add_filter( 'admin_footer_text', array( $this, 'filter_admin_footer_text' ) );
 
 		// AJAX handlers.
-		add_action( 'admin_post_wp_csp_reset_data', array( $this, 'handle_reset_data' ) );
-		add_action( 'wp_ajax_wp_csp_manual_scan', array( $this, 'ajax_manual_scan' ) );
-		add_action( 'wp_ajax_wp_csp_approve_source', array( $this, 'ajax_approve_source' ) );
-		add_action( 'wp_ajax_wp_csp_deny_source', array( $this, 'ajax_deny_source' ) );
-		add_action( 'wp_ajax_wp_csp_revert_source', array( $this, 'ajax_revert_source' ) );
-		add_action( 'wp_ajax_wp_csp_undo_source_decision', array( $this, 'ajax_undo_source_decision' ) );
-		add_action( 'wp_ajax_wp_csp_toggle_mode', array( $this, 'ajax_toggle_mode' ) );
-		add_action( 'wp_ajax_wp_csp_set_automation_mode', array( $this, 'ajax_set_automation_mode' ) );
+		add_action( 'admin_post_wp_sam_reset_data', array( $this, 'handle_reset_data' ) );
+		add_action( 'wp_ajax_wp_sam_manual_scan', array( $this, 'ajax_manual_scan' ) );
+		add_action( 'wp_ajax_wp_sam_approve_source', array( $this, 'ajax_approve_source' ) );
+		add_action( 'wp_ajax_wp_sam_deny_source', array( $this, 'ajax_deny_source' ) );
+		add_action( 'wp_ajax_wp_sam_revert_source', array( $this, 'ajax_revert_source' ) );
+		add_action( 'wp_ajax_wp_sam_undo_source_decision', array( $this, 'ajax_undo_source_decision' ) );
+		add_action( 'wp_ajax_wp_sam_toggle_mode', array( $this, 'ajax_toggle_mode' ) );
+		add_action( 'wp_ajax_wp_sam_set_automation_mode', array( $this, 'ajax_set_automation_mode' ) );
 	}
 
 	// ── Menu registration ─────────────────────────────────────────────────────
@@ -103,20 +103,20 @@ class Admin_UI {
 
 	public function register_settings(): void {
 		$settings = array(
-			'wp_csp_cron_hour'                     => 'absint',
-			'wp_csp_notify_email'                  => 'sanitize_email',
-			'wp_csp_enforce_gate_violation_window' => 'absint',
-			'wp_csp_learning_window_hours'         => 'absint',
-			'wp_csp_report_endpoint_url'           => array( $this, 'sanitize_report_endpoint_url' ),
-			'wp_csp_reporting_transport'           => array( $this, 'sanitize_reporting_transport' ),
-			'wp_csp_policy_header_name'            => array( $this, 'sanitize_policy_header_name' ),
-			'wp_csp_automation_config'             => array( $this, 'sanitize_automation_config' ),
+			'wp_sam_cron_hour'                     => 'absint',
+			'wp_sam_notify_email'                  => 'sanitize_email',
+			'wp_sam_enforce_gate_violation_window' => 'absint',
+			'wp_sam_learning_window_hours'         => 'absint',
+			'wp_sam_report_endpoint_url'           => array( $this, 'sanitize_report_endpoint_url' ),
+			'wp_sam_reporting_transport'           => array( $this, 'sanitize_reporting_transport' ),
+			'wp_sam_policy_header_name'            => array( $this, 'sanitize_policy_header_name' ),
+			'wp_sam_automation_config'             => array( $this, 'sanitize_automation_config' ),
 			// Data retention: days to keep violation reports (0 = keep forever).
-			'wp_csp_violation_retention_days'      => 'absint',
+			'wp_sam_violation_retention_days'      => 'absint',
 		);
 
 		foreach ( $settings as $option => $callback ) {
-			register_setting( 'wp_csp_settings_group', $option, array( 'sanitize_callback' => $callback ) );
+			register_setting( 'wp_sam_settings_group', $option, array( 'sanitize_callback' => $callback ) );
 		}
 	}
 
@@ -247,7 +247,7 @@ class Admin_UI {
 			array(
 				'ajaxUrl'   => admin_url( 'admin-ajax.php' ),
 				'restUrl'   => esc_url_raw( rest_url( 'security-manager/v1/admin/' ) ),
-				'nonce'     => wp_create_nonce( 'wp_csp_admin_nonce' ),
+				'nonce'     => wp_create_nonce( 'wp_sam_admin_nonce' ),
 				'restNonce' => wp_create_nonce( 'wp_rest' ),
 				'i18n'      => array(
 					'scanning'       => __( 'Scanning…', 'security-automation-manager' ),
@@ -285,13 +285,13 @@ class Admin_UI {
 	}
 
 	public function handle_reset_data(): void {
-		check_admin_referer( 'wp_csp_reset_data' );
+		check_admin_referer( 'wp_sam_reset_data' );
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_die( esc_html__( 'You do not have permission to reset plugin data.', 'security-automation-manager' ) );
 		}
 
-		$password     = (string) wp_unslash( $_POST['wp_csp_current_password'] ?? '' );
-		$confirmation = sanitize_text_field( wp_unslash( $_POST['wp_csp_reset_confirmation'] ?? '' ) );
+		$password     = (string) wp_unslash( $_POST['wp_sam_current_password'] ?? '' );
+		$confirmation = sanitize_text_field( wp_unslash( $_POST['wp_sam_reset_confirmation'] ?? '' ) );
 
 		if ( 'RESET CSP DATA' !== $confirmation || ! $this->current_user_password_is_valid( $password ) ) {
 			$this->redirect_to_readiness( 'failed' );
@@ -319,7 +319,7 @@ class Admin_UI {
 
 	private function redirect_to_readiness( string $result ): void {
 		$url = add_query_arg(
-			array( 'wp_csp_reset' => $result ),
+			array( 'wp_sam_reset' => $result ),
 			admin_url( 'admin.php?page=security-automation-manager-readiness#wp-csp-reset' )
 		);
 
@@ -335,7 +335,7 @@ class Admin_UI {
 		// profile is in enforce mode, and only once per session per user.
 		$this->maybe_show_admin_csp_warning();
 
-		$notices = get_option( 'wp_csp_admin_notices', array() );
+		$notices = get_option( 'wp_sam_admin_notices', array() );
 		if ( ! is_array( $notices ) || empty( $notices ) ) {
 			return;
 		}
@@ -349,7 +349,7 @@ class Admin_UI {
 				esc_html( $notice['detail'] )
 			);
 		}
-		delete_option( 'wp_csp_admin_notices' );
+		delete_option( 'wp_sam_admin_notices' );
 	}
 
 	/**
@@ -359,7 +359,7 @@ class Admin_UI {
 	 */
 	private function maybe_show_admin_csp_warning(): void {
 		$user_id  = get_current_user_id();
-		$transkey = 'wp_csp_admin59446_warned_' . $user_id;
+		$transkey = 'wp_sam_admin59446_warned_' . $user_id;
 		if ( get_transient( $transkey ) ) {
 			return;
 		}
@@ -397,7 +397,7 @@ class Admin_UI {
 	// ── AJAX: manual scan ─────────────────────────────────────────────────────
 
 	public function ajax_manual_scan(): void {
-		check_ajax_referer( 'wp_csp_admin_nonce', 'nonce' );
+		check_ajax_referer( 'wp_sam_admin_nonce', 'nonce' );
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'security-automation-manager' ) ), 403 );
 		}
@@ -415,7 +415,7 @@ class Admin_UI {
 	// ── AJAX: approve/deny source ─────────────────────────────────────────────
 
 	public function ajax_approve_source(): void {
-		check_ajax_referer( 'wp_csp_admin_nonce', 'nonce' );
+		check_ajax_referer( 'wp_sam_admin_nonce', 'nonce' );
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_send_json_error( null, 403 );
 		}
@@ -423,7 +423,7 @@ class Admin_UI {
 	}
 
 	public function ajax_deny_source(): void {
-		check_ajax_referer( 'wp_csp_admin_nonce', 'nonce' );
+		check_ajax_referer( 'wp_sam_admin_nonce', 'nonce' );
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_send_json_error( null, 403 );
 		}
@@ -431,7 +431,7 @@ class Admin_UI {
 	}
 
 	public function ajax_revert_source(): void {
-		check_ajax_referer( 'wp_csp_admin_nonce', 'nonce' );
+		check_ajax_referer( 'wp_sam_admin_nonce', 'nonce' );
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_send_json_error( null, 403 );
 		}
@@ -439,7 +439,7 @@ class Admin_UI {
 	}
 
 	public function ajax_undo_source_decision(): void {
-		check_ajax_referer( 'wp_csp_admin_nonce', 'nonce' );
+		check_ajax_referer( 'wp_sam_admin_nonce', 'nonce' );
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_send_json_error( null, 403 );
 		}
@@ -476,7 +476,7 @@ class Admin_UI {
 	// ── AJAX: toggle surface mode ─────────────────────────────────────────────
 
 	public function ajax_toggle_mode(): void {
-		check_ajax_referer( 'wp_csp_admin_nonce', 'nonce' );
+		check_ajax_referer( 'wp_sam_admin_nonce', 'nonce' );
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_send_json_error( null, 403 );
 		}
@@ -514,7 +514,7 @@ class Admin_UI {
 	}
 
 	public function ajax_set_automation_mode(): void {
-		check_ajax_referer( 'wp_csp_admin_nonce', 'nonce' );
+		check_ajax_referer( 'wp_sam_admin_nonce', 'nonce' );
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_send_json_error( null, 403 );
 		}
@@ -577,7 +577,7 @@ class Admin_UI {
 		}
 
 		// ── Gate 2: no violations within the configured time window ───────────
-		$window_hours = max( 1, (int) get_option( 'wp_csp_enforce_gate_violation_window', 24 ) );
+		$window_hours = max( 1, (int) get_option( 'wp_sam_enforce_gate_violation_window', 24 ) );
 		$since        = gmdate( 'Y-m-d H:i:s', time() - ( $window_hours * HOUR_IN_SECONDS ) );
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared

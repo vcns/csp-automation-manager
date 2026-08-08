@@ -23,8 +23,8 @@ class SchemaMigrationTest extends TestCase {
 			$this->assertStringContainsString( "CREATE TABLE {$GLOBALS['wpdb']->prefix}{$table}", $schema );
 		}
 
-		$this->assertSame( WP_SAM_DB_VERSION, get_option( 'wp_csp_db_version' ) );
-		$this->assertSame( WP_SAM_DB_VERSION, get_option( 'wp_csp_schema_verified_version' ) );
+		$this->assertSame( WP_SAM_DB_VERSION, get_option( 'wp_sam_db_version' ) );
+		$this->assertSame( WP_SAM_DB_VERSION, get_option( 'wp_sam_schema_verified_version' ) );
 	}
 
 	public function test_schema_v6_violation_rollup_columns_are_declared(): void {
@@ -70,18 +70,18 @@ class SchemaMigrationTest extends TestCase {
 	 * @dataProvider legacy_schema_version_provider
 	 */
 	public function test_activation_advances_legacy_schema_versions_to_current( string $legacy_version ): void {
-		update_option( 'wp_csp_db_version', $legacy_version );
+		update_option( 'wp_sam_db_version', $legacy_version );
 
 		Activator::activate();
 
-		$this->assertSame( WP_SAM_DB_VERSION, get_option( 'wp_csp_db_version' ) );
+		$this->assertSame( WP_SAM_DB_VERSION, get_option( 'wp_sam_db_version' ) );
 	}
 
 	public function test_repeated_activation_remains_idempotent_for_schema_version(): void {
 		Activator::activate();
 		Activator::activate();
 
-		$this->assertSame( WP_SAM_DB_VERSION, get_option( 'wp_csp_db_version' ) );
+		$this->assertSame( WP_SAM_DB_VERSION, get_option( 'wp_sam_db_version' ) );
 	}
 
 	public function test_missing_table_names_reports_absent_plugin_tables(): void {
@@ -90,17 +90,17 @@ class SchemaMigrationTest extends TestCase {
 			null,
 			'wp_csp_hash_inventory',
 			'wp_csp_violation_reports',
-			'wp_csp_scan_logs',
-			'wp_csp_entitlements',
-			'wp_csp_processed_events',
-			'wp_csp_audit_log',
-			'wp_csp_policy_change_decisions',
+			'wp_sam_scan_logs',
+			'wp_sam_entitlements',
+			'wp_sam_processed_events',
+			'wp_sam_audit_log',
+			'wp_sam_policy_change_decisions',
 			null,
-			'wp_csp_decision_rule_evaluations',
+			'wp_sam_decision_rule_evaluations',
 		);
 
 		$this->assertSame(
-			array( 'wp_csp_source_inventory', 'wp_csp_policy_versions' ),
+			array( 'wp_csp_source_inventory', 'wp_sam_policy_versions' ),
 			Activator::get_missing_table_names()
 		);
 	}
@@ -134,13 +134,13 @@ class SchemaMigrationTest extends TestCase {
 			'csp_source_inventory',
 			'csp_hash_inventory',
 			'csp_violation_reports',
-			'csp_scan_logs',
-			'csp_entitlements',
-			'csp_processed_events',
-			'csp_audit_log',
-			'csp_policy_change_decisions',
-			'csp_policy_versions',
-			'csp_decision_rule_evaluations',
+			'sam_scan_logs',
+			'sam_entitlements',
+			'sam_processed_events',
+			'sam_audit_log',
+			'sam_policy_change_decisions',
+			'sam_policy_versions',
+			'sam_decision_rule_evaluations',
 		);
 	}
 }

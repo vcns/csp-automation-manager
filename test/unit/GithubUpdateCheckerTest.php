@@ -129,7 +129,7 @@ class GithubUpdateCheckerTest extends TestCase {
 		);
 
 		$this->assertInstanceOf( WP_Error::class, $result );
-		$this->assertSame( 'wp_csp_update_checksum_mismatch', $result->get_error_code() );
+		$this->assertSame( 'wp_sam_update_checksum_mismatch', $result->get_error_code() );
 		$this->assertContains( $tmp, $GLOBALS['_wp_deleted_files'] );
 		$this->assertFileDoesNotExist( $tmp );
 	}

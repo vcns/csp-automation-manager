@@ -77,13 +77,13 @@ class Automation_Config {
 		}
 
 		$config[ $surface ] = $this->normalise_surface( $surface_config );
-		update_option( 'wp_csp_automation_config', $config );
+		update_option( 'wp_sam_automation_config', $config );
 
 		return $config;
 	}
 
 	public function all(): array {
-		$config = get_option( 'wp_csp_automation_config', array() );
+		$config = get_option( 'wp_sam_automation_config', array() );
 		return $this->normalise_all( is_array( $config ) ? $config : array() );
 	}
 
@@ -94,7 +94,7 @@ class Automation_Config {
 
 	public function update_all( array $config ): array {
 		$normalised = $this->normalise_all( $config );
-		update_option( 'wp_csp_automation_config', $normalised );
+		update_option( 'wp_sam_automation_config', $normalised );
 		return $normalised;
 	}
 

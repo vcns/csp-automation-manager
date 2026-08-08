@@ -23,21 +23,21 @@ class ReadinessCheckerTest extends TestCase {
 		}
 		$get_var_queue[] = 'wp_csp_policy_profiles';
 		$get_var_queue[] = 4;
-		$get_var_queue[] = 'wp_csp_policy_versions';
+		$get_var_queue[] = 'wp_sam_policy_versions';
 		$get_var_queue[] = 4;
 
 		$GLOBALS['_wpdb_get_var_queue'] = $get_var_queue;
 		$GLOBALS['_wp_options']         = array(
-			'wp_csp_db_version'         => WP_SAM_DB_VERSION,
-			'wp_csp_automation_config'  => array(
+			'wp_sam_db_version'         => WP_SAM_DB_VERSION,
+			'wp_sam_automation_config'  => array(
 				'frontend' => array( 'mode' => 'manual' ),
 				'admin'    => array( 'mode' => 'manual' ),
 				'login'    => array( 'mode' => 'manual' ),
 				'api'      => array( 'mode' => 'manual' ),
 			),
-			'wp_csp_policy_header_name' => 'X-Origin-CSP-Policy',
+			'wp_sam_policy_header_name' => 'X-Origin-CSP-Policy',
 		);
-		$GLOBALS['_wp_cron']            = array( 'wp_csp_daily_scan' => time() + 3600 );
+		$GLOBALS['_wp_cron']            = array( 'wp_sam_daily_scan' => time() + 3600 );
 
 		$report = ( new Readiness_Checker() )->get_report();
 

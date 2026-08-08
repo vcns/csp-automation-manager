@@ -9,7 +9,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-$reset_result = sanitize_text_field( wp_unslash( $_GET['wp_csp_reset'] ?? '' ) );
+$reset_result = sanitize_text_field( wp_unslash( $_GET['wp_sam_reset'] ?? '' ) );
 $status_badge = static function ( string $status ): void {
 	$labels = array(
 		'pass'    => __( 'Pass', 'security-automation-manager' ),
@@ -118,24 +118,24 @@ $status_badge = static function ( string $status ): void {
 		<?php esc_html_e( 'This clears CSP Automation Manager custom-table rows and plugin-owned runtime options, then reseeds the default policy profiles needed for a clean start.', 'security-automation-manager' ); ?>
 	</p>
 	<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="wp-csp-reset-form">
-		<?php wp_nonce_field( 'wp_csp_reset_data' ); ?>
-		<input type="hidden" name="action" value="wp_csp_reset_data">
+		<?php wp_nonce_field( 'wp_sam_reset_data' ); ?>
+		<input type="hidden" name="action" value="wp_sam_reset_data">
 		<table class="form-table" role="presentation">
 			<tr>
 				<th scope="row">
-					<label for="wp_csp_current_password"><?php esc_html_e( 'Current password', 'security-automation-manager' ); ?></label>
+					<label for="wp_sam_current_password"><?php esc_html_e( 'Current password', 'security-automation-manager' ); ?></label>
 				</th>
 				<td>
-					<input type="password" id="wp_csp_current_password" name="wp_csp_current_password" class="regular-text" autocomplete="current-password" required>
+					<input type="password" id="wp_sam_current_password" name="wp_sam_current_password" class="regular-text" autocomplete="current-password" required>
 					<p class="description"><?php esc_html_e( 'Required to re-authenticate the currently logged-in administrator before destructive reset.', 'security-automation-manager' ); ?></p>
 				</td>
 			</tr>
 			<tr>
 				<th scope="row">
-					<label for="wp_csp_reset_confirmation"><?php esc_html_e( 'Confirmation', 'security-automation-manager' ); ?></label>
+					<label for="wp_sam_reset_confirmation"><?php esc_html_e( 'Confirmation', 'security-automation-manager' ); ?></label>
 				</th>
 				<td>
-					<input type="text" id="wp_csp_reset_confirmation" name="wp_csp_reset_confirmation" class="regular-text" pattern="RESET CSP DATA" required>
+					<input type="text" id="wp_sam_reset_confirmation" name="wp_sam_reset_confirmation" class="regular-text" pattern="RESET CSP DATA" required>
 					<p class="description"><?php esc_html_e( 'Type RESET CSP DATA to start from a blank CSP canvas.', 'security-automation-manager' ); ?></p>
 				</td>
 			</tr>

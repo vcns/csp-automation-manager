@@ -75,8 +75,8 @@ final class Plugin {
 	// ── DB migration gate ─────────────────────────────────────────────────────
 
 	private function maybe_upgrade_db(): void {
-		$installed = (int) get_option( 'wp_csp_db_version', 0 );
-		$verified  = (string) get_option( 'wp_csp_schema_verified_version', '' );
+		$installed = (int) get_option( 'wp_sam_db_version', 0 );
+		$verified  = (string) get_option( 'wp_sam_schema_verified_version', '' );
 		if (
 			$installed < (int) WP_SAM_DB_VERSION
 			|| (string) WP_SAM_DB_VERSION !== $verified

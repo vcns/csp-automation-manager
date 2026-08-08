@@ -138,7 +138,7 @@ class Policy_Builder {
 	}
 
 	public function get_policy_header_name( bool $is_report_only ): string {
-		$custom = self::sanitize_custom_policy_header_name( get_option( 'wp_csp_policy_header_name', '' ) );
+		$custom = self::sanitize_custom_policy_header_name( get_option( 'wp_sam_policy_header_name', '' ) );
 		if ( '' !== $custom ) {
 			return $custom;
 		}
@@ -197,7 +197,7 @@ class Policy_Builder {
 	}
 
 	private function get_report_endpoint_url(): string {
-		$override = trim( (string) get_option( 'wp_csp_report_endpoint_url', '' ) );
+		$override = trim( (string) get_option( 'wp_sam_report_endpoint_url', '' ) );
 		if ( '' !== $override && $this->is_allowed_report_endpoint_url( $override ) ) {
 			return esc_url_raw( $override );
 		}
@@ -218,7 +218,7 @@ class Policy_Builder {
 	}
 
 	private function get_reporting_transport(): string {
-		return self::sanitize_reporting_transport( get_option( 'wp_csp_reporting_transport', self::REPORTING_TRANSPORT_DIRECT ) );
+		return self::sanitize_reporting_transport( get_option( 'wp_sam_reporting_transport', self::REPORTING_TRANSPORT_DIRECT ) );
 	}
 
 	private function is_allowed_report_endpoint_url( string $url ): bool {
@@ -263,7 +263,7 @@ class Policy_Builder {
 			$directives = array_diff_key( $directives, array_flip( self::FORBIDDEN_DIRECTIVES ) );
 			// Surface a warning so admins know the override was silently blocked.
 			do_action(
-				'wp_csp_forbidden_directive_stripped',
+				'wp_sam_forbidden_directive_stripped',
 				array_keys( $forbidden_found ),
 				$surface
 			);

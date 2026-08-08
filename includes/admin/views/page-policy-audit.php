@@ -12,9 +12,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 global $wpdb;
 
 $surfaces          = array( 'frontend', 'admin', 'login', 'api' );
-$automation_config = get_option( 'wp_csp_automation_config', array() );
-$versions_table    = $wpdb->prefix . 'csp_policy_versions';
-$decisions_table   = $wpdb->prefix . 'csp_policy_change_decisions';
+$automation_config = get_option( 'wp_sam_automation_config', array() );
+$versions_table    = $wpdb->prefix . 'sam_policy_versions';
+$decisions_table   = $wpdb->prefix . 'sam_policy_change_decisions';
 $pending_table     = $wpdb->prefix . 'csp_source_inventory';
 
 ?>

@@ -3,7 +3,7 @@
  * WP Cron integration for scheduled policy rescans.
  *
  * Implements §4.10 of the directive:
- *   - Registers the wp_csp_daily_scan hook.
+ *   - Registers the wp_sam_daily_scan hook.
  *   - Runs Discovery scan, Hash_Manager audit, and Policy_Builder diff.
  *   - Writes results to the scan log via Audit_Log.
  *   - Sends admin email notification on policy changes (optional).
@@ -31,7 +31,7 @@ class Scheduler {
 	// ── Bootstrap ─────────────────────────────────────────────────────────────
 
 	public function register(): void {
-		add_action( 'wp_csp_daily_scan', array( $this, 'run_daily_scan' ) );
+		add_action( 'wp_sam_daily_scan', array( $this, 'run_daily_scan' ) );
 	}
 
 	// ── Scan runner ───────────────────────────────────────────────────────────
@@ -123,11 +123,11 @@ class Scheduler {
 	// ── Data retention ────────────────────────────────────────────────────────
 
 	/**
-	 * Purges violation reports older than wp_csp_violation_retention_days (default 90).
+	 * Purges violation reports older than wp_sam_violation_retention_days (default 90).
 	 * A value of 0 means keep forever. Runs after every daily cron scan (R10).
 	 */
 	private function purge_old_violations(): void {
-		$days = (int) get_option( 'wp_csp_violation_retention_days', 90 );
+		$days = (int) get_option( 'wp_sam_violation_retention_days', 90 );
 		if ( $days <= 0 ) {
 			return;
 		}
@@ -158,7 +158,7 @@ class Scheduler {
 		if ( empty( $results['policy_changed'] ) ) {
 			return;
 		}
-		$email = (string) get_option( 'wp_csp_notify_email', get_option( 'admin_email' ) );
+		$email = (string) get_option( 'wp_sam_notify_email', get_option( 'admin_email' ) );
 		if ( empty( $email ) || ! is_email( $email ) ) {
 			return;
 		}

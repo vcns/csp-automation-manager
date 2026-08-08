@@ -24,7 +24,7 @@ namespace WP_SAM\CSP;
 if ( ! class_exists( Plugin_Nonce_Manager::class, false ) ) {
 	final class Plugin_Nonce_Manager {
 		public static function get_instance_nonce(): string {
-			return $GLOBALS['_wp_csp_test_nonce'] ?? '';
+			return $GLOBALS['_wp_sam_test_nonce'] ?? '';
 		}
 	}
 }

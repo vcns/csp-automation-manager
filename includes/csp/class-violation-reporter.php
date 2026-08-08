@@ -180,7 +180,7 @@ class Violation_Reporter {
 		}
 
 		// Rate-limit check.
-		$rate_key = 'wp_csp_viol_rate_' . $surface;
+		$rate_key = 'wp_sam_viol_rate_' . $surface;
 		$count    = (int) get_transient( $rate_key );
 		if ( $count >= self::MAX_PER_HOUR_PER_SURFACE ) {
 			return;
@@ -345,7 +345,7 @@ class Violation_Reporter {
 		$urls = array(
 			home_url(),
 			get_site_url(),
-			(string) get_option( 'wp_csp_report_endpoint_url', '' ),
+			(string) get_option( 'wp_sam_report_endpoint_url', '' ),
 		);
 
 		$hosts = array();

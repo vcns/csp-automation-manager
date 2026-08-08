@@ -185,7 +185,7 @@ final class Policy_Events_Builder {
 			$where[] = 'suppression_active = 1';
 		}
 
-		$sql    = "SELECT * FROM {$wpdb->prefix}csp_policy_change_decisions WHERE " . implode( ' AND ', $where ) . ' ORDER BY created_at DESC LIMIT %d';
+		$sql    = "SELECT * FROM {$wpdb->prefix}sam_policy_change_decisions WHERE " . implode( ' AND ', $where ) . ' ORDER BY created_at DESC LIMIT %d';
 		$args[] = self::SOURCE_CAP;
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.PreparedSQL.NotPrepared
 		$rows = $wpdb->get_results( $wpdb->prepare( $sql, ...$args ), ARRAY_A );
@@ -223,7 +223,7 @@ final class Policy_Events_Builder {
 		self::append( $where, $args, Table_Query::like_where( $wpdb, 'version_number', $policy_ver ) );
 		self::append( $where, $args, Table_Query::date_range_where( 'created_at', $when_from, $when_to ) );
 
-		$sql    = "SELECT id, surface, version_number, mode, trigger_type, trigger_id, software_version, created_at FROM {$wpdb->prefix}csp_policy_versions WHERE " . implode( ' AND ', $where ) . ' ORDER BY created_at DESC LIMIT %d';
+		$sql    = "SELECT id, surface, version_number, mode, trigger_type, trigger_id, software_version, created_at FROM {$wpdb->prefix}sam_policy_versions WHERE " . implode( ' AND ', $where ) . ' ORDER BY created_at DESC LIMIT %d';
 		$args[] = self::SOURCE_CAP;
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.PreparedSQL.NotPrepared
 		$rows = $wpdb->get_results( $wpdb->prepare( $sql, ...$args ), ARRAY_A );
@@ -284,7 +284,7 @@ final class Policy_Events_Builder {
 		self::append( $where, $args, Table_Query::like_where( $wpdb, 'detail', $detail ) );
 		self::append( $where, $args, Table_Query::date_range_where( 'created_at', $when_from, $when_to ) );
 
-		$sql    = "SELECT id, component, event, detail, severity, user_id, created_at FROM {$wpdb->prefix}csp_audit_log WHERE " . implode( ' AND ', $where ) . ' ORDER BY created_at DESC LIMIT %d';
+		$sql    = "SELECT id, component, event, detail, severity, user_id, created_at FROM {$wpdb->prefix}sam_audit_log WHERE " . implode( ' AND ', $where ) . ' ORDER BY created_at DESC LIMIT %d';
 		$args[] = self::SOURCE_CAP;
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.PreparedSQL.NotPrepared
 		$rows = $wpdb->get_results( $wpdb->prepare( $sql, ...$args ), ARRAY_A );

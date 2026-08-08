@@ -73,7 +73,7 @@ $violations     = ! empty( $violations_raw ) ? $violations_raw : array();
 
 // Scan log – last 20 runs.
 // phpcs:ignore WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-$scan_logs_raw = $wpdb->get_results( "SELECT * FROM {$wpdb->prefix}csp_scan_logs ORDER BY started_at DESC LIMIT 20", ARRAY_A );
+$scan_logs_raw = $wpdb->get_results( "SELECT * FROM {$wpdb->prefix}sam_scan_logs ORDER BY started_at DESC LIMIT 20", ARRAY_A );
 $scan_logs     = ! empty( $scan_logs_raw ) ? $scan_logs_raw : array();
 ?>
 <div class="wrap wp-csp-wrap">
@@ -492,14 +492,14 @@ $scan_logs     = ! empty( $scan_logs_raw ) ? $scan_logs_raw : array();
 		$pc_when_to     = Table_Query::text_param( 'pc_when_to' );
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- No user input; only $wpdb->prefix used in query.
-		$pc_directive_options = $wpdb->get_col( "SELECT DISTINCT directive FROM {$wpdb->prefix}csp_policy_change_decisions ORDER BY directive" );
+		$pc_directive_options = $wpdb->get_col( "SELECT DISTINCT directive FROM {$wpdb->prefix}sam_policy_change_decisions ORDER BY directive" );
 		$pc_directive_options = ! empty( $pc_directive_options ) ? $pc_directive_options : array();
 
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- No user input; only $wpdb->prefix used in query.
-		$pc_actor_from_decisions = $wpdb->get_col( "SELECT DISTINCT actor_type FROM {$wpdb->prefix}csp_policy_change_decisions" );
+		$pc_actor_from_decisions = $wpdb->get_col( "SELECT DISTINCT actor_type FROM {$wpdb->prefix}sam_policy_change_decisions" );
 		$pc_actor_from_decisions = ! empty( $pc_actor_from_decisions ) ? $pc_actor_from_decisions : array();
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- No user input; only $wpdb->prefix used in query.
-		$pc_actor_from_versions = $wpdb->get_col( "SELECT DISTINCT trigger_type FROM {$wpdb->prefix}csp_policy_versions" );
+		$pc_actor_from_versions = $wpdb->get_col( "SELECT DISTINCT trigger_type FROM {$wpdb->prefix}sam_policy_versions" );
 		$pc_actor_from_versions = ! empty( $pc_actor_from_versions ) ? $pc_actor_from_versions : array();
 		$pc_actor_from_versions = array_map(
 			static function ( string $trigger_type ): string {
@@ -790,7 +790,7 @@ $scan_logs     = ! empty( $scan_logs_raw ) ? $scan_logs_raw : array();
 	<?php elseif ( 'violations' === $tab ) : ?>
 	<!-- ── Violations tab ─────────────────────────────────────────────────── -->
 		<?php
-		$report_endpoint_url = (string) get_option( 'wp_csp_report_endpoint_url', '' );
+		$report_endpoint_url = (string) get_option( 'wp_sam_report_endpoint_url', '' );
 		if ( '' === trim( $report_endpoint_url ) ) {
 			$report_endpoint_url = rest_url( 'security-manager/v1/report' );
 		}
@@ -1034,7 +1034,7 @@ $scan_logs     = ! empty( $scan_logs_raw ) ? $scan_logs_raw : array();
 	<!-- ── Scan log tab ───────────────────────────────────────────────────── -->
 		<?php
 	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- No user input; only $wpdb->prefix used in query.
-		$scan_logs_raw = $wpdb->get_results( "SELECT * FROM {$wpdb->prefix}csp_scan_logs ORDER BY started_at DESC LIMIT 20", ARRAY_A );
+		$scan_logs_raw = $wpdb->get_results( "SELECT * FROM {$wpdb->prefix}sam_scan_logs ORDER BY started_at DESC LIMIT 20", ARRAY_A );
 		$scan_logs     = ! empty( $scan_logs_raw ) ? $scan_logs_raw : array();
 		?>
 	<table class="widefat fixed striped">
@@ -1080,16 +1080,16 @@ $scan_logs     = ! empty( $scan_logs_raw ) ? $scan_logs_raw : array();
 		$learning_window            = new \WP_SAM\CSP\Learning_Window();
 		$learning_status            = $learning_window->is_open() ? __( 'Open', 'security-automation-manager' ) : __( 'Locked', 'security-automation-manager' );
 		$current_report_endpoint    = esc_url_raw( rest_url( 'security-manager/v1/report' ) );
-		$configured_report_endpoint = (string) get_option( 'wp_csp_report_endpoint_url', '' );
-		$configured_policy_header   = (string) get_option( 'wp_csp_policy_header_name', '' );
-		$reporting_transport        = \WP_SAM\CSP\Policy_Builder::sanitize_reporting_transport( get_option( 'wp_csp_reporting_transport', 'report-uri' ) );
+		$configured_report_endpoint = (string) get_option( 'wp_sam_report_endpoint_url', '' );
+		$configured_policy_header   = (string) get_option( 'wp_sam_policy_header_name', '' );
+		$reporting_transport        = \WP_SAM\CSP\Policy_Builder::sanitize_reporting_transport( get_option( 'wp_sam_reporting_transport', 'report-uri' ) );
 		$settings_automation_config = ( new \WP_SAM\CSP\Automation_Config() )->all();
 		$automation_mode_labels     = \WP_SAM\CSP\Automation_Config::mode_labels();
 		$automation_directives      = array( 'default-src', 'img-src', 'font-src', 'media-src', 'manifest-src' );
 		$automation_schemes         = array( 'https', 'wss' );
 		?>
 	<form method="post" action="options.php">
-		<?php settings_fields( 'wp_csp_settings_group' ); ?>
+		<?php settings_fields( 'wp_sam_settings_group' ); ?>
 
 		<!-- ── Promotion gates ───────────────────────────────────────────── -->
 		<h2 class="title"><?php esc_html_e( 'Promotion Gates', 'security-automation-manager' ); ?></h2>
@@ -1099,14 +1099,14 @@ $scan_logs     = ! empty( $scan_logs_raw ) ? $scan_logs_raw : array();
 		<table class="form-table" role="presentation">
 			<tr>
 				<th scope="row">
-					<label for="wp_csp_enforce_gate_violation_window">
+					<label for="wp_sam_enforce_gate_violation_window">
 						<?php esc_html_e( 'Violation-free window (hours)', 'security-automation-manager' ); ?>
 					</label>
 				</th>
 				<td>
-					<input type="number" id="wp_csp_enforce_gate_violation_window"
-						name="wp_csp_enforce_gate_violation_window"
-						value="<?php echo esc_attr( get_option( 'wp_csp_enforce_gate_violation_window', 24 ) ); ?>"
+					<input type="number" id="wp_sam_enforce_gate_violation_window"
+						name="wp_sam_enforce_gate_violation_window"
+						value="<?php echo esc_attr( get_option( 'wp_sam_enforce_gate_violation_window', 24 ) ); ?>"
 						min="1" max="720" class="small-text" />
 					<p class="description">
 						<?php esc_html_e( 'Number of hours without any CSP violations required before a surface can be promoted to enforce mode. Default: 24. Increase this for production sites to ensure stability.', 'security-automation-manager' ); ?>
@@ -1135,7 +1135,7 @@ $scan_logs     = ! empty( $scan_logs_raw ) ? $scan_logs_raw : array();
 				<tr>
 					<td><strong><?php echo esc_html( ucfirst( $surface ) ); ?></strong></td>
 					<td>
-						<select name="wp_csp_automation_config[<?php echo esc_attr( $surface ); ?>][mode]">
+						<select name="wp_sam_automation_config[<?php echo esc_attr( $surface ); ?>][mode]">
 							<?php foreach ( $automation_mode_labels as $mode => $label ) : ?>
 							<option value="<?php echo esc_attr( $mode ); ?>" <?php selected( $surface_config['mode'], $mode ); ?>>
 								<?php echo esc_html( $label ); ?>
@@ -1144,12 +1144,12 @@ $scan_logs     = ! empty( $scan_logs_raw ) ? $scan_logs_raw : array();
 						</select>
 					</td>
 					<td>
-						<input type="number" class="small-text" min="0" max="50" name="wp_csp_automation_config[<?php echo esc_attr( $surface ); ?>][max_automatic_changes_per_scan]" value="<?php echo esc_attr( (string) ( $surface_config['max_automatic_changes_per_scan'] ?? 0 ) ); ?>" />
+						<input type="number" class="small-text" min="0" max="50" name="wp_sam_automation_config[<?php echo esc_attr( $surface ); ?>][max_automatic_changes_per_scan]" value="<?php echo esc_attr( (string) ( $surface_config['max_automatic_changes_per_scan'] ?? 0 ) ); ?>" />
 					</td>
 					<td>
 						<?php foreach ( $automation_directives as $directive ) : ?>
 							<label style="display:block">
-								<input type="checkbox" name="wp_csp_automation_config[<?php echo esc_attr( $surface ); ?>][enabled_directives][]" value="<?php echo esc_attr( $directive ); ?>" <?php checked( in_array( $directive, $surface_config['enabled_directives'] ?? array(), true ) ); ?> />
+								<input type="checkbox" name="wp_sam_automation_config[<?php echo esc_attr( $surface ); ?>][enabled_directives][]" value="<?php echo esc_attr( $directive ); ?>" <?php checked( in_array( $directive, $surface_config['enabled_directives'] ?? array(), true ) ); ?> />
 								<code><?php echo esc_html( $directive ); ?></code>
 							</label>
 						<?php endforeach; ?>
@@ -1158,7 +1158,7 @@ $scan_logs     = ! empty( $scan_logs_raw ) ? $scan_logs_raw : array();
 					<td>
 						<?php foreach ( $automation_schemes as $scheme ) : ?>
 							<label style="display:block">
-								<input type="checkbox" name="wp_csp_automation_config[<?php echo esc_attr( $surface ); ?>][allowed_source_schemes][]" value="<?php echo esc_attr( $scheme ); ?>" <?php checked( in_array( $scheme, $surface_config['allowed_source_schemes'] ?? array(), true ) ); ?> />
+								<input type="checkbox" name="wp_sam_automation_config[<?php echo esc_attr( $surface ); ?>][allowed_source_schemes][]" value="<?php echo esc_attr( $scheme ); ?>" <?php checked( in_array( $scheme, $surface_config['allowed_source_schemes'] ?? array(), true ) ); ?> />
 								<code><?php echo esc_html( $scheme ); ?></code>
 							</label>
 						<?php endforeach; ?>
@@ -1177,9 +1177,9 @@ $scan_logs     = ! empty( $scan_logs_raw ) ? $scan_logs_raw : array();
 		</p>
 		<table class="form-table" role="presentation">
 			<tr>
-				<th scope="row"><label for="wp_csp_policy_header_name"><?php esc_html_e( 'Policy header name', 'security-automation-manager' ); ?></label></th>
+				<th scope="row"><label for="wp_sam_policy_header_name"><?php esc_html_e( 'Policy header name', 'security-automation-manager' ); ?></label></th>
 				<td>
-					<input type="text" id="wp_csp_policy_header_name" name="wp_csp_policy_header_name"
+					<input type="text" id="wp_sam_policy_header_name" name="wp_sam_policy_header_name"
 						value="<?php echo esc_attr( $configured_policy_header ); ?>"
 						placeholder="<?php echo esc_attr( 'X-Origin-CSP-Policy' ); ?>"
 						class="regular-text code" />
@@ -1199,9 +1199,9 @@ $scan_logs     = ! empty( $scan_logs_raw ) ? $scan_logs_raw : array();
 		</p>
 		<table class="form-table" role="presentation">
 			<tr>
-				<th scope="row"><label for="wp_csp_report_endpoint_url"><?php esc_html_e( 'Reporting server URL', 'security-automation-manager' ); ?></label></th>
+				<th scope="row"><label for="wp_sam_report_endpoint_url"><?php esc_html_e( 'Reporting server URL', 'security-automation-manager' ); ?></label></th>
 				<td>
-					<input type="url" id="wp_csp_report_endpoint_url" name="wp_csp_report_endpoint_url"
+					<input type="url" id="wp_sam_report_endpoint_url" name="wp_sam_report_endpoint_url"
 						value="<?php echo esc_attr( $configured_report_endpoint ); ?>"
 						placeholder="<?php echo esc_attr( $current_report_endpoint ); ?>"
 						class="regular-text code" />
@@ -1218,9 +1218,9 @@ $scan_logs     = ! empty( $scan_logs_raw ) ? $scan_logs_raw : array();
 				</td>
 			</tr>
 			<tr>
-				<th scope="row"><label for="wp_csp_reporting_transport"><?php esc_html_e( 'Reporting transport', 'security-automation-manager' ); ?></label></th>
+				<th scope="row"><label for="wp_sam_reporting_transport"><?php esc_html_e( 'Reporting transport', 'security-automation-manager' ); ?></label></th>
 				<td>
-					<select id="wp_csp_reporting_transport" name="wp_csp_reporting_transport">
+					<select id="wp_sam_reporting_transport" name="wp_sam_reporting_transport">
 						<option value="report-uri" <?php selected( $reporting_transport, 'report-uri' ); ?>>
 							<?php esc_html_e( 'Direct report-uri (recommended)', 'security-automation-manager' ); ?>
 						</option>
@@ -1237,10 +1237,10 @@ $scan_logs     = ! empty( $scan_logs_raw ) ? $scan_logs_raw : array();
 				</td>
 			</tr>
 			<tr>
-				<th scope="row"><label for="wp_csp_learning_window_hours"><?php esc_html_e( 'Learning window (hours)', 'security-automation-manager' ); ?></label></th>
+				<th scope="row"><label for="wp_sam_learning_window_hours"><?php esc_html_e( 'Learning window (hours)', 'security-automation-manager' ); ?></label></th>
 				<td>
-					<input type="number" id="wp_csp_learning_window_hours" name="wp_csp_learning_window_hours"
-						value="<?php echo esc_attr( get_option( 'wp_csp_learning_window_hours', 48 ) ); ?>"
+					<input type="number" id="wp_sam_learning_window_hours" name="wp_sam_learning_window_hours"
+						value="<?php echo esc_attr( get_option( 'wp_sam_learning_window_hours', 48 ) ); ?>"
 						min="1" max="720" class="small-text" />
 					<p class="description">
 						<?php esc_html_e( 'Default: 48. The report endpoint stops creating or updating source candidates after this many hours from the latest page, post, or plugin change.', 'security-automation-manager' ); ?>
@@ -1269,18 +1269,18 @@ $scan_logs     = ! empty( $scan_logs_raw ) ? $scan_logs_raw : array();
 		<h2 class="title"><?php esc_html_e( 'Scan Schedule', 'security-automation-manager' ); ?></h2>
 		<table class="form-table" role="presentation">
 			<tr>
-				<th scope="row"><label for="wp_csp_cron_hour"><?php esc_html_e( 'Daily Scan Hour (0–23, UTC)', 'security-automation-manager' ); ?></label></th>
+				<th scope="row"><label for="wp_sam_cron_hour"><?php esc_html_e( 'Daily Scan Hour (0–23, UTC)', 'security-automation-manager' ); ?></label></th>
 				<td>
-					<input type="number" id="wp_csp_cron_hour" name="wp_csp_cron_hour"
-						value="<?php echo esc_attr( get_option( 'wp_csp_cron_hour', 2 ) ); ?>"
+					<input type="number" id="wp_sam_cron_hour" name="wp_sam_cron_hour"
+						value="<?php echo esc_attr( get_option( 'wp_sam_cron_hour', 2 ) ); ?>"
 						min="0" max="23" class="small-text" />
 				</td>
 			</tr>
 			<tr>
-				<th scope="row"><label for="wp_csp_notify_email"><?php esc_html_e( 'Notification Email', 'security-automation-manager' ); ?></label></th>
+				<th scope="row"><label for="wp_sam_notify_email"><?php esc_html_e( 'Notification Email', 'security-automation-manager' ); ?></label></th>
 				<td>
-					<input type="email" id="wp_csp_notify_email" name="wp_csp_notify_email"
-						value="<?php echo esc_attr( get_option( 'wp_csp_notify_email', get_option( 'admin_email' ) ) ); ?>"
+					<input type="email" id="wp_sam_notify_email" name="wp_sam_notify_email"
+						value="<?php echo esc_attr( get_option( 'wp_sam_notify_email', get_option( 'admin_email' ) ) ); ?>"
 						class="regular-text" />
 					<p class="description"><?php esc_html_e( 'Receive an email when the policy changes after a scheduled scan.', 'security-automation-manager' ); ?></p>
 				</td>

@@ -77,7 +77,7 @@ class Conflict_Detector {
 	 * Throttled via a 24-hour transient to avoid hammering.
 	 */
 	public function maybe_run_probe(): void {
-		$transient_key = 'wp_csp_conflict_probe_ran';
+		$transient_key = 'wp_sam_conflict_probe_ran';
 		if ( get_transient( $transient_key ) ) {
 			return;
 		}

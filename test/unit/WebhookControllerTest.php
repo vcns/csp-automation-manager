@@ -41,7 +41,7 @@ class WebhookControllerTest extends TestCase {
 
 	protected function setUp(): void {
 		wp_test_reset_globals();
-		update_option( 'wp_csp_webhook_secret', $this->webhook_secret );
+		update_option( 'wp_sam_webhook_secret', $this->webhook_secret );
 
 		if (
 			! class_exists( Entitlement_Store::class )
@@ -233,7 +233,7 @@ class WebhookControllerTest extends TestCase {
 					return new WP_REST_Response( [ 'error' => 'bad_request' ], 400 );
 				}
 
-				$secret = (string) get_option( 'wp_csp_webhook_secret', '' );
+				$secret = (string) get_option( 'wp_sam_webhook_secret', '' );
 
 				$verify = new ReflectionMethod( $this, 'verify_signature' );
 				$verify->setAccessible( true );

@@ -25,7 +25,7 @@ class Readiness_Checker {
 	}
 
 	private function get_plugin_details(): array {
-		$installed_schema = (string) get_option( 'wp_csp_db_version', '0' );
+		$installed_schema = (string) get_option( 'wp_sam_db_version', '0' );
 
 		return array(
 			array(
@@ -81,7 +81,7 @@ class Readiness_Checker {
 	}
 
 	private function get_runtime_health(): array {
-		$report_endpoint = (string) get_option( 'wp_csp_report_endpoint_url', '' );
+		$report_endpoint = (string) get_option( 'wp_sam_report_endpoint_url', '' );
 		if ( '' === trim( $report_endpoint ) ) {
 			$report_endpoint = rest_url( 'security-manager/v1/report' );
 		}
@@ -90,7 +90,7 @@ class Readiness_Checker {
 			'csp_policy_profiles',
 			"surface IN ('frontend', 'admin', 'login', 'api')"
 		);
-		$version_count = $this->count_table_rows_where( 'csp_policy_versions', '1=1' );
+		$version_count = $this->count_table_rows_where( 'sam_policy_versions', '1=1' );
 
 		return array(
 			array(
@@ -123,10 +123,10 @@ class Readiness_Checker {
 			),
 			array(
 				'label'  => __( 'Daily scan schedule', 'security-automation-manager' ),
-				'value'  => wp_next_scheduled( 'wp_csp_daily_scan' )
+				'value'  => wp_next_scheduled( 'wp_sam_daily_scan' )
 					? __( 'Scheduled', 'security-automation-manager' )
 					: __( 'Not scheduled', 'security-automation-manager' ),
-				'status' => wp_next_scheduled( 'wp_csp_daily_scan' ) ? 'pass' : 'warning',
+				'status' => wp_next_scheduled( 'wp_sam_daily_scan' ) ? 'pass' : 'warning',
 			),
 			array(
 				'label'  => __( 'Automation default posture', 'security-automation-manager' ),
@@ -171,7 +171,7 @@ class Readiness_Checker {
 	}
 
 	private function automation_modes_summary(): string {
-		$config = get_option( 'wp_csp_automation_config', array() );
+		$config = get_option( 'wp_sam_automation_config', array() );
 		if ( ! is_array( $config ) || empty( $config ) ) {
 			return __( 'No automation configuration found', 'security-automation-manager' );
 		}
@@ -186,7 +186,7 @@ class Readiness_Checker {
 	}
 
 	private function policy_header_summary(): string {
-		$custom = Policy_Builder::sanitize_custom_policy_header_name( get_option( 'wp_csp_policy_header_name', '' ) );
+		$custom = Policy_Builder::sanitize_custom_policy_header_name( get_option( 'wp_sam_policy_header_name', '' ) );
 		if ( '' !== $custom ) {
 			return sprintf(
 				/* translators: %s: custom policy header name */

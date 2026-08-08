@@ -184,7 +184,7 @@ class PolicyBuilderTest extends TestCase {
 	}
 
 	public function test_build_uses_configured_report_endpoint_url(): void {
-		update_option( 'wp_csp_report_endpoint_url', 'https://public.example.net/wp-json/csp-manager/v1/report' );
+		update_option( 'wp_sam_report_endpoint_url', 'https://public.example.net/wp-json/csp-manager/v1/report' );
 		$profile = $this->make_profile( [ 'default-src' => [ "'none'" ] ] );
 
 		$policy = $this->builder->build_policy_string( $profile, 'frontend' );
@@ -193,7 +193,7 @@ class PolicyBuilderTest extends TestCase {
 	}
 
 	public function test_build_ignores_invalid_report_endpoint_url(): void {
-		update_option( 'wp_csp_report_endpoint_url', 'javascript:alert(1)' );
+		update_option( 'wp_sam_report_endpoint_url', 'javascript:alert(1)' );
 		$profile = $this->make_profile( [ 'default-src' => [ "'none'" ] ] );
 
 		$policy = $this->builder->build_policy_string( $profile, 'frontend' );
@@ -221,7 +221,7 @@ class PolicyBuilderTest extends TestCase {
 	}
 
 	public function test_build_appends_report_to_when_reporting_api_is_enabled(): void {
-		update_option( 'wp_csp_reporting_transport', 'both' );
+		update_option( 'wp_sam_reporting_transport', 'both' );
 		$profile = $this->make_profile( [ 'default-src' => [ "'none'" ] ] );
 
 		$policy = $this->builder->build_policy_string( $profile, 'frontend' );
@@ -230,7 +230,7 @@ class PolicyBuilderTest extends TestCase {
 	}
 
 	public function test_build_omits_report_uri_when_reporting_api_only_is_enabled(): void {
-		update_option( 'wp_csp_reporting_transport', 'report-to' );
+		update_option( 'wp_sam_reporting_transport', 'report-to' );
 		$profile = $this->make_profile( [ 'default-src' => [ "'none'" ] ] );
 
 		$policy = $this->builder->build_policy_string( $profile, 'frontend' );
@@ -254,14 +254,14 @@ class PolicyBuilderTest extends TestCase {
 	}
 
 	public function test_policy_header_name_uses_custom_origin_header(): void {
-		update_option( 'wp_csp_policy_header_name', 'X-Origin-CSP-Policy' );
+		update_option( 'wp_sam_policy_header_name', 'X-Origin-CSP-Policy' );
 
 		$this->assertSame( 'X-Origin-CSP-Policy', $this->builder->get_policy_header_name( true ) );
 		$this->assertSame( 'X-Origin-CSP-Policy', $this->builder->get_policy_header_name( false ) );
 	}
 
 	public function test_policy_header_name_ignores_invalid_custom_header(): void {
-		update_option( 'wp_csp_policy_header_name', "X-Bad:\r\nInjected" );
+		update_option( 'wp_sam_policy_header_name', "X-Bad:\r\nInjected" );
 
 		$this->assertSame(
 			'Content-Security-Policy-Report-Only',
@@ -270,7 +270,7 @@ class PolicyBuilderTest extends TestCase {
 	}
 
 	public function test_policy_header_name_rejects_blocked_headers(): void {
-		update_option( 'wp_csp_policy_header_name', 'Set-Cookie' );
+		update_option( 'wp_sam_policy_header_name', 'Set-Cookie' );
 
 		$this->assertSame( 'Content-Security-Policy', $this->builder->get_policy_header_name( false ) );
 	}
@@ -443,9 +443,9 @@ class PolicyBuilderTest extends TestCase {
 			public function build_policy_string( array $profile, string $surface ): string {
 				// Temporarily override the static nonce bridge by injecting via
 				// a local constant-like mechanism.
-				$GLOBALS['_wp_csp_test_nonce'] = $this->stub_nonce;
+				$GLOBALS['_wp_sam_test_nonce'] = $this->stub_nonce;
 				$result = parent::build_policy_string( $profile, $surface );
-				unset( $GLOBALS['_wp_csp_test_nonce'] );
+				unset( $GLOBALS['_wp_sam_test_nonce'] );
 				return $result;
 			}
 		};

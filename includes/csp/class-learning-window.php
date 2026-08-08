@@ -13,8 +13,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Learning_Window {
 
-	public const OPTION_LAST_CHANGE   = 'wp_csp_last_material_change_at';
-	public const OPTION_WINDOW_HOURS  = 'wp_csp_learning_window_hours';
+	public const OPTION_LAST_CHANGE   = 'wp_sam_last_material_change_at';
+	public const OPTION_WINDOW_HOURS  = 'wp_sam_learning_window_hours';
 	public const DEFAULT_WINDOW_HOURS = 48;
 
 	public function register(): void {

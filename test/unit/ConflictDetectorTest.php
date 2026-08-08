@@ -108,7 +108,7 @@ class ConflictDetectorTest extends TestCase {
 		$this->assertCount( 1, $GLOBALS['_wp_remote_head_requests'] );
 		$this->assertSame( 'https://example.com', $GLOBALS['_wp_remote_head_requests'][0]['url'] );
 		$this->assertSame( '1', $GLOBALS['_wp_remote_head_requests'][0]['args']['headers']['X-WP-CSP-Probe'] );
-		$this->assertSame( 1, $GLOBALS['_wp_transients']['wp_csp_conflict_probe_ran'] );
+		$this->assertSame( 1, $GLOBALS['_wp_transients']['wp_sam_conflict_probe_ran'] );
 	}
 
 	private function assertAuditDetailContains( string $needle ): void {

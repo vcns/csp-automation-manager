@@ -14,7 +14,7 @@ declare( strict_types=1 );
 // ── Plugin constants ──────────────────────────────────────────────────────────
 define( 'ABSPATH',               __DIR__ . '/' );
 define( 'WP_SAM_VERSION',        '1.0.16' );
-define( 'WP_SAM_DB_VERSION',     '8' );
+define( 'WP_SAM_DB_VERSION',     '9' );
 define( 'WP_SAM_FILE',           dirname( __DIR__ ) . '/security-automation-manager.php' );
 define( 'WP_SAM_DIR',            dirname( __DIR__ ) . '/' );
 define( 'WP_SAM_URL',            'https://example.com/wp-content/plugins/security-automation-manager/' );
@@ -651,7 +651,7 @@ function wp_test_reset_globals(): void {
 	$GLOBALS['_wpdb_insert_result']      = 1;
 	$GLOBALS['_wpdb_update_result']      = 0;
 	$GLOBALS['wpdb']                     = new wpdb_stub();
-	$GLOBALS['_wp_csp_test_nonce']       = '';
+	$GLOBALS['_wp_sam_test_nonce']       = '';
 	$GLOBALS['_wp_rest_body']            = '';
 	$GLOBALS['_wp_rest_headers']         = [];
 	$GLOBALS['_wpdb_query_result']       = 1;
