@@ -63,7 +63,7 @@ Current baseline:
 
 - activate plugin on a clean site; confirm all custom tables exist (`csp_policy_profiles`, `csp_source_inventory`, `csp_hash_inventory`, `csp_violation_reports`, `csp_scan_logs`, `csp_entitlements`, `csp_processed_events`, `csp_audit_log`, `csp_policy_change_decisions`, `csp_policy_versions`, `csp_decision_rule_evaluations`)
 - confirm default options are seeded including `wp_csp_violation_retention_days` (should be `90`)
-- confirm `wp_csp_automation_config` is seeded to `manual` for every surface and `emergency_disabled` remains true
+- confirm `wp_csp_automation_config` is seeded to `manual` for every surface
 - simulate DB upgrade path: set `wp_csp_db_version` to a lower version, reload; confirm `maybe_upgrade_db()` fires and new schema is applied without data loss
 - deactivate and confirm cron event is removed
 - uninstall and confirm tables and options are removed

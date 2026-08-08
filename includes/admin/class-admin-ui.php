@@ -3,10 +3,11 @@
  * WordPress Admin UI: menus, settings API, AJAX handlers.
  *
  * Registers admin pages:
- *   1. csp-automation-manager-dashboard  – CSP surface profiles, source inventory, violations, scan history
- *   2. csp-automation-manager-settings   – promotion gates, learning window, cron schedule, notify email
- *   3. csp-automation-manager-policy-audit – policy history, decisions, provenance
- *   4. csp-automation-manager-readiness  – plugin-specific health checks and reset
+ *   1. csp-automation-manager-dashboard    – CSP Manager: surface profiles, source inventory,
+ *      violations, scan history, and settings (promotion gates, learning window, cron schedule,
+ *      notify email), all as tabs on one page
+ *   2. csp-automation-manager-policy-audit – policy history, decisions, provenance
+ *   3. csp-automation-manager-readiness    – plugin-specific health checks and reset
  *
  * All form submissions are protected by check_admin_referer() and
  * current_user_can('manage_options').
@@ -44,6 +45,7 @@ class Admin_UI {
 		add_action( 'admin_notices', array( $this, 'display_admin_notices' ) );
 		add_filter( 'plugin_action_links_' . plugin_basename( WP_CSP_FILE ), array( $this, 'add_plugin_action_links' ) );
 		add_filter( 'plugin_row_meta', array( $this, 'add_plugin_row_meta' ), 10, 2 );
+		add_filter( 'admin_footer_text', array( $this, 'filter_admin_footer_text' ) );
 
 		// AJAX handlers.
 		add_action( 'admin_post_wp_csp_reset_data', array( $this, 'handle_reset_data' ) );
@@ -71,20 +73,11 @@ class Admin_UI {
 
 		add_submenu_page(
 			'csp-automation-manager-dashboard',
-			__( 'CSP Dashboard', 'csp-automation-manager' ),
-			__( 'Dashboard', 'csp-automation-manager' ),
+			__( 'CSP Manager', 'csp-automation-manager' ),
+			__( 'CSP Manager', 'csp-automation-manager' ),
 			'manage_options',
 			'csp-automation-manager-dashboard',
 			array( $this, 'render_dashboard' )
-		);
-
-		add_submenu_page(
-			'csp-automation-manager-dashboard',
-			__( 'Settings', 'csp-automation-manager' ),
-			__( 'Settings', 'csp-automation-manager' ),
-			'manage_options',
-			'csp-automation-manager-settings',
-			array( $this, 'render_settings' )
 		);
 
 		add_submenu_page(
@@ -130,7 +123,7 @@ class Admin_UI {
 	public function add_plugin_action_links( array $links ): array {
 		$settings_link = sprintf(
 			'<a href="%1$s">%2$s</a>',
-			esc_url( admin_url( 'admin.php?page=csp-automation-manager-settings' ) ),
+			esc_url( admin_url( 'admin.php?page=csp-automation-manager-dashboard&tab=settings' ) ),
 			esc_html__( 'Settings', 'csp-automation-manager' )
 		);
 
@@ -161,6 +154,20 @@ class Admin_UI {
 		);
 
 		return $links;
+	}
+
+	/**
+	 * Suppresses the default "Thank you for creating with WordPress." footer
+	 * text on this plugin's own admin pages only; every other admin screen is
+	 * left untouched.
+	 */
+	public function filter_admin_footer_text( string $text ): string {
+		$screen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+		if ( $screen && in_array( $screen->id, $this->plugin_page_hooks(), true ) ) {
+			return '';
+		}
+
+		return $text;
 	}
 
 	public function sanitize_report_endpoint_url( mixed $url ): string {
@@ -202,14 +209,20 @@ class Admin_UI {
 		return ( new Automation_Config() )->normalise_admin_input( is_array( $config ) ? $config : array() );
 	}
 
-	public function enqueue_assets( string $hook_suffix ): void {
-		$csp_pages = array(
+	/**
+	 * Admin-page hook suffixes this plugin registers, shared by enqueue_assets()
+	 * and filter_admin_footer_text() so the list only lives in one place.
+	 */
+	private function plugin_page_hooks(): array {
+		return array(
 			'toplevel_page_csp-automation-manager-dashboard',
-			'csp-manager_page_csp-automation-manager-settings',
 			'csp-manager_page_csp-automation-manager-policy-audit',
 			'csp-manager_page_csp-automation-manager-readiness',
 		);
-		if ( ! in_array( $hook_suffix, $csp_pages, true ) ) {
+	}
+
+	public function enqueue_assets( string $hook_suffix ): void {
+		if ( ! in_array( $hook_suffix, $this->plugin_page_hooks(), true ) ) {
 			return;
 		}
 
@@ -253,13 +266,6 @@ class Admin_UI {
 			wp_die( esc_html__( 'You do not have permission to view this page.', 'csp-automation-manager' ) );
 		}
 		require WP_CSP_DIR . 'includes/admin/views/page-csp-dashboard.php';
-	}
-
-	public function render_settings(): void {
-		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_die( esc_html__( 'You do not have permission to view this page.', 'csp-automation-manager' ) );
-		}
-		require WP_CSP_DIR . 'includes/admin/views/page-settings.php';
 	}
 
 	public function render_policy_audit(): void {

@@ -149,6 +149,8 @@ class Activator {
   KEY approval_state (approval_state),
   KEY risk_level (risk_level),
   KEY decision_fingerprint (decision_fingerprint),
+  KEY last_seen_at (last_seen_at),
+  KEY source_host (source_host(191)),
   UNIQUE KEY surf_dir_host (surface, directive, source_host(191))
 ) {$cc};"
 		);
@@ -179,6 +181,7 @@ class Activator {
 		// 4. Ingested CSP violation reports
 		// v3: adds sample column — populated only when 'report-sample' is in the policy.
 		// v6: adds first/last roll-up timestamps and unique fingerprint support.
+		// v8: adds occurrence_count index for the sortable Violations dashboard tab.
 		dbDelta(
 			"CREATE TABLE {$p}csp_violation_reports (
   id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -206,6 +209,7 @@ class Activator {
   KEY violated_directive (violated_directive),
   KEY reported_at (reported_at),
   KEY last_reported_at (last_reported_at),
+  KEY occurrence_count (occurrence_count),
   UNIQUE KEY fingerprint (fingerprint)
 ) {$cc};"
 		);
@@ -512,7 +516,6 @@ class Activator {
 			'automatic_rejection_enabled'    => false,
 			'max_automatic_changes_per_scan' => 0,
 			'change_rate_guardrail'          => 0,
-			'emergency_disabled'             => true,
 		);
 
 		return array(

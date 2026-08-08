@@ -186,3 +186,115 @@
 .wp-csp-reset-form {
 	max-width: 760px;
 }
+
+/* ── Sortable column headers ─────────────────────────────────────────────── */
+.wp-csp-wrap .widefat th a {
+	display: inline-flex;
+	align-items: center;
+	gap: 2px;
+	text-decoration: none;
+	color: inherit;
+}
+
+.wp-csp-wrap .widefat th a:hover {
+	text-decoration: underline;
+}
+
+.wp-csp-wrap .widefat th .dashicons {
+	width: 16px;
+	height: 16px;
+	font-size: 16px;
+}
+
+/* ── Filter forms ────────────────────────────────────────────────────────── */
+.wp-csp-filter-form label {
+	display: inline-block;
+	margin: 0 16px 12px 0;
+	font-size: 0.9em;
+	vertical-align: top;
+}
+
+.wp-csp-filter-form label > * {
+	display: block;
+	margin-top: 4px;
+}
+
+.wp-csp-filter-form select[multiple] {
+	min-width: 140px;
+}
+
+details.wp-csp-filter-form {
+	border: 1px solid #ccd0d4;
+	border-radius: 4px;
+	padding: 8px 12px;
+	background: #f6f7f7;
+	margin-bottom: 1em;
+}
+
+details.wp-csp-filter-form summary {
+	cursor: pointer;
+	font-weight: 600;
+	padding: 4px 0;
+}
+
+details.wp-csp-filter-form form {
+	margin-top: 12px;
+}
+
+/* ── Violation metadata icon + popover ──────────────────────────────────── */
+.wp-csp-meta-icon {
+	position: relative;
+	display: inline-block;
+	color: #787c82;
+	cursor: help;
+}
+
+.wp-csp-meta-icon:hover,
+.wp-csp-meta-icon:focus {
+	color: #2271b1;
+	outline: none;
+}
+
+.wp-csp-meta-icon--empty {
+	color: #dcdcde;
+	cursor: default;
+}
+
+.wp-csp-meta-popover {
+	display: none;
+	position: absolute;
+	right: 0;
+	top: 100%;
+	z-index: 10;
+	width: 360px;
+	max-width: 80vw;
+	margin-top: 6px;
+	padding: 10px 12px;
+	background: #fff;
+	border: 1px solid #ccd0d4;
+	border-radius: 4px;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, .15);
+	text-align: left;
+	white-space: normal;
+	font-size: 0.85em;
+	line-height: 1.5;
+}
+
+.wp-csp-meta-icon:hover .wp-csp-meta-popover,
+.wp-csp-meta-icon:focus .wp-csp-meta-popover {
+	display: block;
+}
+
+.wp-csp-meta-row {
+	margin-bottom: 6px;
+}
+
+.wp-csp-meta-row:last-child {
+	margin-bottom: 0;
+}
+
+.wp-csp-meta-row code {
+	display: block;
+	word-break: break-all;
+	white-space: normal;
+}

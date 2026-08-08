@@ -14,7 +14,7 @@ declare( strict_types=1 );
 // ── Plugin constants ──────────────────────────────────────────────────────────
 define( 'ABSPATH',               __DIR__ . '/' );
 define( 'WP_CSP_VERSION',        '1.0.16' );
-define( 'WP_CSP_DB_VERSION',     '7' );
+define( 'WP_CSP_DB_VERSION',     '8' );
 define( 'WP_CSP_FILE',           dirname( __DIR__ ) . '/csp-automation-manager.php' );
 define( 'WP_CSP_DIR',            dirname( __DIR__ ) . '/' );
 define( 'WP_CSP_URL',            'https://example.com/wp-content/plugins/csp-automation-manager/' );
@@ -176,6 +176,45 @@ if ( ! function_exists( 'wp_json_encode' ) ) {
 if ( ! function_exists( 'wp_parse_url' ) ) {
 	function wp_parse_url( string $url, int $component = -1 ): mixed {
 		return parse_url( $url, $component );
+	}
+}
+
+if ( ! function_exists( 'add_query_arg' ) ) {
+	/**
+	 * Minimal stub covering this codebase's only call shape: add_query_arg( array $args, string $url ).
+	 */
+	function add_query_arg( mixed ...$args ): string {
+		$params = is_array( $args[0] ?? null ) ? $args[0] : array( $args[0] => $args[1] ?? '' );
+		$url    = is_array( $args[0] ?? null ) ? (string) ( $args[1] ?? '' ) : (string) ( $args[2] ?? '' );
+
+		$parts = wp_parse_url( $url );
+		$query = array();
+		if ( ! empty( $parts['query'] ) ) {
+			parse_str( (string) $parts['query'], $query );
+		}
+
+		foreach ( $params as $key => $value ) {
+			if ( null === $value ) {
+				unset( $query[ $key ] );
+			} else {
+				$query[ $key ] = $value;
+			}
+		}
+
+		$base = ( $parts['scheme'] ?? '' ) !== '' ? $parts['scheme'] . '://' . ( $parts['host'] ?? '' ) . ( $parts['path'] ?? '' ) : (string) ( $parts['path'] ?? '' );
+		$qs   = http_build_query( $query, '', '&' );
+
+		return $base . ( '' !== $qs ? '?' . $qs : '' );
+	}
+}
+
+if ( ! function_exists( 'selected' ) ) {
+	function selected( mixed $a, mixed $b = true, bool $echo = true ): string {
+		$result = ( (string) $a === (string) $b ) ? " selected='selected'" : '';
+		if ( $echo ) {
+			echo $result; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- test stub.
+		}
+		return $result;
 	}
 }
 
@@ -440,8 +479,14 @@ if ( ! class_exists( 'WP_Error' ) ) {
 // ── wpdb stub ─────────────────────────────────────────────────────────────────
 // Minimal implementation that returns configurable values from globals.
 // Tests set $GLOBALS['_wpdb_*'] before calling the code under test.
+if ( ! class_exists( 'wpdb' ) ) {
+	// Minimal stand-in for WordPress core's wpdb class so type-hinted `\wpdb $wpdb`
+	// parameters accept wpdb_stub instances under PHP's type system.
+	class wpdb {}
+}
+
 if ( ! class_exists( 'wpdb_stub' ) ) {
-	class wpdb_stub {
+	class wpdb_stub extends wpdb {
 		public string  $prefix     = 'wp_';
 		public ?string $last_error = null;
 		public int     $rows_affected = 0;
@@ -479,7 +524,18 @@ if ( ! class_exists( 'wpdb_stub' ) ) {
 		}
 
 		public function get_results( string $query, string $output = 'ARRAY_A' ): array {
+			if ( ! empty( $GLOBALS['_wpdb_get_results_queue'] ) && is_array( $GLOBALS['_wpdb_get_results_queue'] ) ) {
+				return array_shift( $GLOBALS['_wpdb_get_results_queue'] );
+			}
 			return $GLOBALS['_wpdb_get_results'] ?? [];
+		}
+
+		public function get_col( string $query ): array {
+			return $GLOBALS['_wpdb_get_col'] ?? [];
+		}
+
+		public function esc_like( string $text ): string {
+			return addcslashes( $text, '_%\\' );
 		}
 
 		public function query( string $sql ): int|false {
@@ -590,6 +646,8 @@ function wp_test_reset_globals(): void {
 	$GLOBALS['_wpdb_get_var_queue']      = [];
 	$GLOBALS['_wpdb_get_row_queue']      = [];
 	$GLOBALS['_wpdb_get_results']        = [];
+	$GLOBALS['_wpdb_get_results_queue']  = [];
+	$GLOBALS['_wpdb_get_col']            = [];
 	$GLOBALS['_wpdb_insert_result']      = 1;
 	$GLOBALS['_wpdb_update_result']      = 0;
 	$GLOBALS['wpdb']                     = new wpdb_stub();
