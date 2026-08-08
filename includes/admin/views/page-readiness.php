@@ -19,13 +19,13 @@ $status_badge = static function ( string $status ): void {
 	$label  = $labels[ $status ] ?? __( 'Unknown', 'security-automation-manager' );
 
 	printf(
-		'<span class="wp-csp-readiness-badge status-%1$s">%2$s</span>',
+		'<span class="wp-sam-readiness-badge status-%1$s">%2$s</span>',
 		esc_attr( $status ),
 		esc_html( $label )
 	);
 };
 ?>
-<div class="wrap wp-csp-wrap">
+<div class="wrap wp-sam-wrap">
 	<h1><?php esc_html_e( 'CSP Manager Readiness', 'security-automation-manager' ); ?></h1>
 	<p class="description">
 		<?php esc_html_e( 'Plugin-specific checks for schema, runtime defaults, reporting configuration, and reset readiness.', 'security-automation-manager' ); ?>
@@ -46,7 +46,7 @@ $status_badge = static function ( string $status ): void {
 	<?php endif; ?>
 
 	<h2><?php esc_html_e( 'Plugin and Database', 'security-automation-manager' ); ?></h2>
-	<table class="widefat striped wp-csp-readiness-table">
+	<table class="widefat striped wp-sam-readiness-table">
 		<thead>
 			<tr>
 				<th scope="col"><?php esc_html_e( 'Check', 'security-automation-manager' ); ?></th>
@@ -66,7 +66,7 @@ $status_badge = static function ( string $status ): void {
 	</table>
 
 	<h2><?php esc_html_e( 'Schema Health', 'security-automation-manager' ); ?></h2>
-	<table class="widefat striped wp-csp-readiness-table">
+	<table class="widefat striped wp-sam-readiness-table">
 		<thead>
 			<tr>
 				<th scope="col"><?php esc_html_e( 'Table', 'security-automation-manager' ); ?></th>
@@ -92,7 +92,7 @@ $status_badge = static function ( string $status ): void {
 	</table>
 
 	<h2><?php esc_html_e( 'Operational Health', 'security-automation-manager' ); ?></h2>
-	<table class="widefat striped wp-csp-readiness-table">
+	<table class="widefat striped wp-sam-readiness-table">
 		<thead>
 			<tr>
 				<th scope="col"><?php esc_html_e( 'Check', 'security-automation-manager' ); ?></th>
@@ -113,11 +113,11 @@ $status_badge = static function ( string $status ): void {
 
 	<hr>
 
-	<h2 id="wp-csp-reset"><?php esc_html_e( 'Reset Plugin Data', 'security-automation-manager' ); ?></h2>
+	<h2 id="wp-sam-reset"><?php esc_html_e( 'Reset Plugin Data', 'security-automation-manager' ); ?></h2>
 	<p>
 		<?php esc_html_e( 'This clears CSP Automation Manager custom-table rows and plugin-owned runtime options, then reseeds the default policy profiles needed for a clean start.', 'security-automation-manager' ); ?>
 	</p>
-	<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="wp-csp-reset-form">
+	<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="wp-sam-reset-form">
 		<?php wp_nonce_field( 'wp_sam_reset_data' ); ?>
 		<input type="hidden" name="action" value="wp_sam_reset_data">
 		<table class="form-table" role="presentation">

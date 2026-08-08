@@ -129,7 +129,7 @@ class Admin_UI {
 
 		$reset_link = sprintf(
 			'<a href="%1$s">%2$s</a>',
-			esc_url( admin_url( 'admin.php?page=security-automation-manager-readiness#wp-csp-reset' ) ),
+			esc_url( admin_url( 'admin.php?page=security-automation-manager-readiness#wp-sam-reset' ) ),
 			esc_html__( 'Reset', 'security-automation-manager' )
 		);
 
@@ -149,7 +149,7 @@ class Admin_UI {
 			: __( 'Updates: WordPress.org package; no custom updater runs in this build.', 'security-automation-manager' );
 
 		$links[] = sprintf(
-			'<span class="wp-csp-update-posture">%s</span>',
+			'<span class="wp-sam-update-posture">%s</span>',
 			esc_html( $update_posture )
 		);
 
@@ -227,14 +227,14 @@ class Admin_UI {
 		}
 
 		wp_enqueue_style(
-			'wp-csp-admin',
+			'wp-sam-admin',
 			WP_SAM_URL . 'assets/css/admin.css',
 			array(),
 			WP_SAM_VERSION
 		);
 
 		wp_enqueue_script(
-			'wp-csp-admin',
+			'wp-sam-admin',
 			WP_SAM_URL . 'assets/js/admin.js',
 			array( 'jquery' ),
 			WP_SAM_VERSION,
@@ -242,7 +242,7 @@ class Admin_UI {
 		);
 
 		wp_localize_script(
-			'wp-csp-admin',
+			'wp-sam-admin',
 			'wpCspAdmin',
 			array(
 				'ajaxUrl'   => admin_url( 'admin-ajax.php' ),
@@ -320,7 +320,7 @@ class Admin_UI {
 	private function redirect_to_readiness( string $result ): void {
 		$url = add_query_arg(
 			array( 'wp_sam_reset' => $result ),
-			admin_url( 'admin.php?page=security-automation-manager-readiness#wp-csp-reset' )
+			admin_url( 'admin.php?page=security-automation-manager-readiness#wp-sam-reset' )
 		);
 
 		wp_safe_redirect( $url );

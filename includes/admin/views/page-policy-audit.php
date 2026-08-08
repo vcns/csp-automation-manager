@@ -18,12 +18,12 @@ $decisions_table   = $wpdb->prefix . 'sam_policy_change_decisions';
 $pending_table     = $wpdb->prefix . 'csp_source_inventory';
 
 ?>
-<div class="wrap wp-csp-wrap">
+<div class="wrap wp-sam-wrap">
 	<h1><?php esc_html_e( 'CSP Policy Audit', 'security-automation-manager' ); ?></h1>
 	<p><?php esc_html_e( 'Inspect effective policies, decision provenance, pending review items, and policy version history.', 'security-automation-manager' ); ?></p>
 
 	<h2><?php esc_html_e( 'Current Policy', 'security-automation-manager' ); ?></h2>
-	<table class="widefat striped wp-csp-audit-table">
+	<table class="widefat striped wp-sam-audit-table">
 		<thead>
 			<tr>
 				<th><?php esc_html_e( 'Surface', 'security-automation-manager' ); ?></th>
@@ -88,7 +88,7 @@ $pending_table     = $wpdb->prefix . 'csp_source_inventory';
 		ARRAY_A
 	);
 	?>
-	<table class="widefat striped wp-csp-audit-table">
+	<table class="widefat striped wp-sam-audit-table">
 		<thead>
 			<tr>
 				<th><?php esc_html_e( 'Surface', 'security-automation-manager' ); ?></th>
@@ -106,7 +106,7 @@ $pending_table     = $wpdb->prefix . 'csp_source_inventory';
 					<td><?php echo esc_html( $item['surface'] ); ?></td>
 					<td><code><?php echo esc_html( $item['directive'] ); ?></code></td>
 					<td><code><?php echo esc_html( $item['source_host'] ); ?></code></td>
-					<td><span class="wp-csp-risk-badge risk-<?php echo esc_attr( $item['risk_level'] ); ?>"><?php echo esc_html( ucfirst( $item['risk_level'] ) ); ?></span> <?php echo esc_html( $item['risk_reason'] ); ?></td>
+					<td><span class="wp-sam-risk-badge risk-<?php echo esc_attr( $item['risk_level'] ); ?>"><?php echo esc_html( ucfirst( $item['risk_level'] ) ); ?></span> <?php echo esc_html( $item['risk_reason'] ); ?></td>
 					<td><?php echo esc_html( (string) $item['evidence_count'] ); ?></td>
 					<td><?php echo esc_html( $item['first_seen_at'] ); ?></td>
 					<td><?php echo esc_html( $item['last_seen_at'] ); ?></td>
@@ -120,7 +120,7 @@ $pending_table     = $wpdb->prefix . 'csp_source_inventory';
 
 	<h2><?php esc_html_e( 'Recent Decisions', 'security-automation-manager' ); ?></h2>
 	<?php $decisions = $wpdb->get_results( "SELECT * FROM {$decisions_table} ORDER BY created_at DESC LIMIT 50", ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared ?>
-	<table class="widefat striped wp-csp-audit-table">
+	<table class="widefat striped wp-sam-audit-table">
 		<thead>
 			<tr>
 				<th><?php esc_html_e( 'When', 'security-automation-manager' ); ?></th>
@@ -143,7 +143,7 @@ $pending_table     = $wpdb->prefix . 'csp_source_inventory';
 					<td><?php echo esc_html( $decision['surface'] ); ?></td>
 					<td><code><?php echo esc_html( $decision['directive'] ); ?></code></td>
 					<td><code><?php echo esc_html( $decision['source_host'] ); ?></code></td>
-					<td><span class="wp-csp-risk-badge risk-<?php echo esc_attr( $decision['risk_level'] ); ?>"><?php echo esc_html( ucfirst( $decision['risk_level'] ) ); ?></span></td>
+					<td><span class="wp-sam-risk-badge risk-<?php echo esc_attr( $decision['risk_level'] ); ?>"><?php echo esc_html( ucfirst( $decision['risk_level'] ) ); ?></span></td>
 					<td><?php echo esc_html( $decision['decision_engine_version'] ?? '' ); ?></td>
 					<td><?php echo ! empty( $decision['policy_version_id'] ) ? esc_html( (string) $decision['policy_version_id'] ) : esc_html( '—' ); ?></td>
 				</tr>

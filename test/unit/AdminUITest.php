@@ -28,7 +28,7 @@ class AdminUITest extends TestCase {
 		$this->assertArrayHasKey( 'reset', $links );
 		$this->assertStringContainsString( 'admin.php?page=security-automation-manager-dashboard', $links['settings'] );
 		$this->assertStringContainsString( 'tab=settings', $links['settings'] );
-		$this->assertStringContainsString( 'admin.php?page=security-automation-manager-readiness#wp-csp-reset', $links['reset'] );
+		$this->assertStringContainsString( 'admin.php?page=security-automation-manager-readiness#wp-sam-reset', $links['reset'] );
 		$this->assertStringContainsString( 'Settings', $links['settings'] );
 		$this->assertStringContainsString( 'Reset', $links['reset'] );
 		$this->assertSame( 'settings', array_key_first( $links ) );
@@ -64,7 +64,7 @@ class AdminUITest extends TestCase {
 		$this->assertStringContainsString( 'Proposed source', $view );
 		$this->assertStringContainsString( 'Policy version', $view );
 		$this->assertStringContainsString( "'Automation'", $view );
-		$this->assertStringContainsString( 'wp-csp-automation-mode', $view );
+		$this->assertStringContainsString( 'wp-sam-automation-mode', $view );
 		$this->assertStringNotContainsString( "'Strict-Dynamic'", $view );
 	}
 

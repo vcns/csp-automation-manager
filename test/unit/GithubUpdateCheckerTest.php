@@ -86,7 +86,7 @@ class GithubUpdateCheckerTest extends TestCase {
 	}
 
 	public function test_package_download_is_verified_against_manifest_checksum(): void {
-		$tmp     = tempnam( sys_get_temp_dir(), 'wp-csp-update-' );
+		$tmp     = tempnam( sys_get_temp_dir(), 'wp-sam-update-' );
 		$content = 'verified package';
 		file_put_contents( $tmp, $content );
 
@@ -113,7 +113,7 @@ class GithubUpdateCheckerTest extends TestCase {
 	}
 
 	public function test_checksum_mismatch_returns_error_and_deletes_download(): void {
-		$tmp = tempnam( sys_get_temp_dir(), 'wp-csp-update-' );
+		$tmp = tempnam( sys_get_temp_dir(), 'wp-sam-update-' );
 		file_put_contents( $tmp, 'tampered package' );
 
 		$manifest                           = $this->manifest( '1.0.17' );

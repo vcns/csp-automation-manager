@@ -76,34 +76,34 @@ $violations     = ! empty( $violations_raw ) ? $violations_raw : array();
 $scan_logs_raw = $wpdb->get_results( "SELECT * FROM {$wpdb->prefix}sam_scan_logs ORDER BY started_at DESC LIMIT 20", ARRAY_A );
 $scan_logs     = ! empty( $scan_logs_raw ) ? $scan_logs_raw : array();
 ?>
-<div class="wrap wp-csp-wrap">
+<div class="wrap wp-sam-wrap">
 	<h1><?php esc_html_e( 'CSP Manager', 'security-automation-manager' ); ?></h1>
 
 	<!-- ── Top action bar ────────────────────────────────────────────────── -->
 	<p>
-		<button type="button" id="wp-csp-manual-scan" class="button button-primary">
+		<button type="button" id="wp-sam-manual-scan" class="button button-primary">
 			<?php esc_html_e( 'Run Manual Scan', 'security-automation-manager' ); ?>
 		</button>
-		<span id="wp-csp-scan-status" style="margin-left:10px;display:none"></span>
+		<span id="wp-sam-scan-status" style="margin-left:10px;display:none"></span>
 	</p>
 
 	<!-- ── Tabs ──────────────────────────────────────────────────────────── -->
-	<nav class="nav-tab-wrapper wp-csp-tab-wrapper" role="tablist" aria-label="<?php esc_attr_e( 'CSP dashboard sections', 'security-automation-manager' ); ?>">
+	<nav class="nav-tab-wrapper wp-sam-tab-wrapper" role="tablist" aria-label="<?php esc_attr_e( 'CSP dashboard sections', 'security-automation-manager' ); ?>">
 		<?php foreach ( $tab_help as $tab_key => $tab_data ) : ?>
 		<a class="nav-tab<?php echo $tab_key === $tab ? ' nav-tab-active' : ''; ?>"
 			href="<?php echo esc_url( add_query_arg( 'tab', $tab_key, $base_url ) ); ?>"
 			role="tab"
 			title="<?php echo esc_attr( $tab_data['description'] ); ?>"
-			aria-describedby="wp-csp-tab-help-<?php echo esc_attr( $tab_key ); ?>"
+			aria-describedby="wp-sam-tab-help-<?php echo esc_attr( $tab_key ); ?>"
 			<?php echo $tab_key === $tab ? 'aria-selected="true" aria-current="page"' : 'aria-selected="false"'; ?>>
 			<?php echo esc_html( $tab_data['label'] ); ?>
-			<span class="screen-reader-text" id="wp-csp-tab-help-<?php echo esc_attr( $tab_key ); ?>">
+			<span class="screen-reader-text" id="wp-sam-tab-help-<?php echo esc_attr( $tab_key ); ?>">
 				<?php echo esc_html( $tab_data['description'] ); ?>
 			</span>
 		</a>
 		<?php endforeach; ?>
 	</nav>
-	<div class="wp-csp-tab-help" role="note">
+	<div class="wp-sam-tab-help" role="note">
 		<strong><?php echo esc_html( $tab_help[ $tab ]['label'] ); ?>:</strong>
 		<?php echo esc_html( $tab_help[ $tab ]['description'] ); ?>
 	</div>
@@ -179,7 +179,7 @@ $scan_logs     = ! empty( $scan_logs_raw ) ? $scan_logs_raw : array();
 		<tr>
 			<td><?php echo esc_html( ucfirst( $profile['surface'] ) ); ?></td>
 			<td>
-				<span class="wp-csp-mode-badge mode-<?php echo esc_attr( $profile['mode'] ); ?>">
+				<span class="wp-sam-mode-badge mode-<?php echo esc_attr( $profile['mode'] ); ?>">
 					<?php echo esc_html( $profile['mode'] ); ?>
 				</span>
 			</td>
@@ -194,11 +194,11 @@ $scan_logs     = ! empty( $scan_logs_raw ) ? $scan_logs_raw : array();
 					\WP_SAM\CSP\Automation_Config::mode_label( $automation_mode )
 				);
 				?>
-				<label class="screen-reader-text" for="wp-csp-automation-mode-<?php echo esc_attr( $surface ); ?>">
+				<label class="screen-reader-text" for="wp-sam-automation-mode-<?php echo esc_attr( $surface ); ?>">
 					<?php echo esc_html( $automation_title ); ?>
 				</label>
-				<select id="wp-csp-automation-mode-<?php echo esc_attr( $surface ); ?>"
-					class="wp-csp-automation-mode"
+				<select id="wp-sam-automation-mode-<?php echo esc_attr( $surface ); ?>"
+					class="wp-sam-automation-mode"
 					data-surface="<?php echo esc_attr( $surface ); ?>"
 					title="<?php echo esc_attr( $automation_title ); ?>">
 					<?php foreach ( $automation_labels as $mode => $label ) : ?>
@@ -213,7 +213,7 @@ $scan_logs     = ! empty( $scan_logs_raw ) ? $scan_logs_raw : array();
 				<?php foreach ( array( 'report-only', 'enforce', 'disabled' ) as $m ) : ?>
 					<?php if ( $m !== $profile['mode'] ) : ?>
 					<button type="button"
-						class="button button-small wp-csp-toggle-mode"
+						class="button button-small wp-sam-toggle-mode"
 						data-surface="<?php echo esc_attr( $profile['surface'] ); ?>"
 						data-mode="<?php echo esc_attr( $m ); ?>">
 						<?php echo esc_html( ucwords( str_replace( '-', ' ', $m ) ) ); ?>
@@ -350,7 +350,7 @@ $scan_logs     = ! empty( $scan_logs_raw ) ? $scan_logs_raw : array();
 		$sources_raw = $wpdb->get_results( $data_sql, ARRAY_A );
 		$sources     = ! empty( $sources_raw ) ? $sources_raw : array();
 		?>
-	<form method="get" action="" class="wp-csp-filter-form">
+	<form method="get" action="" class="wp-sam-filter-form">
 		<input type="hidden" name="page" value="security-automation-manager-dashboard" />
 		<input type="hidden" name="tab"  value="sources" />
 		<label>
@@ -432,35 +432,35 @@ $scan_logs     = ! empty( $scan_logs_raw ) ? $scan_logs_raw : array();
 			<td><code><?php echo esc_html( $src['directive'] ); ?></code></td>
 			<td><code><?php echo esc_html( $src['source_host'] ); ?></code></td>
 			<td>
-				<span class="wp-csp-risk-badge risk-<?php echo esc_attr( $src['risk_level'] ?? 'low' ); ?>" title="<?php echo esc_attr( $src['risk_reason'] ?? '' ); ?>">
+				<span class="wp-sam-risk-badge risk-<?php echo esc_attr( $src['risk_level'] ?? 'low' ); ?>" title="<?php echo esc_attr( $src['risk_reason'] ?? '' ); ?>">
 					<?php echo esc_html( ucfirst( $src['risk_level'] ?? 'low' ) ); ?>
 				</span>
 			</td>
 			<td>
-				<span class="wp-csp-state-badge state-<?php echo esc_attr( $src['approval_state'] ); ?>">
+				<span class="wp-sam-state-badge state-<?php echo esc_attr( $src['approval_state'] ); ?>">
 					<?php echo esc_html( ucfirst( $src['approval_state'] ) ); ?>
 				</span>
 			</td>
 			<td><?php echo esc_html( number_format( (int) ( $src['evidence_count'] ?? 1 ) ) ); ?></td>
 			<td><?php echo esc_html( $src['last_seen_at'] ); ?></td>
-			<td class="wp-csp-source-actions">
+			<td class="wp-sam-source-actions">
 				<?php if ( 'pending' === $src['approval_state'] || 'denied' === $src['approval_state'] ) : ?>
-				<button type="button" class="button button-small wp-csp-approve-source" data-id="<?php echo esc_attr( $src['id'] ); ?>">
+				<button type="button" class="button button-small wp-sam-approve-source" data-id="<?php echo esc_attr( $src['id'] ); ?>">
 					<?php esc_html_e( 'Approve', 'security-automation-manager' ); ?>
 				</button>
 				<?php endif; ?>
 				<?php if ( 'pending' === $src['approval_state'] || 'approved' === $src['approval_state'] ) : ?>
-				<button type="button" class="button button-small wp-csp-deny-source" data-id="<?php echo esc_attr( $src['id'] ); ?>">
+				<button type="button" class="button button-small wp-sam-deny-source" data-id="<?php echo esc_attr( $src['id'] ); ?>">
 					<?php esc_html_e( 'Reject', 'security-automation-manager' ); ?>
 				</button>
 				<?php endif; ?>
 				<?php if ( 'approved' === $src['approval_state'] ) : ?>
-				<button type="button" class="button button-small wp-csp-revert-source" data-id="<?php echo esc_attr( $src['id'] ); ?>">
+				<button type="button" class="button button-small wp-sam-revert-source" data-id="<?php echo esc_attr( $src['id'] ); ?>">
 					<?php esc_html_e( 'Revert', 'security-automation-manager' ); ?>
 				</button>
 				<?php endif; ?>
 				<?php if ( in_array( $src['last_decision'] ?? '', array( 'approved', 'auto_approved', 'rejected' ), true ) ) : ?>
-				<button type="button" class="button button-small wp-csp-undo-source-decision" data-id="<?php echo esc_attr( $src['id'] ); ?>">
+				<button type="button" class="button button-small wp-sam-undo-source-decision" data-id="<?php echo esc_attr( $src['id'] ); ?>">
 					<?php esc_html_e( 'Undo', 'security-automation-manager' ); ?>
 				</button>
 				<?php endif; ?>
@@ -640,7 +640,7 @@ $scan_logs     = ! empty( $scan_logs_raw ) ? $scan_logs_raw : array();
 		<p><?php esc_html_e( 'Showing results from up to 5,000 recent records per activity type. Narrow your filters (Type, Surface, Directive, or a date range) to see the full, correctly-sorted result set.', 'security-automation-manager' ); ?></p>
 	</div>
 	<?php endif; ?>
-	<details class="wp-csp-filter-form">
+	<details class="wp-sam-filter-form">
 		<summary><?php esc_html_e( 'Filters', 'security-automation-manager' ); ?></summary>
 		<form method="get" action="">
 			<input type="hidden" name="page" value="security-automation-manager-dashboard" />
@@ -765,7 +765,7 @@ $scan_logs     = ! empty( $scan_logs_raw ) ? $scan_logs_raw : array();
 			</td>
 			<td>
 				<?php if ( '' !== $event['risk_level'] ) : ?>
-				<span class="wp-csp-risk-badge risk-<?php echo esc_attr( $event['risk_level'] ); ?>" title="<?php echo esc_attr( $event['risk_reason'] ); ?>">
+				<span class="wp-sam-risk-badge risk-<?php echo esc_attr( $event['risk_level'] ); ?>" title="<?php echo esc_attr( $event['risk_reason'] ); ?>">
 					<?php echo esc_html( ucfirst( $event['risk_level'] ) ); ?>
 				</span>
 				<?php else : ?>
@@ -895,7 +895,7 @@ $scan_logs     = ! empty( $scan_logs_raw ) ? $scan_logs_raw : array();
 		$violations_raw = $wpdb->get_results( $viol_data_sql, ARRAY_A );
 		$violations     = ! empty( $violations_raw ) ? $violations_raw : array();
 		?>
-	<form method="get" action="" class="wp-csp-filter-form">
+	<form method="get" action="" class="wp-sam-filter-form">
 		<input type="hidden" name="page" value="security-automation-manager-dashboard" />
 		<input type="hidden" name="tab" value="violations" />
 		<label>
@@ -995,10 +995,10 @@ $scan_logs     = ! empty( $scan_logs_raw ) ? $scan_logs_raw : array();
 				$has_meta = ! empty( $v['document_uri'] ) || ! empty( $v['source_file'] ) || ! empty( $v['referrer'] ) || ! empty( $v['user_agent'] ) || ! empty( $v['sample'] );
 				?>
 				<?php if ( $has_meta ) : ?>
-				<span class="dashicons dashicons-info-outline wp-csp-meta-icon" tabindex="0">
-					<span class="wp-csp-meta-popover" role="tooltip">
+				<span class="dashicons dashicons-info-outline wp-sam-meta-icon" tabindex="0">
+					<span class="wp-sam-meta-popover" role="tooltip">
 						<?php foreach ( $meta_fields as $meta_label => $meta_value ) : ?>
-						<div class="wp-csp-meta-row">
+						<div class="wp-sam-meta-row">
 							<strong><?php echo esc_html( $meta_label ); ?>:</strong>
 							<code><?php echo esc_html( $meta_value ); ?></code>
 						</div>
@@ -1006,7 +1006,7 @@ $scan_logs     = ! empty( $scan_logs_raw ) ? $scan_logs_raw : array();
 					</span>
 				</span>
 				<?php else : ?>
-				<span class="dashicons dashicons-info-outline wp-csp-meta-icon wp-csp-meta-icon--empty" title="<?php esc_attr_e( 'No metadata captured for this violation', 'security-automation-manager' ); ?>"></span>
+				<span class="dashicons dashicons-info-outline wp-sam-meta-icon wp-sam-meta-icon--empty" title="<?php esc_attr_e( 'No metadata captured for this violation', 'security-automation-manager' ); ?>"></span>
 				<?php endif; ?>
 			</td>
 		</tr>
@@ -1205,7 +1205,7 @@ $scan_logs     = ! empty( $scan_logs_raw ) ? $scan_logs_raw : array();
 						value="<?php echo esc_attr( $configured_report_endpoint ); ?>"
 						placeholder="<?php echo esc_attr( $current_report_endpoint ); ?>"
 						class="regular-text code" />
-					<button type="button" class="button wp-csp-use-current-report-endpoint" data-report-endpoint="<?php echo esc_attr( $current_report_endpoint ); ?>">
+					<button type="button" class="button wp-sam-use-current-report-endpoint" data-report-endpoint="<?php echo esc_attr( $current_report_endpoint ); ?>">
 						<?php esc_html_e( 'Use current site endpoint', 'security-automation-manager' ); ?>
 					</button>
 					<p class="description">
@@ -1292,4 +1292,4 @@ $scan_logs     = ! empty( $scan_logs_raw ) ? $scan_logs_raw : array();
 	<?php endif; ?>
 
 	</div><!-- .tab-content -->
-</div><!-- .wp-csp-wrap -->
+</div><!-- .wp-sam-wrap -->

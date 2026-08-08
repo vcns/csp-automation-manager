@@ -21,7 +21,7 @@ class ConflictDetectorTest extends TestCase {
 	}
 
 	public function test_scan_htaccess_detects_csp_header_directives(): void {
-		$path = tempnam( sys_get_temp_dir(), 'wp-csp-htaccess-' );
+		$path = tempnam( sys_get_temp_dir(), 'wp-sam-htaccess-' );
 		$this->assertIsString( $path );
 
 		try {
