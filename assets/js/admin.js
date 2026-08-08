@@ -1,8 +1,8 @@
 /**
- * CSP Automation Manager admin JavaScript.
- * Handles AJAX interactions on the CSP Manager admin pages.
+ * Security Automation Manager admin JavaScript.
+ * Handles AJAX interactions on the plugin's admin pages.
  */
-/* global wpCspAdmin, jQuery */
+/* global wpSamAdmin, jQuery */
 ( function ( $ ) {
 	'use strict';
 
@@ -11,22 +11,22 @@
 		const $status = $( '#wp-sam-scan-status' );
 
 		$btn.prop( 'disabled', true );
-		$status.text( wpCspAdmin.i18n.scanning ).show();
+		$status.text( wpSamAdmin.i18n.scanning ).show();
 
-		$.post( wpCspAdmin.ajaxUrl, {
-			action: 'wp_csp_manual_scan',
-			nonce:  wpCspAdmin.nonce,
+		$.post( wpSamAdmin.ajaxUrl, {
+			action: 'wp_sam_manual_scan',
+			nonce:  wpSamAdmin.nonce,
 		} )
 		.done( function ( res ) {
 			if ( res.success ) {
-				$status.text( wpCspAdmin.i18n.scanDone );
+				$status.text( wpSamAdmin.i18n.scanDone );
 				setTimeout( function () { location.reload(); }, 1500 );
 			} else {
-				$status.text( res.data.message || wpCspAdmin.i18n.scanError );
+				$status.text( res.data.message || wpSamAdmin.i18n.scanError );
 			}
 		} )
 		.fail( function () {
-			$status.text( wpCspAdmin.i18n.scanError );
+			$status.text( wpSamAdmin.i18n.scanError );
 		} )
 		.always( function () {
 			$btn.prop( 'disabled', false );
@@ -40,9 +40,9 @@
 
 		$btn.prop( 'disabled', true );
 
-		$.post( wpCspAdmin.ajaxUrl, {
-			action:  'wp_csp_toggle_mode',
-			nonce:   wpCspAdmin.nonce,
+		$.post( wpSamAdmin.ajaxUrl, {
+			action:  'wp_sam_toggle_mode',
+			nonce:   wpSamAdmin.nonce,
 			surface: surface,
 			mode:    mode,
 		} )
@@ -68,9 +68,9 @@
 
 		$select.prop( 'disabled', true );
 
-		$.post( wpCspAdmin.ajaxUrl, {
-			action:  'wp_csp_set_automation_mode',
-			nonce:   wpCspAdmin.nonce,
+		$.post( wpSamAdmin.ajaxUrl, {
+			action:  'wp_sam_set_automation_mode',
+			nonce:   wpSamAdmin.nonce,
 			surface: surface,
 			mode:    mode,
 		} )
@@ -107,7 +107,7 @@
 		}
 		if ( reason.trim() === '' ) {
 			// eslint-disable-next-line no-alert
-			alert( wpCspAdmin.i18n.reasonRequired || 'A decision reason is required.' );
+			alert( wpSamAdmin.i18n.reasonRequired || 'A decision reason is required.' );
 			return null;
 		}
 		return reason.trim();
@@ -147,9 +147,9 @@
 
 		$btn.prop( 'disabled', true );
 
-		$.post( wpCspAdmin.ajaxUrl, {
+		$.post( wpSamAdmin.ajaxUrl, {
 			action:    action,
-			nonce:     wpCspAdmin.nonce,
+			nonce:     wpSamAdmin.nonce,
 			source_id: id,
 			reason:    reason,
 		} )
@@ -169,23 +169,23 @@
 	}
 
 	$( document ).on( 'click', '.wp-sam-approve-source', function () {
-		postSourceDecision( $( this ), 'wp_csp_approve_source', 'Why should this source be approved?', 'approved', 'Approved', 'approved' );
+		postSourceDecision( $( this ), 'wp_sam_approve_source', 'Why should this source be approved?', 'approved', 'Approved', 'approved' );
 	} );
 
 	$( document ).on( 'click', '.wp-sam-deny-source', function () {
-		postSourceDecision( $( this ), 'wp_csp_deny_source', 'Why should this source be rejected and suppressed?', 'denied', 'Denied', 'rejected' );
+		postSourceDecision( $( this ), 'wp_sam_deny_source', 'Why should this source be rejected and suppressed?', 'denied', 'Denied', 'rejected' );
 	} );
 
 	$( document ).on( 'click', '.wp-sam-revert-source', function () {
-		postSourceDecision( $( this ), 'wp_csp_revert_source', 'Why should this approved source be reverted and suppressed?', 'denied', 'Denied', 'reverted' );
+		postSourceDecision( $( this ), 'wp_sam_revert_source', 'Why should this approved source be reverted and suppressed?', 'denied', 'Denied', 'reverted' );
 	} );
 
 	$( document ).on( 'click', '.wp-sam-undo-source-decision', function () {
-		postSourceDecision( $( this ), 'wp_csp_undo_source_decision', 'Why should this decision be undone?', 'pending', 'Pending', 'undone' );
+		postSourceDecision( $( this ), 'wp_sam_undo_source_decision', 'Why should this decision be undone?', 'pending', 'Pending', 'undone' );
 	} );
 
 	$( document ).on( 'click', '.wp-sam-use-current-report-endpoint', function () {
-		$( '#wp_csp_report_endpoint_url' )
+		$( '#wp_sam_report_endpoint_url' )
 			.val( $( this ).data( 'report-endpoint' ) || '' )
 			.trigger( 'change' );
 	} );

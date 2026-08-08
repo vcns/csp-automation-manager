@@ -243,7 +243,7 @@ class Admin_UI {
 
 		wp_localize_script(
 			'wp-sam-admin',
-			'wpCspAdmin',
+			'wpSamAdmin',
 			array(
 				'ajaxUrl'   => admin_url( 'admin-ajax.php' ),
 				'restUrl'   => esc_url_raw( rest_url( 'security-manager/v1/admin/' ) ),
