@@ -3,11 +3,11 @@
  * WordPress Admin UI: menus, settings API, AJAX handlers.
  *
  * Registers admin pages:
- *   1. csp-automation-manager-dashboard    – CSP Manager: surface profiles, source inventory,
+ *   1. security-automation-manager-dashboard    – CSP Manager: surface profiles, source inventory,
  *      violations, scan history, and settings (promotion gates, learning window, cron schedule,
  *      notify email), all as tabs on one page
- *   2. csp-automation-manager-policy-audit – policy history, decisions, provenance
- *   3. csp-automation-manager-readiness    – plugin-specific health checks and reset
+ *   2. security-automation-manager-policy-audit – policy history, decisions, provenance
+ *   3. security-automation-manager-readiness    – plugin-specific health checks and reset
  *
  * All form submissions are protected by check_admin_referer() and
  * current_user_can('manage_options').
@@ -15,14 +15,14 @@
 
 declare( strict_types=1 );
 
-namespace WP_CSP\Admin;
+namespace WP_SAM\Admin;
 
-use WP_CSP\Plugin;
-use WP_CSP\CSP\Automation_Config;
-use WP_CSP\CSP\Policy_Builder;
-use WP_CSP\CSP\Policy_Change_Manager;
-use WP_CSP\CSP\Policy_Version_Manager;
-use WP_CSP\CSP\Scheduler;
+use WP_SAM\Plugin;
+use WP_SAM\CSP\Automation_Config;
+use WP_SAM\CSP\Policy_Builder;
+use WP_SAM\CSP\Policy_Change_Manager;
+use WP_SAM\CSP\Policy_Version_Manager;
+use WP_SAM\CSP\Scheduler;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -43,7 +43,7 @@ class Admin_UI {
 		add_action( 'admin_init', array( $this, 'register_settings' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_assets' ) );
 		add_action( 'admin_notices', array( $this, 'display_admin_notices' ) );
-		add_filter( 'plugin_action_links_' . plugin_basename( WP_CSP_FILE ), array( $this, 'add_plugin_action_links' ) );
+		add_filter( 'plugin_action_links_' . plugin_basename( WP_SAM_FILE ), array( $this, 'add_plugin_action_links' ) );
 		add_filter( 'plugin_row_meta', array( $this, 'add_plugin_row_meta' ), 10, 2 );
 		add_filter( 'admin_footer_text', array( $this, 'filter_admin_footer_text' ) );
 
@@ -62,39 +62,39 @@ class Admin_UI {
 
 	public function add_menu_pages(): void {
 		add_menu_page(
-			__( 'CSP Manager', 'csp-automation-manager' ),
-			__( 'CSP Manager', 'csp-automation-manager' ),
+			__( 'CSP Manager', 'security-automation-manager' ),
+			__( 'CSP Manager', 'security-automation-manager' ),
 			'manage_options',
-			'csp-automation-manager-dashboard',
+			'security-automation-manager-dashboard',
 			array( $this, 'render_dashboard' ),
 			'dashicons-shield',
 			80
 		);
 
 		add_submenu_page(
-			'csp-automation-manager-dashboard',
-			__( 'CSP Manager', 'csp-automation-manager' ),
-			__( 'CSP Manager', 'csp-automation-manager' ),
+			'security-automation-manager-dashboard',
+			__( 'CSP Manager', 'security-automation-manager' ),
+			__( 'CSP Manager', 'security-automation-manager' ),
 			'manage_options',
-			'csp-automation-manager-dashboard',
+			'security-automation-manager-dashboard',
 			array( $this, 'render_dashboard' )
 		);
 
 		add_submenu_page(
-			'csp-automation-manager-dashboard',
-			__( 'Policy Audit', 'csp-automation-manager' ),
-			__( 'Policy Audit', 'csp-automation-manager' ),
+			'security-automation-manager-dashboard',
+			__( 'Policy Audit', 'security-automation-manager' ),
+			__( 'Policy Audit', 'security-automation-manager' ),
 			'manage_options',
-			'csp-automation-manager-policy-audit',
+			'security-automation-manager-policy-audit',
 			array( $this, 'render_policy_audit' )
 		);
 
 		add_submenu_page(
-			'csp-automation-manager-dashboard',
-			__( 'Readiness', 'csp-automation-manager' ),
-			__( 'Readiness', 'csp-automation-manager' ),
+			'security-automation-manager-dashboard',
+			__( 'Readiness', 'security-automation-manager' ),
+			__( 'Readiness', 'security-automation-manager' ),
 			'manage_options',
-			'csp-automation-manager-readiness',
+			'security-automation-manager-readiness',
 			array( $this, 'render_readiness' )
 		);
 	}
@@ -123,14 +123,14 @@ class Admin_UI {
 	public function add_plugin_action_links( array $links ): array {
 		$settings_link = sprintf(
 			'<a href="%1$s">%2$s</a>',
-			esc_url( admin_url( 'admin.php?page=csp-automation-manager-dashboard&tab=settings' ) ),
-			esc_html__( 'Settings', 'csp-automation-manager' )
+			esc_url( admin_url( 'admin.php?page=security-automation-manager-dashboard&tab=settings' ) ),
+			esc_html__( 'Settings', 'security-automation-manager' )
 		);
 
 		$reset_link = sprintf(
 			'<a href="%1$s">%2$s</a>',
-			esc_url( admin_url( 'admin.php?page=csp-automation-manager-readiness#wp-csp-reset' ) ),
-			esc_html__( 'Reset', 'csp-automation-manager' )
+			esc_url( admin_url( 'admin.php?page=security-automation-manager-readiness#wp-csp-reset' ) ),
+			esc_html__( 'Reset', 'security-automation-manager' )
 		);
 
 		return array(
@@ -140,13 +140,13 @@ class Admin_UI {
 	}
 
 	public function add_plugin_row_meta( array $links, string $file ): array {
-		if ( plugin_basename( WP_CSP_FILE ) !== $file ) {
+		if ( plugin_basename( WP_SAM_FILE ) !== $file ) {
 			return $links;
 		}
 
-		$update_posture = 'github' === WP_CSP_DISTRIBUTION_CHANNEL
-			? __( 'Updates: GitHub Releases channel with checksum verification.', 'csp-automation-manager' )
-			: __( 'Updates: WordPress.org package; no custom updater runs in this build.', 'csp-automation-manager' );
+		$update_posture = 'github' === WP_SAM_DISTRIBUTION_CHANNEL
+			? __( 'Updates: GitHub Releases channel with checksum verification.', 'security-automation-manager' )
+			: __( 'Updates: WordPress.org package; no custom updater runs in this build.', 'security-automation-manager' );
 
 		$links[] = sprintf(
 			'<span class="wp-csp-update-posture">%s</span>',
@@ -215,9 +215,9 @@ class Admin_UI {
 	 */
 	private function plugin_page_hooks(): array {
 		return array(
-			'toplevel_page_csp-automation-manager-dashboard',
-			'csp-manager_page_csp-automation-manager-policy-audit',
-			'csp-manager_page_csp-automation-manager-readiness',
+			'toplevel_page_security-automation-manager-dashboard',
+			'csp-manager_page_security-automation-manager-policy-audit',
+			'csp-manager_page_security-automation-manager-readiness',
 		);
 	}
 
@@ -228,16 +228,16 @@ class Admin_UI {
 
 		wp_enqueue_style(
 			'wp-csp-admin',
-			WP_CSP_URL . 'assets/css/admin.css',
+			WP_SAM_URL . 'assets/css/admin.css',
 			array(),
-			WP_CSP_VERSION
+			WP_SAM_VERSION
 		);
 
 		wp_enqueue_script(
 			'wp-csp-admin',
-			WP_CSP_URL . 'assets/js/admin.js',
+			WP_SAM_URL . 'assets/js/admin.js',
 			array( 'jquery' ),
-			WP_CSP_VERSION,
+			WP_SAM_VERSION,
 			true
 		);
 
@@ -250,10 +250,10 @@ class Admin_UI {
 				'nonce'     => wp_create_nonce( 'wp_csp_admin_nonce' ),
 				'restNonce' => wp_create_nonce( 'wp_rest' ),
 				'i18n'      => array(
-					'scanning'       => __( 'Scanning…', 'csp-automation-manager' ),
-					'scanDone'       => __( 'Scan complete.', 'csp-automation-manager' ),
-					'scanError'      => __( 'Scan failed. Check error log.', 'csp-automation-manager' ),
-					'reasonRequired' => __( 'A decision reason is required.', 'csp-automation-manager' ),
+					'scanning'       => __( 'Scanning…', 'security-automation-manager' ),
+					'scanDone'       => __( 'Scan complete.', 'security-automation-manager' ),
+					'scanError'      => __( 'Scan failed. Check error log.', 'security-automation-manager' ),
+					'reasonRequired' => __( 'A decision reason is required.', 'security-automation-manager' ),
 				),
 			)
 		);
@@ -263,31 +263,31 @@ class Admin_UI {
 
 	public function render_dashboard(): void {
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_die( esc_html__( 'You do not have permission to view this page.', 'csp-automation-manager' ) );
+			wp_die( esc_html__( 'You do not have permission to view this page.', 'security-automation-manager' ) );
 		}
-		require WP_CSP_DIR . 'includes/admin/views/page-csp-dashboard.php';
+		require WP_SAM_DIR . 'includes/admin/views/page-csp-dashboard.php';
 	}
 
 	public function render_policy_audit(): void {
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_die( esc_html__( 'You do not have permission to view this page.', 'csp-automation-manager' ) );
+			wp_die( esc_html__( 'You do not have permission to view this page.', 'security-automation-manager' ) );
 		}
-		require WP_CSP_DIR . 'includes/admin/views/page-policy-audit.php';
+		require WP_SAM_DIR . 'includes/admin/views/page-policy-audit.php';
 	}
 
 	public function render_readiness(): void {
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_die( esc_html__( 'You do not have permission to view this page.', 'csp-automation-manager' ) );
+			wp_die( esc_html__( 'You do not have permission to view this page.', 'security-automation-manager' ) );
 		}
 
 		$readiness = ( new Readiness_Checker() )->get_report();
-		require WP_CSP_DIR . 'includes/admin/views/page-readiness.php';
+		require WP_SAM_DIR . 'includes/admin/views/page-readiness.php';
 	}
 
 	public function handle_reset_data(): void {
 		check_admin_referer( 'wp_csp_reset_data' );
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_die( esc_html__( 'You do not have permission to reset plugin data.', 'csp-automation-manager' ) );
+			wp_die( esc_html__( 'You do not have permission to reset plugin data.', 'security-automation-manager' ) );
 		}
 
 		$password     = (string) wp_unslash( $_POST['wp_csp_current_password'] ?? '' );
@@ -320,7 +320,7 @@ class Admin_UI {
 	private function redirect_to_readiness( string $result ): void {
 		$url = add_query_arg(
 			array( 'wp_csp_reset' => $result ),
-			admin_url( 'admin.php?page=csp-automation-manager-readiness#wp-csp-reset' )
+			admin_url( 'admin.php?page=security-automation-manager-readiness#wp-csp-reset' )
 		);
 
 		wp_safe_redirect( $url );
@@ -344,7 +344,7 @@ class Admin_UI {
 			printf(
 				'<div class="notice notice-%1$s is-dismissible"><p><strong>%2$s</strong> [%3$s] %4$s</p></div>',
 				esc_attr( $type ),
-				esc_html__( 'CSP Automation Manager:', 'csp-automation-manager' ),
+				esc_html__( 'CSP Automation Manager:', 'security-automation-manager' ),
 				esc_html( $notice['component'] . '/' . $notice['event'] ),
 				esc_html( $notice['detail'] )
 			);
@@ -379,7 +379,7 @@ class Admin_UI {
 			wp_kses(
 				sprintf(
 					/* translators: %s: URL to WordPress core Trac ticket */
-					__( '<strong>CSP Automation Manager:</strong> The wp-admin CSP surface is in <strong>enforce mode</strong>. WordPress core <a href="%s" target="_blank" rel="noopener">Trac #59446</a> is unresolved - some admin UI components may be blocked. Monitor violation reports before keeping enforce mode active.', 'csp-automation-manager' ),
+					__( '<strong>CSP Automation Manager:</strong> The wp-admin CSP surface is in <strong>enforce mode</strong>. WordPress core <a href="%s" target="_blank" rel="noopener">Trac #59446</a> is unresolved - some admin UI components may be blocked. Monitor violation reports before keeping enforce mode active.', 'security-automation-manager' ),
 					'https://core.trac.wordpress.org/ticket/59446'
 				),
 				array(
@@ -399,7 +399,7 @@ class Admin_UI {
 	public function ajax_manual_scan(): void {
 		check_ajax_referer( 'wp_csp_admin_nonce', 'nonce' );
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'csp-automation-manager' ) ), 403 );
+			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'security-automation-manager' ) ), 403 );
 		}
 
 		$scheduler = new Scheduler( $this->plugin->audit );
@@ -448,12 +448,12 @@ class Admin_UI {
 
 	private function decide_source( int $id, string $action ): void {
 		if ( $id <= 0 ) {
-			wp_send_json_error( array( 'message' => __( 'Invalid source ID.', 'csp-automation-manager' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Invalid source ID.', 'security-automation-manager' ) ) );
 		}
 
 		$reason = sanitize_text_field( wp_unslash( $_POST['reason'] ?? '' ) );
 		if ( '' === trim( $reason ) ) {
-			wp_send_json_error( array( 'message' => __( 'A decision reason is required.', 'csp-automation-manager' ) ) );
+			wp_send_json_error( array( 'message' => __( 'A decision reason is required.', 'security-automation-manager' ) ) );
 		}
 
 		$manager = new Policy_Change_Manager( $this->plugin->audit, null, new Policy_Version_Manager( $this->plugin->policy_builder ) );
@@ -468,7 +468,7 @@ class Admin_UI {
 		}
 
 		if ( ! $ok ) {
-			wp_send_json_error( array( 'message' => __( 'Could not record policy decision.', 'csp-automation-manager' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Could not record policy decision.', 'security-automation-manager' ) ) );
 		}
 		wp_send_json_success();
 	}
@@ -523,11 +523,11 @@ class Admin_UI {
 		$mode    = sanitize_text_field( wp_unslash( $_POST['mode'] ?? '' ) );
 
 		if ( ! in_array( $surface, Automation_Config::SURFACES, true ) ) {
-			wp_send_json_error( array( 'message' => __( 'Invalid surface.', 'csp-automation-manager' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Invalid surface.', 'security-automation-manager' ) ) );
 		}
 
 		if ( ! in_array( $mode, Automation_Config::MODES, true ) ) {
-			wp_send_json_error( array( 'message' => __( 'Invalid automation mode.', 'csp-automation-manager' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Invalid automation mode.', 'security-automation-manager' ) ) );
 		}
 
 		( new Automation_Config() )->update_surface_mode( $surface, $mode );
@@ -573,7 +573,7 @@ class Admin_UI {
 		);
 
 		if ( ( $src_count + $hash_count ) === 0 ) {
-			return __( 'Cannot promote to enforce: no approved sources or hashes found for this surface. Run a scan and approve at least one source first.', 'csp-automation-manager' );
+			return __( 'Cannot promote to enforce: no approved sources or hashes found for this surface. Run a scan and approve at least one source first.', 'security-automation-manager' );
 		}
 
 		// ── Gate 2: no violations within the configured time window ───────────
@@ -594,7 +594,7 @@ class Admin_UI {
 		if ( $recent_violations > 0 ) {
 			return sprintf(
 				/* translators: 1: violation count, 2: hours */
-				__( 'Cannot promote to enforce: %1$d violation(s) recorded for this surface in the last %2$d hour(s). Resolve violations in report-only mode first, or extend the violation window in Settings.', 'csp-automation-manager' ),
+				__( 'Cannot promote to enforce: %1$d violation(s) recorded for this surface in the last %2$d hour(s). Resolve violations in report-only mode first, or extend the violation window in Settings.', 'security-automation-manager' ),
 				$recent_violations,
 				$window_hours
 			);
@@ -619,7 +619,7 @@ class Admin_UI {
 				if ( false !== $expires_ts && $expires_ts > time() ) {
 					return sprintf(
 						/* translators: 1: override owner, 2: expiry datetime */
-						__( 'Cannot promote to enforce: a temporary override set by "%1$s" is active until %2$s. Wait for it to expire or remove it before enabling enforce mode.', 'csp-automation-manager' ),
+						__( 'Cannot promote to enforce: a temporary override set by "%1$s" is active until %2$s. Wait for it to expire or remove it before enabling enforce mode.', 'security-automation-manager' ),
 						esc_html( $owner ),
 						esc_html( $expires_at )
 					);

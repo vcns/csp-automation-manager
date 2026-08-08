@@ -6,8 +6,8 @@
 declare( strict_types=1 );
 
 use PHPUnit\Framework\TestCase;
-use WP_CSP\Activator;
-use WP_CSP\Admin\Readiness_Checker;
+use WP_SAM\Activator;
+use WP_SAM\Admin\Readiness_Checker;
 
 class ReadinessCheckerTest extends TestCase {
 
@@ -28,7 +28,7 @@ class ReadinessCheckerTest extends TestCase {
 
 		$GLOBALS['_wpdb_get_var_queue'] = $get_var_queue;
 		$GLOBALS['_wp_options']         = array(
-			'wp_csp_db_version'         => WP_CSP_DB_VERSION,
+			'wp_csp_db_version'         => WP_SAM_DB_VERSION,
 			'wp_csp_automation_config'  => array(
 				'frontend' => array( 'mode' => 'manual' ),
 				'admin'    => array( 'mode' => 'manual' ),

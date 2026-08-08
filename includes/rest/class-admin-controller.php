@@ -5,11 +5,11 @@
 
 declare( strict_types=1 );
 
-namespace WP_CSP\Rest;
+namespace WP_SAM\Rest;
 
-use WP_CSP\CSP\Automation_Config;
-use WP_CSP\CSP\Policy_Version_Manager;
-use WP_CSP\Modules\Audit_Log;
+use WP_SAM\CSP\Automation_Config;
+use WP_SAM\CSP\Policy_Version_Manager;
+use WP_SAM\Modules\Audit_Log;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;

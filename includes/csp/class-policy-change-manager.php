@@ -5,9 +5,9 @@
 
 declare( strict_types=1 );
 
-namespace WP_CSP\CSP;
+namespace WP_SAM\CSP;
 
-use WP_CSP\Modules\Audit_Log;
+use WP_SAM\Modules\Audit_Log;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -424,7 +424,7 @@ class Policy_Change_Manager {
 				'deterministic_result'       => wp_json_encode( $deterministic ),
 				'evidence_snapshot'          => wp_json_encode( $this->source_evidence_snapshot( $source ) ),
 				'reverted_decision_id'       => $reverted_decision_value,
-				'software_version'           => defined( 'WP_CSP_VERSION' ) ? WP_CSP_VERSION : '',
+				'software_version'           => defined( 'WP_SAM_VERSION' ) ? WP_SAM_VERSION : '',
 				'suppression_active'         => $suppress ? 1 : 0,
 				'created_at'                 => $now,
 			),

@@ -1,12 +1,12 @@
 <?php
 /**
- * Unit tests for WP_CSP\CSP\Automation_Config.
+ * Unit tests for WP_SAM\CSP\Automation_Config.
  */
 
 declare( strict_types=1 );
 
 use PHPUnit\Framework\TestCase;
-use WP_CSP\CSP\Automation_Config;
+use WP_SAM\CSP\Automation_Config;
 
 class AutomationConfigTest extends TestCase {
 

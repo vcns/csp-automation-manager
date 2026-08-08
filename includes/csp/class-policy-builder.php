@@ -26,9 +26,9 @@
 
 declare( strict_types=1 );
 
-namespace WP_CSP\CSP;
+namespace WP_SAM\CSP;
 
-use WP_CSP\Modules\Feature_Gate;
+use WP_SAM\Modules\Feature_Gate;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -192,8 +192,8 @@ class Policy_Builder {
 	}
 
 	private function is_conflict_probe_request(): bool {
-		return isset( $_SERVER['HTTP_X_WP_CSP_PROBE'] )
-			&& '1' === (string) $_SERVER['HTTP_X_WP_CSP_PROBE'];
+		return isset( $_SERVER['HTTP_X_WP_SAM_PROBE'] )
+			&& '1' === (string) $_SERVER['HTTP_X_WP_SAM_PROBE'];
 	}
 
 	private function get_report_endpoint_url(): string {

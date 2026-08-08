@@ -6,8 +6,8 @@
 declare( strict_types=1 );
 
 use PHPUnit\Framework\TestCase;
-use WP_CSP\Activator;
-use WP_CSP\Admin\Data_Resetter;
+use WP_SAM\Activator;
+use WP_SAM\Admin\Data_Resetter;
 
 class DataResetterTest extends TestCase {
 
@@ -53,7 +53,7 @@ class DataResetterTest extends TestCase {
 		$this->assertArrayNotHasKey( 'wp_csp_remote_config', $GLOBALS['_wp_transients'] );
 		$this->assertArrayHasKey( 'unrelated_plugin_transient', $GLOBALS['_wp_transients'] );
 		$this->assertArrayHasKey( 'wp_csp_daily_scan', $GLOBALS['_wp_cron'] );
-		$this->assertSame( WP_CSP_DB_VERSION, $GLOBALS['_wp_options']['wp_csp_db_version'] );
+		$this->assertSame( WP_SAM_DB_VERSION, $GLOBALS['_wp_options']['wp_csp_db_version'] );
 		$this->assertCount( 4, $GLOBALS['_wpdb_updated_rows'] );
 		$this->assertSame(
 			array( 'frontend', 'admin', 'login', 'api' ),

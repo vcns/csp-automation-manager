@@ -15,7 +15,7 @@
 
 declare( strict_types=1 );
 
-namespace WP_CSP\Modules;
+namespace WP_SAM\Modules;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;

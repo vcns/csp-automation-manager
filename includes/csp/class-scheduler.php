@@ -11,10 +11,10 @@
 
 declare( strict_types=1 );
 
-namespace WP_CSP\CSP;
+namespace WP_SAM\CSP;
 
-use WP_CSP\Modules\Audit_Log;
-use WP_CSP\Modules\Feature_Gate;
+use WP_SAM\Modules\Audit_Log;
+use WP_SAM\Modules\Feature_Gate;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -43,7 +43,7 @@ class Scheduler {
 		$scan_id = $this->audit->start_scan( 'scheduled' );
 
 		try {
-			$plugin   = \WP_CSP\Plugin::instance();
+			$plugin   = \WP_SAM\Plugin::instance();
 			$gate     = $plugin->gate;
 			$hash_mgr = $plugin->hash_manager;
 
@@ -87,7 +87,7 @@ class Scheduler {
 		$scan_id = $this->audit->start_scan( 'manual' );
 
 		try {
-			$plugin   = \WP_CSP\Plugin::instance();
+			$plugin   = \WP_SAM\Plugin::instance();
 			$gate     = $plugin->gate;
 			$hash_mgr = $plugin->hash_manager;
 
@@ -164,15 +164,15 @@ class Scheduler {
 		}
 		$subject = sprintf(
 			/* translators: %s: site name */
-			__( '[%s] CSP Automation: policy changed after scheduled scan', 'csp-automation-manager' ),
+			__( '[%s] CSP Automation: policy changed after scheduled scan', 'security-automation-manager' ),
 			get_bloginfo( 'name' )
 		);
 		$message = sprintf(
 			/* translators: 1: sources added, 2: hashes removed */
-			__( "The scheduled CSP rescan completed.\n\nSources added: %1\$d\nHashes retired: %2\$d\n\nReview the dashboard: %3\$s", 'csp-automation-manager' ),
+			__( "The scheduled CSP rescan completed.\n\nSources added: %1\$d\nHashes retired: %2\$d\n\nReview the dashboard: %3\$s", 'security-automation-manager' ),
 			$results['sources_added'],
 			$results['hashes_removed'],
-			admin_url( 'admin.php?page=csp-automation-manager-dashboard' )
+			admin_url( 'admin.php?page=security-automation-manager-dashboard' )
 		);
 		wp_mail( $email, $subject, $message );
 	}

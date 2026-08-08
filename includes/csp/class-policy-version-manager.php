@@ -5,9 +5,9 @@
 
 declare( strict_types=1 );
 
-namespace WP_CSP\CSP;
+namespace WP_SAM\CSP;
 
-use WP_CSP\Modules\Feature_Gate;
+use WP_SAM\Modules\Feature_Gate;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -49,7 +49,7 @@ class Policy_Version_Manager {
 				'previous_version_id' => isset( $previous['id'] ) ? (int) $previous['id'] : null,
 				'trigger_type'        => $this->normalise_token( $trigger_type, 32 ),
 				'trigger_id'          => $trigger_id > 0 ? $trigger_id : null,
-				'software_version'    => defined( 'WP_CSP_VERSION' ) ? WP_CSP_VERSION : '',
+				'software_version'    => defined( 'WP_SAM_VERSION' ) ? WP_SAM_VERSION : '',
 				'created_at'          => current_time( 'mysql', true ),
 			),
 			array( '%s', '%d', '%s', '%s', '%s', '%d', '%s', '%d', '%s', '%s' )

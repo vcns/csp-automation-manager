@@ -1,6 +1,6 @@
 <?php
 /**
- * Unit tests for WP_CSP\CSP\Violation_Reporter.
+ * Unit tests for WP_SAM\CSP\Violation_Reporter.
  *
  * Tests normalisation of both CSP Level 3 and Reporting API payloads,
  * deduplication fingerprint generation, rate limiting, and edge cases.
@@ -10,9 +10,9 @@
 declare( strict_types=1 );
 
 use PHPUnit\Framework\TestCase;
-use WP_CSP\CSP\Learning_Window;
-use WP_CSP\CSP\Violation_Reporter;
-use WP_CSP\Modules\Audit_Log;
+use WP_SAM\CSP\Learning_Window;
+use WP_SAM\CSP\Violation_Reporter;
+use WP_SAM\Modules\Audit_Log;
 
 class ViolationReporterTest extends TestCase {
 

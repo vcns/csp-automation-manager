@@ -14,9 +14,9 @@
 
 declare( strict_types=1 );
 
-namespace WP_CSP\CSP;
+namespace WP_SAM\CSP;
 
-use WP_CSP\Modules\Audit_Log;
+use WP_SAM\Modules\Audit_Log;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;

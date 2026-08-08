@@ -2,7 +2,7 @@
 
 ## Overview
 
-The plugin creates custom tables on activation. All table names are prefixed with the site's configured WordPress table prefix (default `wp_`). Tables are created and migrated via `dbDelta()` in `includes/class-activator.php`; the current schema version is tracked in the `wp_csp_db_version` option and compared against the `WP_CSP_DB_VERSION` constant on every boot.
+The plugin creates custom tables on activation. All table names are prefixed with the site's configured WordPress table prefix (default `wp_`). Tables are created and migrated via `dbDelta()` in `includes/class-activator.php`; the current schema version is tracked in the `wp_csp_db_version` option and compared against the `WP_SAM_DB_VERSION` constant on every boot.
 
 | Version | Change |
 |---------|--------|
@@ -176,7 +176,7 @@ Key columns:
 
 - `id`
 - `site_identity` — truncated SHA-256 hash of the site URL; binds the entitlement to a specific WordPress install
-- `product_key` — identifies the premium product tier (e.g. `csp-automation-manager`)
+- `product_key` — identifies the premium product tier (e.g. `security-automation-manager`)
 - `tier` — `free`, `pro`
 - `status` — `active`, `revoked`, `expired`, `grace`
 - `stripe_customer_id`, `stripe_session_id`, `stripe_payment_intent_id`
@@ -360,7 +360,7 @@ If performance issues appear under high violation volume, first review:
 
 Whenever schema changes are introduced:
 
-1. Increment `WP_CSP_DB_VERSION` in `csp-automation-manager.php`.
+1. Increment `WP_SAM_DB_VERSION` in `security-automation-manager.php`.
 2. Update the `CREATE TABLE` SQL in `includes/class-activator.php`. `dbDelta()` handles adding new columns and new tables; it cannot drop columns or change column types.
 3. Add explicit upgrade logic in `Plugin::maybe_upgrade_db()` for any change that `dbDelta()` cannot handle automatically.
 4. Update this document, the version table at the top of this file, and `CHANGELOG.md`.
@@ -372,7 +372,7 @@ Whenever schema changes are introduced:
 
 - all plugin tables are created if absent
 - default settings and default per-surface policy profiles are seeded
-- the `wp_csp_db_version` option is set to `WP_CSP_DB_VERSION`
+- the `wp_csp_db_version` option is set to `WP_SAM_DB_VERSION`
 
 ### Updated during runtime
 

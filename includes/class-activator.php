@@ -10,7 +10,7 @@
 
 declare( strict_types=1 );
 
-namespace WP_CSP;
+namespace WP_SAM;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -385,7 +385,7 @@ class Activator {
 ) {$cc};"
 		);
 
-		update_option( 'wp_csp_db_version', WP_CSP_DB_VERSION );
+		update_option( 'wp_csp_db_version', WP_SAM_DB_VERSION );
 	}
 
 	private static function migrate_violation_report_rollups(): void {
@@ -557,13 +557,13 @@ class Activator {
 	}
 
 	private static function seed_initial_policy_versions(): void {
-		if ( ! class_exists( 'WP_CSP\CSP\Policy_Version_Manager' ) ) {
+		if ( ! class_exists( 'WP_SAM\CSP\Policy_Version_Manager' ) ) {
 			return;
 		}
 
 		global $wpdb;
 		$table   = $wpdb->prefix . 'csp_policy_versions';
-		$manager = new \WP_CSP\CSP\Policy_Version_Manager();
+		$manager = new \WP_SAM\CSP\Policy_Version_Manager();
 
 		if ( ! self::table_exists( $table ) ) {
 			return;
@@ -660,6 +660,6 @@ class Activator {
 	}
 
 	public static function mark_schema_verified(): void {
-		update_option( 'wp_csp_schema_verified_version', WP_CSP_DB_VERSION );
+		update_option( 'wp_csp_schema_verified_version', WP_SAM_DB_VERSION );
 	}
 }

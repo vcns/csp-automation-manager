@@ -5,7 +5,7 @@
 
 declare( strict_types=1 );
 
-namespace WP_CSP\CSP;
+namespace WP_SAM\CSP;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -47,10 +47,10 @@ class Automation_Config {
 
 	public static function mode_labels(): array {
 		return array(
-			self::MODE_MANUAL                         => __( 'Manual', 'csp-automation-manager' ),
-			self::MODE_AUTOMATIC_MEDIUM_HIGH_APPROVAL => __( 'Automatic (with medium+high approvals)', 'csp-automation-manager' ),
-			self::MODE_AUTOMATIC_HIGH_APPROVAL        => __( 'Automatic (with high approvals only)', 'csp-automation-manager' ),
-			self::MODE_FULLY_AUTOMATIC                => __( 'Fully Automatic', 'csp-automation-manager' ),
+			self::MODE_MANUAL                         => __( 'Manual', 'security-automation-manager' ),
+			self::MODE_AUTOMATIC_MEDIUM_HIGH_APPROVAL => __( 'Automatic (with medium+high approvals)', 'security-automation-manager' ),
+			self::MODE_AUTOMATIC_HIGH_APPROVAL        => __( 'Automatic (with high approvals only)', 'security-automation-manager' ),
+			self::MODE_FULLY_AUTOMATIC                => __( 'Fully Automatic', 'security-automation-manager' ),
 		);
 	}
 

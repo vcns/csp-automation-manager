@@ -1,14 +1,14 @@
 <?php
 /**
- * Unit tests for WP_CSP\CSP\Policy_Change_Manager.
+ * Unit tests for WP_SAM\CSP\Policy_Change_Manager.
  */
 
 declare( strict_types=1 );
 
 use PHPUnit\Framework\TestCase;
-use WP_CSP\CSP\Automation_Config;
-use WP_CSP\CSP\Policy_Change_Manager;
-use WP_CSP\Modules\Audit_Log;
+use WP_SAM\CSP\Automation_Config;
+use WP_SAM\CSP\Policy_Change_Manager;
+use WP_SAM\Modules\Audit_Log;
 
 class PolicyChangeManagerTest extends TestCase {
 

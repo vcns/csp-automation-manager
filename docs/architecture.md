@@ -17,12 +17,12 @@ CSP Automation Manager is a WordPress plugin that helps site owners roll out str
 
 ### Bootstrap
 
-`csp-automation-manager.php`
+`security-automation-manager.php`
 
 Responsibilities:
 
 - declares plugin metadata
-- defines version, path, and DB version constants (`WP_CSP_DB_VERSION`)
+- defines version, path, and DB version constants (`WP_SAM_DB_VERSION`)
 - registers the autoloader
 - wires activation and deactivation hooks
 - starts the plugin on `plugins_loaded`
@@ -50,7 +50,7 @@ Responsibilities:
 - construct shared services
 - register REST routes
 - register admin UI and CSP runtime hooks
-- run DB schema migrations via `maybe_upgrade_db()` on each boot when `WP_CSP_DB_VERSION` exceeds the stored option value, when the current schema has not yet been verified, or when an admin request detects missing plugin tables
+- run DB schema migrations via `maybe_upgrade_db()` on each boot when `WP_SAM_DB_VERSION` exceeds the stored option value, when the current schema has not yet been verified, or when an admin request detects missing plugin tables
 - expose the central singleton used by cross-cutting helpers
 
 ### CSP runtime
@@ -106,7 +106,7 @@ Responsibilities:
 
 1. WordPress loads the plugin file.
 2. The plugin singleton is initialized on `plugins_loaded`.
-3. `maybe_upgrade_db()` compares `WP_CSP_DB_VERSION` against the stored option and the schema verification marker; if either is stale, `Activator::activate()` is called and `dbDelta()` migrates or repairs the schema. Admin requests also check for missing plugin tables so a partially upgraded installation can self-heal.
+3. `maybe_upgrade_db()` compares `WP_SAM_DB_VERSION` against the stored option and the schema verification marker; if either is stale, `Activator::activate()` is called and `dbDelta()` migrates or repairs the schema. Admin requests also check for missing plugin tables so a partially upgraded installation can self-heal.
 4. Shared services are instantiated.
 5. Hooks for admin UI, REST endpoints, nonce generation, CSP emission, cron, and conflict detection are registered.
 

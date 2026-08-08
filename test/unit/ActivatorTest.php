@@ -1,6 +1,6 @@
 <?php
 /**
- * Unit tests for WP_CSP\Activator.
+ * Unit tests for WP_SAM\Activator.
  *
  * Focuses on the parts that can run without a real database:
  *   - Default options are seeded with correct keys and values.
@@ -14,7 +14,7 @@
 declare( strict_types=1 );
 
 use PHPUnit\Framework\TestCase;
-use WP_CSP\Activator;
+use WP_SAM\Activator;
 
 class ActivatorTest extends TestCase {
 

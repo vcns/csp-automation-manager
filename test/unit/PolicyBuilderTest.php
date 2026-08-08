@@ -1,6 +1,6 @@
 <?php
 /**
- * Unit tests for WP_CSP\CSP\Policy_Builder.
+ * Unit tests for WP_SAM\CSP\Policy_Builder.
  *
  * Focuses on build_policy_string() which assembles the CSP header value.
  * Header emission itself is not tested here as it requires PHP header state.
@@ -9,8 +9,8 @@
 declare( strict_types=1 );
 
 use PHPUnit\Framework\TestCase;
-use WP_CSP\CSP\Policy_Builder;
-use WP_CSP\Modules\Feature_Gate;
+use WP_SAM\CSP\Policy_Builder;
+use WP_SAM\Modules\Feature_Gate;
 
 class PolicyBuilderTest extends TestCase {
 

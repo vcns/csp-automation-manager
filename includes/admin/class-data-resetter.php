@@ -5,9 +5,9 @@
 
 declare( strict_types=1 );
 
-namespace WP_CSP\Admin;
+namespace WP_SAM\Admin;
 
-use WP_CSP\Activator;
+use WP_SAM\Activator;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;

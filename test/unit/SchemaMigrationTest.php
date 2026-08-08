@@ -6,7 +6,7 @@
 declare( strict_types=1 );
 
 use PHPUnit\Framework\TestCase;
-use WP_CSP\Activator;
+use WP_SAM\Activator;
 
 class SchemaMigrationTest extends TestCase {
 
@@ -23,8 +23,8 @@ class SchemaMigrationTest extends TestCase {
 			$this->assertStringContainsString( "CREATE TABLE {$GLOBALS['wpdb']->prefix}{$table}", $schema );
 		}
 
-		$this->assertSame( WP_CSP_DB_VERSION, get_option( 'wp_csp_db_version' ) );
-		$this->assertSame( WP_CSP_DB_VERSION, get_option( 'wp_csp_schema_verified_version' ) );
+		$this->assertSame( WP_SAM_DB_VERSION, get_option( 'wp_csp_db_version' ) );
+		$this->assertSame( WP_SAM_DB_VERSION, get_option( 'wp_csp_schema_verified_version' ) );
 	}
 
 	public function test_schema_v6_violation_rollup_columns_are_declared(): void {
@@ -74,14 +74,14 @@ class SchemaMigrationTest extends TestCase {
 
 		Activator::activate();
 
-		$this->assertSame( WP_CSP_DB_VERSION, get_option( 'wp_csp_db_version' ) );
+		$this->assertSame( WP_SAM_DB_VERSION, get_option( 'wp_csp_db_version' ) );
 	}
 
 	public function test_repeated_activation_remains_idempotent_for_schema_version(): void {
 		Activator::activate();
 		Activator::activate();
 
-		$this->assertSame( WP_CSP_DB_VERSION, get_option( 'wp_csp_db_version' ) );
+		$this->assertSame( WP_SAM_DB_VERSION, get_option( 'wp_csp_db_version' ) );
 	}
 
 	public function test_missing_table_names_reports_absent_plugin_tables(): void {

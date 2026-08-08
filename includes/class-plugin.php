@@ -9,19 +9,19 @@
 
 declare( strict_types=1 );
 
-namespace WP_CSP;
+namespace WP_SAM;
 
-use WP_CSP\Admin\Admin_UI;
-use WP_CSP\CSP\Conflict_Detector;
-use WP_CSP\CSP\Hash_Manager;
-use WP_CSP\CSP\Learning_Window;
-use WP_CSP\CSP\Nonce_Manager;
-use WP_CSP\CSP\Policy_Builder;
-use WP_CSP\CSP\Scheduler;
-use WP_CSP\CSP\Violation_Reporter;
-use WP_CSP\Modules\Audit_Log;
-use WP_CSP\Modules\Feature_Gate;
-use WP_CSP\Rest\Admin_Controller;
+use WP_SAM\Admin\Admin_UI;
+use WP_SAM\CSP\Conflict_Detector;
+use WP_SAM\CSP\Hash_Manager;
+use WP_SAM\CSP\Learning_Window;
+use WP_SAM\CSP\Nonce_Manager;
+use WP_SAM\CSP\Policy_Builder;
+use WP_SAM\CSP\Scheduler;
+use WP_SAM\CSP\Violation_Reporter;
+use WP_SAM\Modules\Audit_Log;
+use WP_SAM\Modules\Feature_Gate;
+use WP_SAM\Rest\Admin_Controller;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -66,9 +66,9 @@ final class Plugin {
 
 	private function load_textdomain(): void {
 		load_plugin_textdomain(
-			'csp-automation-manager',
+			'security-automation-manager',
 			false,
-			dirname( plugin_basename( WP_CSP_FILE ) ) . '/languages'
+			dirname( plugin_basename( WP_SAM_FILE ) ) . '/languages'
 		);
 	}
 
@@ -78,8 +78,8 @@ final class Plugin {
 		$installed = (int) get_option( 'wp_csp_db_version', 0 );
 		$verified  = (string) get_option( 'wp_csp_schema_verified_version', '' );
 		if (
-			$installed < (int) WP_CSP_DB_VERSION
-			|| (string) WP_CSP_DB_VERSION !== $verified
+			$installed < (int) WP_SAM_DB_VERSION
+			|| (string) WP_SAM_DB_VERSION !== $verified
 			|| ( is_admin() && ! empty( Activator::get_missing_table_names() ) )
 		) {
 			Activator::activate();

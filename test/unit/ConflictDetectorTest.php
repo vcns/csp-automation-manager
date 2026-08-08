@@ -1,13 +1,13 @@
 <?php
 /**
- * Unit tests for WP_CSP\CSP\Conflict_Detector.
+ * Unit tests for WP_SAM\CSP\Conflict_Detector.
  */
 
 declare( strict_types=1 );
 
 use PHPUnit\Framework\TestCase;
-use WP_CSP\CSP\Conflict_Detector;
-use WP_CSP\Modules\Audit_Log;
+use WP_SAM\CSP\Conflict_Detector;
+use WP_SAM\Modules\Audit_Log;
 
 class ConflictDetectorTest extends TestCase {
 

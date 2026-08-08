@@ -1,6 +1,6 @@
 <?php
 /**
- * Unit tests for WP_CSP\Modules\Config_Resolver.
+ * Unit tests for WP_SAM\Modules\Config_Resolver.
  *
  * Tests the two-path URL resolution (DNS + fallback), stale cache behaviour,
  * signature bypass when sodium is unavailable, and expiry checking.
@@ -10,8 +10,8 @@
 declare( strict_types=1 );
 
 use PHPUnit\Framework\TestCase;
-use WP_CSP\Modules\Audit_Log;
-use WP_CSP\Modules\Config_Resolver;
+use WP_SAM\Modules\Audit_Log;
+use WP_SAM\Modules\Config_Resolver;
 
 class ConfigResolverTest extends TestCase {
 

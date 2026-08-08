@@ -1,12 +1,12 @@
 <?php
 /**
- * Unit tests for WP_CSP\Modules\Github_Update_Checker.
+ * Unit tests for WP_SAM\Modules\Github_Update_Checker.
  */
 
 declare( strict_types=1 );
 
 use PHPUnit\Framework\TestCase;
-use WP_CSP\Modules\Github_Update_Checker;
+use WP_SAM\Modules\Github_Update_Checker;
 
 class GithubUpdateCheckerTest extends TestCase {
 
@@ -19,37 +19,37 @@ class GithubUpdateCheckerTest extends TestCase {
 
 		$checker   = new Github_Update_Checker();
 		$transient = (object) array(
-			'checked'   => array( WP_CSP_PLUGIN_BASENAME => WP_CSP_VERSION ),
+			'checked'   => array( WP_SAM_PLUGIN_BASENAME => WP_SAM_VERSION ),
 			'response'  => array(),
 			'no_update' => array(),
 		);
 
 		$result = $checker->inject_update( $transient );
 
-		$item = $result->response[ WP_CSP_PLUGIN_BASENAME ] ?? null;
+		$item = $result->response[ WP_SAM_PLUGIN_BASENAME ] ?? null;
 		$this->assertIsObject( $item );
 		$this->assertSame( '1.0.17', $item->new_version );
 		$this->assertSame( 'https://vcns.github.io/wp-updates/csp-automation-manager/csp-automation-manager-github-v1.0.17.zip', $item->package );
-		$this->assertArrayNotHasKey( WP_CSP_PLUGIN_BASENAME, $result->no_update );
+		$this->assertArrayNotHasKey( WP_SAM_PLUGIN_BASENAME, $result->no_update );
 	}
 
 	public function test_current_manifest_version_populates_no_update_without_package(): void {
-		$GLOBALS['_wp_remote_get_response'] = $this->response( $this->manifest( WP_CSP_VERSION ) );
+		$GLOBALS['_wp_remote_get_response'] = $this->response( $this->manifest( WP_SAM_VERSION ) );
 
 		$checker   = new Github_Update_Checker();
 		$transient = (object) array(
-			'checked'   => array( WP_CSP_PLUGIN_BASENAME => WP_CSP_VERSION ),
+			'checked'   => array( WP_SAM_PLUGIN_BASENAME => WP_SAM_VERSION ),
 			'response'  => array(),
 			'no_update' => array(),
 		);
 
 		$result = $checker->inject_update( $transient );
 
-		$item = $result->no_update[ WP_CSP_PLUGIN_BASENAME ] ?? null;
+		$item = $result->no_update[ WP_SAM_PLUGIN_BASENAME ] ?? null;
 		$this->assertIsObject( $item );
-		$this->assertSame( WP_CSP_VERSION, $item->new_version );
+		$this->assertSame( WP_SAM_VERSION, $item->new_version );
 		$this->assertSame( '', $item->package );
-		$this->assertArrayNotHasKey( WP_CSP_PLUGIN_BASENAME, $result->response );
+		$this->assertArrayNotHasKey( WP_SAM_PLUGIN_BASENAME, $result->response );
 	}
 
 	public function test_invalid_manifest_does_not_offer_update(): void {
@@ -60,7 +60,7 @@ class GithubUpdateCheckerTest extends TestCase {
 
 		$checker   = new Github_Update_Checker();
 		$transient = (object) array(
-			'checked'   => array( WP_CSP_PLUGIN_BASENAME => WP_CSP_VERSION ),
+			'checked'   => array( WP_SAM_PLUGIN_BASENAME => WP_SAM_VERSION ),
 			'response'  => array(),
 			'no_update' => array(),
 		);
@@ -101,7 +101,7 @@ class GithubUpdateCheckerTest extends TestCase {
 			false,
 			$package,
 			new stdClass(),
-			array( 'plugin' => WP_CSP_PLUGIN_BASENAME )
+			array( 'plugin' => WP_SAM_PLUGIN_BASENAME )
 		);
 
 		$this->assertSame( $tmp, $result );
@@ -125,7 +125,7 @@ class GithubUpdateCheckerTest extends TestCase {
 			false,
 			$manifest['download_url'],
 			new stdClass(),
-			array( 'plugins' => array( WP_CSP_PLUGIN_BASENAME ) )
+			array( 'plugins' => array( WP_SAM_PLUGIN_BASENAME ) )
 		);
 
 		$this->assertInstanceOf( WP_Error::class, $result );
@@ -147,7 +147,7 @@ class GithubUpdateCheckerTest extends TestCase {
 
 	public function test_auto_update_kill_switch_defers_when_constant_is_absent(): void {
 		$checker = new Github_Update_Checker();
-		$item    = (object) array( 'plugin' => WP_CSP_PLUGIN_BASENAME );
+		$item    = (object) array( 'plugin' => WP_SAM_PLUGIN_BASENAME );
 
 		$this->assertTrue( $checker->auto_update_gate( true, $item ) );
 		$this->assertFalse( $checker->auto_update_gate( false, $item ) );
