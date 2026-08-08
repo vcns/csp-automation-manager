@@ -94,7 +94,8 @@ Responsibilities:
 
 Responsibilities:
 
-- render dashboard, settings, policy audit, and readiness pages
+- render the tabbed CSP Manager page (Start Here, Profiles, For Review, Policy Changes, Violations, Scan Log, and Settings, all as tabs on one admin page), plus the separate Policy Audit and Readiness pages
+- support full-dataset sorting and per-column filtering on the Violations, For Review, and Policy Changes tables
 - support source review and mode switching
 - trigger scans and config refreshes
 - surface one-per-session warnings for known platform constraints (e.g. wp-admin strict CSP limitation)
@@ -170,7 +171,7 @@ Conflicts are warning-level audit events. The detector never removes or rewrites
 3. High-risk proposals include script/style execution, connection, form, frame, worker, wildcard, cleartext HTTP, broad browser schemes, and unsafe keyword patterns.
 4. `Decision_Engine` evaluates proposals through versioned deterministic rules and returns risk, hard exclusions, automation eligibility, and rule findings.
 5. Administrators approve, reject, revert, or undo decisions from the For Review queue. Every material administrator decision requires a reason.
-6. When a surface is explicitly configured for automation, emergency disable is off, and a per-run limit is set, deterministic low-risk proposals may be approved automatically with actor `automation_engine`.
+6. When a surface is explicitly configured for automation and a per-run limit is set, deterministic low-risk proposals may be approved automatically with actor `automation_engine`. Automation Mode alone gates eligibility — there is no separate kill-switch field; setting a surface to Manual is the way to stop automatic approvals.
 7. Medium, high, unknown, ambiguous, hard-excluded, disallowed-scheme, excluded-directive, and AI-agreement-required proposals remain pending for administrator review.
 8. Every decision is appended to `csp_policy_change_decisions`, mirrored to `csp_audit_log`, and linked to deterministic rule findings in `csp_decision_rule_evaluations`.
 9. Approved, automatically approved, and reverted decisions capture a `csp_policy_versions` snapshot for the affected surface.
@@ -188,7 +189,7 @@ Conflicts are warning-level audit events. The detector never removes or rewrites
 
 1. Administrators open **CSP Manager -> Readiness**.
 2. `Readiness_Checker` reports plugin version, installed schema version, expected custom tables, plugin-owned row counts, reporting endpoint validity, policy header emission mode, scheduled scan status, policy-profile presence, policy-version snapshot presence, and automation posture.
-3. The Installed Plugins row exposes **Settings** and **Reset** action links; Reset opens the readiness page at the destructive reset panel.
+3. The Installed Plugins row exposes **Settings** and **Reset** action links; Settings opens the CSP Manager page's Settings tab, and Reset opens the readiness page at the destructive reset panel.
 4. Reset requires `manage_options`, a valid WordPress nonce, the current logged-in administrator's password, and the typed phrase `RESET CSP DATA`.
 5. `Data_Resetter` clears rows from plugin-owned custom tables, deletes plugin-owned runtime options and transients, clears the plugin daily scan schedule, and then runs `Activator::activate()` to reseed default options, policy profiles, policy snapshots, and cron.
 6. After reseeding, reset sets every policy profile to `disabled` so the plugin does not emit CSP headers until an administrator deliberately restarts rollout in report-only or enforce mode.

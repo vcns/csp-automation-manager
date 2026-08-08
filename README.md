@@ -23,6 +23,9 @@ It provides per-surface CSP profiles, nonce injection, source discovery, violati
 - Policy Audit admin view and privileged admin REST endpoints for current policy, pending reviews, decisions, history, and manual automation configuration
 - Readiness admin view for plugin-specific schema and runtime checks, with an authenticated reset flow that clears CSP data and disables header emission until rollout is restarted
 - Automation configuration scaffold that defaults every surface to `manual`; no proposal is auto-approved on install or upgrade
+- Full-dataset sorting and per-column filtering on the Violations, For Review, and Policy Changes tables, with pagination-safe filter state
+- Per-row metadata icon on the Violations table showing document URI, source file, line/column, referrer, user agent, and any captured data-URI payload
+- A "Start Here" tab covering the report-only, learning-window, and manual-promotion workflow, and a single tabbed CSP Manager page combining Profiles, For Review, Policy Changes, Violations, Scan Log, and Settings
 - Multi-surface scan support
 - `strict-dynamic` with automatic host-source suppression
 - Trusted Types directives, report-only by default
@@ -61,18 +64,19 @@ The GitHub-channel ZIP includes a checksum-verified updater that uses WordPress'
 ## Getting Started
 
 1. Install and activate the plugin.
-2. Run an initial scan from the CSP Manager dashboard.
-3. Review and approve only the external sources your site actually requires.
-4. Reject or revert unwanted sources so the same fingerprint is suppressed from future proposals.
-5. Use the Policy Audit page to inspect why a proposal exists and what policy version resulted from decisions.
-6. Use the Readiness page when validating schema health or deliberately resetting CSP data for a clean rollout attempt.
-7. After a reset, re-enable the required surfaces in report-only mode when you are ready to restart rollout.
-8. Stay in report-only mode until violations are understood.
-9. Promote one surface at a time into enforce mode.
+2. Open **CSP Manager**; the Start Here tab explains the workflow below.
+3. Run an initial scan from the Profiles tab.
+4. Review and approve only the external sources your site actually requires from the For Review tab.
+5. Reject or revert unwanted sources so the same fingerprint is suppressed from future proposals.
+6. Use the Policy Audit page to inspect why a proposal exists and what policy version resulted from decisions.
+7. Use the Readiness page when validating schema health or deliberately resetting CSP data for a clean rollout attempt.
+8. After a reset, re-enable the required surfaces in report-only mode when you are ready to restart rollout.
+9. Stay in report-only mode until violations are understood.
+10. Promote one surface at a time into enforce mode.
 
 ## Automation Posture
 
-Automation defaults to `Manual` for every surface. Administrators may explicitly select each surface posture from the Profiles tab or Settings page:
+Automation defaults to `Manual` for every surface. Administrators may explicitly select each surface posture from the Profiles tab or the Settings tab:
 
 - `Manual`
 - `Automatic (with medium+high approvals)`
