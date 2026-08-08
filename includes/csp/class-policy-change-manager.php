@@ -493,10 +493,6 @@ class Policy_Change_Manager {
 			return false;
 		}
 
-		if ( ! empty( $automation['emergency_disabled'] ) ) {
-			return false;
-		}
-
 		$max_changes = (int) ( $automation['max_automatic_changes_per_scan'] ?? 0 );
 		if ( $max_changes <= 0 || $this->automatic_changes_this_run >= $max_changes ) {
 			return false;

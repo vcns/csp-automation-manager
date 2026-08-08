@@ -81,7 +81,6 @@ class PolicyChangeManagerTest extends TestCase {
 			array(
 				'frontend' => array(
 					'mode'                           => Automation_Config::MODE_AUTOMATIC_MEDIUM_HIGH_APPROVAL,
-					'emergency_disabled'             => false,
 					'max_automatic_changes_per_scan' => 2,
 					'allowed_source_schemes'         => array( 'https' ),
 				),

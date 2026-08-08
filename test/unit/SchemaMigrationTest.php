@@ -56,6 +56,16 @@ class SchemaMigrationTest extends TestCase {
 		$this->assertStringNotContainsString( 'KEY trigger (trigger_type, trigger_id)', $schema );
 	}
 
+	public function test_schema_v8_sort_and_filter_indexes_are_declared(): void {
+		Activator::activate();
+
+		$schema = implode( "\n\n", $GLOBALS['_dbdelta_queries'] );
+
+		$this->assertStringContainsString( 'KEY last_seen_at (last_seen_at)', $schema );
+		$this->assertStringContainsString( 'KEY source_host (source_host(191))', $schema );
+		$this->assertStringContainsString( 'KEY occurrence_count (occurrence_count)', $schema );
+	}
+
 	/**
 	 * @dataProvider legacy_schema_version_provider
 	 */
@@ -114,6 +124,7 @@ class SchemaMigrationTest extends TestCase {
 			'v4' => array( '4' ),
 			'v5' => array( '5' ),
 			'v6' => array( '6' ),
+			'v7' => array( '7' ),
 		);
 	}
 
