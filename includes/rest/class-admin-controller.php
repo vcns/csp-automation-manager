@@ -29,7 +29,7 @@ class Admin_Controller {
 
 	public function register_routes(): void {
 		register_rest_route(
-			'csp-manager/v1',
+			'security-manager/v1',
 			'/admin/policies',
 			array(
 				'methods'             => \WP_REST_Server::READABLE,
@@ -39,7 +39,7 @@ class Admin_Controller {
 		);
 
 		register_rest_route(
-			'csp-manager/v1',
+			'security-manager/v1',
 			'/admin/policies/(?P<surface>[a-z-]+)/history',
 			array(
 				'methods'             => \WP_REST_Server::READABLE,
@@ -49,7 +49,7 @@ class Admin_Controller {
 		);
 
 		register_rest_route(
-			'csp-manager/v1',
+			'security-manager/v1',
 			'/admin/policy-versions/(?P<id>\d+)',
 			array(
 				'methods'             => \WP_REST_Server::READABLE,
@@ -59,7 +59,7 @@ class Admin_Controller {
 		);
 
 		register_rest_route(
-			'csp-manager/v1',
+			'security-manager/v1',
 			'/admin/policy-versions/(?P<id>\d+)/diff',
 			array(
 				'methods'             => \WP_REST_Server::READABLE,
@@ -69,7 +69,7 @@ class Admin_Controller {
 		);
 
 		register_rest_route(
-			'csp-manager/v1',
+			'security-manager/v1',
 			'/admin/decisions',
 			array(
 				'methods'             => \WP_REST_Server::READABLE,
@@ -79,7 +79,7 @@ class Admin_Controller {
 		);
 
 		register_rest_route(
-			'csp-manager/v1',
+			'security-manager/v1',
 			'/admin/decisions/(?P<id>\d+)',
 			array(
 				'methods'             => \WP_REST_Server::READABLE,
@@ -89,7 +89,7 @@ class Admin_Controller {
 		);
 
 		register_rest_route(
-			'csp-manager/v1',
+			'security-manager/v1',
 			'/admin/reviews/pending',
 			array(
 				'methods'             => \WP_REST_Server::READABLE,
@@ -99,7 +99,7 @@ class Admin_Controller {
 		);
 
 		register_rest_route(
-			'csp-manager/v1',
+			'security-manager/v1',
 			'/admin/automation-config',
 			array(
 				array(

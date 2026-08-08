@@ -121,7 +121,7 @@ Responsibilities:
 7. If enabled and licensed, `'strict-dynamic'` is appended to `script-src`; approved host sources are suppressed from `script-src` at this point (browsers silently ignore host allowlists when `strict-dynamic` is present — CSP3 §8.2).
 8. `sandbox` is skipped if null or if the profile is in report-only mode (CSP spec — `sandbox` is ignored in `Content-Security-Policy-Report-Only`).
 9. Trusted Types directives (`require-trusted-types-for`, `trusted-types`) are skipped when their arrays are empty; when enabled they are always emitted as report-only regardless of surface mode.
-10. The reporting endpoint is resolved from `wp_csp_report_endpoint_url` when an administrator has configured an absolute `http` or `https` override; otherwise it falls back to `rest_url( 'csp-manager/v1/report' )`.
+10. The reporting endpoint is resolved from `wp_csp_report_endpoint_url` when an administrator has configured an absolute `http` or `https` override; otherwise it falls back to `rest_url( 'security-manager/v1/report' )`.
 11. The CSP includes `report-uri <report_uri>` by default so browser reports are delivered directly and promptly to the local learning endpoint.
 12. If `wp_csp_reporting_transport` is set to `both` or `report-to`, two additional Reporting API headers are emitted before the CSP header:
     - `Reporting-Endpoints: csp-endpoint="<report_uri>"` — Structured Fields Dictionary (RFC 9651); required for browsers to honour `report-to csp-endpoint` in the CSP
@@ -153,7 +153,7 @@ Conflicts are warning-level audit events. The detector never removes or rewrites
 
 ### 4. Violation ingestion flow
 
-1. Browser submits a violation report to the configured reporting endpoint. By default this is `/wp-json/csp-manager/v1/report`; proxy/CDN deployments can advertise an administrator-provided public URL that must route back to this plugin endpoint for local learning.
+1. Browser submits a violation report to the configured reporting endpoint. By default this is `/wp-json/security-manager/v1/report`; proxy/CDN deployments can advertise an administrator-provided public URL that must route back to this plugin endpoint for local learning. A legacy alias at `/wp-json/csp-manager/v1/report` (the pre-rename REST namespace) remains registered against the same handler, since browsers holding a CSP header issued before the rename keep POSTing to it until they receive a fresh policy; remove the alias a couple of releases after the rename ships.
 2. `Violation_Reporter` validates the `Content-Type` header; requests with a content type other than `application/csp-report`, `application/reports+json`, or `application/json` are rejected with HTTP 400.
 3. The payload is normalised from either the legacy `application/csp-report` format (hyphenated field names: `document-uri`, `blocked-uri`, `script-sample`, etc.) or the Reporting API `application/reports+json` format (camelCase field names: `documentURL`, `blockedURL`, `sample`, etc.).
 4. The `document-uri` hostname is compared against the WordPress site origin (RFC 6454); reports from a different origin are silently discarded — CSP reports are client-generated and spoofable.
@@ -182,7 +182,7 @@ Conflicts are warning-level audit events. The detector never removes or rewrites
 2. The current surface summary shows CSP mode, automation mode, latest policy version, pending proposal count, unresolved high-risk count, and the latest captured header.
 3. The For Review queue lists pending proposals with surface, directive, source, risk, evidence count, first seen, and last seen.
 4. Recent decisions show actor, state, surface, directive, source, risk, decision-engine version, and linked policy version.
-5. Privileged REST endpoints under `/wp-json/csp-manager/v1/admin/*` expose policy history, policy diffs, decisions, pending reviews, and automation configuration for richer future UI workflows.
+5. Privileged REST endpoints under `/wp-json/security-manager/v1/admin/*` expose policy history, policy diffs, decisions, pending reviews, and automation configuration for richer future UI workflows.
 
 ### 7. Readiness and reset flow
 

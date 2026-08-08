@@ -402,7 +402,7 @@ class ViolationReporterTest extends TestCase {
 
 	private function make_request( string $body ): WP_REST_Request {
 		$GLOBALS['_wp_rest_body'] = $body;
-		return new WP_REST_Request( 'POST', '/csp-manager/v1/report' );
+		return new WP_REST_Request( 'POST', '/security-manager/v1/report' );
 	}
 
 	/**

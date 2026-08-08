@@ -792,7 +792,7 @@ $scan_logs     = ! empty( $scan_logs_raw ) ? $scan_logs_raw : array();
 		<?php
 		$report_endpoint_url = (string) get_option( 'wp_csp_report_endpoint_url', '' );
 		if ( '' === trim( $report_endpoint_url ) ) {
-			$report_endpoint_url = rest_url( 'csp-manager/v1/report' );
+			$report_endpoint_url = rest_url( 'security-manager/v1/report' );
 		}
 
 		$v_surface     = Table_Query::multi_param( 'v_surface' );
@@ -1079,7 +1079,7 @@ $scan_logs     = ! empty( $scan_logs_raw ) ? $scan_logs_raw : array();
 		<?php
 		$learning_window            = new \WP_SAM\CSP\Learning_Window();
 		$learning_status            = $learning_window->is_open() ? __( 'Open', 'security-automation-manager' ) : __( 'Locked', 'security-automation-manager' );
-		$current_report_endpoint    = esc_url_raw( rest_url( 'csp-manager/v1/report' ) );
+		$current_report_endpoint    = esc_url_raw( rest_url( 'security-manager/v1/report' ) );
 		$configured_report_endpoint = (string) get_option( 'wp_csp_report_endpoint_url', '' );
 		$configured_policy_header   = (string) get_option( 'wp_csp_policy_header_name', '' );
 		$reporting_transport        = \WP_SAM\CSP\Policy_Builder::sanitize_reporting_transport( get_option( 'wp_csp_reporting_transport', 'report-uri' ) );

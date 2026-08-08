@@ -203,10 +203,10 @@ class Policy_Builder {
 		}
 
 		if ( function_exists( 'did_action' ) && did_action( 'init' ) > 0 ) {
-			return esc_url_raw( rest_url( 'csp-manager/v1/report' ) );
+			return esc_url_raw( rest_url( 'security-manager/v1/report' ) );
 		}
 
-		return esc_url_raw( home_url( '/wp-json/csp-manager/v1/report' ) );
+		return esc_url_raw( home_url( '/wp-json/security-manager/v1/report' ) );
 	}
 
 	private function uses_reporting_api(): bool {

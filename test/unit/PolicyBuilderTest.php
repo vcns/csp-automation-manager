@@ -179,7 +179,7 @@ class PolicyBuilderTest extends TestCase {
 		$policy = $this->builder->build_policy_string( $profile, 'frontend' );
 
 		$this->assertStringContainsString( 'report-uri', $policy );
-		$this->assertStringContainsString( 'csp-manager/v1/report', $policy );
+		$this->assertStringContainsString( 'security-manager/v1/report', $policy );
 		$this->assertStringNotContainsString( 'report-to csp-endpoint', $policy );
 	}
 
@@ -198,7 +198,7 @@ class PolicyBuilderTest extends TestCase {
 
 		$policy = $this->builder->build_policy_string( $profile, 'frontend' );
 
-		$this->assertStringContainsString( 'report-uri https://example.com/wp-json/csp-manager/v1/report', $policy );
+		$this->assertStringContainsString( 'report-uri https://example.com/wp-json/security-manager/v1/report', $policy );
 		$this->assertStringNotContainsString( 'javascript:', $policy );
 	}
 
@@ -208,7 +208,7 @@ class PolicyBuilderTest extends TestCase {
 
 		$policy = $this->builder->build_policy_string( $profile, 'frontend' );
 
-		$this->assertStringContainsString( 'report-uri https://example.com/wp-json/csp-manager/v1/report', $policy );
+		$this->assertStringContainsString( 'report-uri https://example.com/wp-json/security-manager/v1/report', $policy );
 	}
 
 	public function test_build_uses_rest_url_report_endpoint_after_init(): void {
@@ -217,7 +217,7 @@ class PolicyBuilderTest extends TestCase {
 
 		$policy = $this->builder->build_policy_string( $profile, 'frontend' );
 
-		$this->assertStringContainsString( 'report-uri https://example.com/wp-json/csp-manager/v1/report', $policy );
+		$this->assertStringContainsString( 'report-uri https://example.com/wp-json/security-manager/v1/report', $policy );
 	}
 
 	public function test_build_appends_report_to_when_reporting_api_is_enabled(): void {

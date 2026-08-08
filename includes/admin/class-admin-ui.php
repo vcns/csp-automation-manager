@@ -246,7 +246,7 @@ class Admin_UI {
 			'wpCspAdmin',
 			array(
 				'ajaxUrl'   => admin_url( 'admin-ajax.php' ),
-				'restUrl'   => esc_url_raw( rest_url( 'csp-manager/v1/admin/' ) ),
+				'restUrl'   => esc_url_raw( rest_url( 'security-manager/v1/admin/' ) ),
 				'nonce'     => wp_create_nonce( 'wp_csp_admin_nonce' ),
 				'restNonce' => wp_create_nonce( 'wp_rest' ),
 				'i18n'      => array(
