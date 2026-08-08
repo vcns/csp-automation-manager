@@ -24,7 +24,7 @@ This repository contains a WordPress plugin that automates Content Security Poli
 ## Coding expectations
 
 - Use `declare(strict_types=1);` in PHP files.
-- Follow the existing namespace and autoload structure under `WP_CSP\`.
+- Follow the existing namespace and autoload structure under `WP_SAM\`.
 - Prefer small methods with single-purpose responsibilities.
 - Escape output late and validate input early.
 - Use `hash_equals()` for secret comparisons.
