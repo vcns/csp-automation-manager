@@ -170,13 +170,15 @@
         <div>
           <p class='section-label'>Dashboard</p>
           <h2>Where to look in the WordPress admin.</h2>
-          <p>Open <strong>CSP Manager</strong> in the WordPress admin. The main dashboard is split into tabs that match the product workflow.</p>
+          <p>Open <strong>CSP Manager</strong> in the WordPress admin. The main page is split into tabs that match the product workflow.</p>
           <ul class='bullets'>
+            <li><strong>Start Here:</strong> a short guide to the report-only, learning-window, and enforce-promotion workflow.</li>
             <li><strong>Profiles:</strong> see each surface and switch between report-only, enforce, and disabled.</li>
-            <li><strong>For Review:</strong> review discovered hosts, risk, state, evidence count, and last-seen time.</li>
-            <li><strong>Policy Changes:</strong> review the activity timeline for proposals, decisions, actors, policy snapshots, reversions, undo actions, and suppressions.</li>
-            <li><strong>Violations:</strong> inspect browser-reported blocked resources and occurrence counts.</li>
+            <li><strong>For Review:</strong> review discovered hosts, risk, state, evidence count, and last-seen time. Sortable and filterable across the full dataset, not just the current page.</li>
+            <li><strong>Policy Changes:</strong> review the activity timeline for proposals, decisions, actors, policy snapshots, reversions, undo actions, and suppressions. Also sortable and filterable.</li>
+            <li><strong>Violations:</strong> inspect browser-reported blocked resources and occurrence counts, sortable and filterable, with a metadata icon per row showing document URI, source file, line/column, referrer, user agent, and any captured payload.</li>
             <li><strong>Scan Log:</strong> check manual and scheduled scan results.</li>
+            <li><strong>Settings:</strong> promotion gates, deterministic automation, proxy header emission, report endpoint learning, and scan schedule.</li>
           </ul>
         </div>
         <div class='callout-stack'>
@@ -190,7 +192,7 @@
           </div>
           <div class='callout'>
             <h3>Automation settings</h3>
-            <p>Use <strong>CSP Manager -> Settings -> Deterministic Automation</strong> to move a surface out of manual mode, clear the emergency disable switch, and set a per-run automatic-change limit.</p>
+            <p>Use <strong>CSP Manager -> Settings -> Deterministic Automation</strong> to move a surface out of manual mode and set a per-run automatic-change limit. Automation Mode alone controls eligibility; there is no separate switch to clear.</p>
           </div>
         </div>
       </section>

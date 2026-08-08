@@ -6,6 +6,21 @@ The format is based on Keep a Changelog, and this project follows semantic versi
 
 ## [Unreleased]
 
+### Added
+
+- Added full-dataset sorting and per-column filtering (multi-select, free-text, numeric, date-range) to the Violations, For Review, and Policy Changes tables, replacing plain unsortable pagination.
+- Added a per-row metadata icon on the Violations table showing document URI, source file, line/column, referrer, user agent, and any captured data-URI payload for a violation.
+- Added a "Start Here" tab explaining the report-only, learning-window, and manual enforce-promotion workflow; it is now the default landing tab.
+
+### Changed
+
+- Renamed the dashboard to "CSP Manager" and merged the standalone Settings page into it as a tab, alongside Profiles, For Review, Policy Changes, Violations, and Scan Log.
+- Removed the default WordPress "Thank you for creating with WordPress." admin footer text on this plugin's own pages.
+
+### Removed
+
+- Removed the "Allow eligible auto-approvals" checkbox and its underlying `emergency_disabled` field. Automation Mode alone now governs whether a surface's proposals can be auto-approved; the field could previously be silently reset by an unrelated settings save due to how defaults were merged, which is no longer possible now that it no longer exists.
+
 ## [1.0.16] - 2026-08-04
 
 ### Added

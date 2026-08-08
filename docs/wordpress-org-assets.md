@@ -66,11 +66,11 @@ Keep the composition safe for WordPress.org cropping behaviour.
 
 Suggested screenshot sequence:
 
-1. Dashboard profiles tab
-2. Source inventory approval workflow
-3. Violation report table
-4. Scan log
-5. Settings page
+1. Start Here tab (CSP Manager onboarding overview)
+2. Profiles tab
+3. For Review source approval workflow
+4. Violations table (sorting/filtering and the metadata icon)
+5. Settings tab (Deterministic Automation)
 6. Premium entitlement page
 
 Each screenshot should represent the current UI accurately. Update screenshots when the admin UI changes materially.
